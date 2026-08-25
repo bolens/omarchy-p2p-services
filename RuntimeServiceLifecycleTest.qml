@@ -14,6 +14,9 @@ ShellRoot {
     service.configure({eventRefresh:false,privacyFilter:true})
     if (service.settings.privacyFilter !== true || service.watcherHealth !== "disabled" || service.watcherCode !== "disabled")
       throw new Error("event refresh disablement failed")
+    service.configure({eventRefresh:false,_p2pRevision:7})
+    service.configure({eventRefresh:false,_p2pRevision:3})
+    if (service.durableSettingsRevision !== 7) throw new Error("durable settings revision regressed")
 
     service.lastDurationMs = 42
     service.diagnostics = [{code:"sample"}]

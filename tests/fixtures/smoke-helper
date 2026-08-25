@@ -10,6 +10,9 @@ case "$1" in
     sleep 0.4
     printf '%s' '[]'
     ;;
+  settings-watch)
+    sleep 5
+    ;;
   watch)
     exit 0
     ;;

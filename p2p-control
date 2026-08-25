@@ -14,6 +14,7 @@ from p2p_registry import normalize_custom_services, validate_registry
 from p2p_runtime import RuntimeProbe
 from p2p_settings import reconcile_settings, sanitize_settings
 from p2p_settings_store import SettingsStore
+from p2p_settings_watch import watch_settings
 from p2p_secure_files import atomic_private_write, ensure_private_directory, read_or_create_secret, read_private_text
 from p2p_snapshot import SnapshotContext
 from p2p_validation import safe_http_url
@@ -392,6 +393,10 @@ def main():
   if len(sys.argv)<2: raise SystemExit(2)
   if sys.argv[1]=="settings-load" and len(sys.argv)==2:
     print(json.dumps(SETTINGS.load(),separators=(",",":"))); return
+  if sys.argv[1]=="settings-watch" and len(sys.argv)==2:
+    try: watch_settings(SETTINGS_FILE)
+    except KeyboardInterrupt: pass
+    return
   if sys.argv[1]=="settings-save" and len(sys.argv)==3:
     try: SETTINGS.save(sys.argv[2])
     except (OSError,ValueError,TypeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)

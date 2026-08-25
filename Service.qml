@@ -20,10 +20,12 @@ Item {
   property string watcherCode: "waiting"
   property bool watcherPollingOnly: false
   property int watcherRetryMilliseconds: 1000
+  property int durableSettingsRevision: -1
   property string helper: PathUtils.localFilePath(Qt.resolvedUrl("p2p-control"))
 
   function configure(next) {
     settings = next && typeof next === "object" && !Array.isArray(next) ? next : {}
+    durableSettingsRevision = Math.max(durableSettingsRevision, Number(settings._p2pRevision) || 0)
     if (settings.eventRefresh === false) {
       watcherProc.running = false
       eventRefreshDelay.stop()
@@ -71,6 +73,22 @@ Item {
     onFailed: root.refreshError = "Shared P2P status scan failed"
   }
 
+  Process {
+    id: settingsWatcherProc
+    command: [root.helper, "settings-watch"]
+    running: true
+    stdout: SplitParser {
+      onRead: function(line) {
+        try {
+          var event = JSON.parse(line)
+          if (event.type === "settings-changed" && Number(event.revision) > root.durableSettingsRevision)
+            root.durableSettingsRevision = Number(event.revision)
+        } catch (error) {}
+      }
+    }
+    onExited: settingsWatcherRetry.restart()
+  }
+  Timer { id: settingsWatcherRetry; interval: 1000; onTriggered: settingsWatcherProc.running = true }
   Process {
     id: watcherProc
     command: [root.helper, "watch"]

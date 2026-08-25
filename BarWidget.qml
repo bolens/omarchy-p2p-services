@@ -335,6 +335,13 @@ Panel {
       && target.settingsIndicatorVisible !== true
   }
   function reloadDurableSettings() { settingsStore.load(settings) }
+  function reloadIfSharedSettingsAdvanced() {
+    if (!p2pService || !durableSettingsLoaded || settingsStore.busy) return false
+    var localRevision = Number(durableSettings._p2pRevision) || 0
+    if (Number(p2pService.durableSettingsRevision) <= localRevision) return false
+    reloadDurableSettings()
+    return true
+  }
   function reloadSettingsAcrossInstances() {
     var widgets = bar && typeof bar.moduleWidgets === "function" ? bar.moduleWidgets(moduleName) : [root]
     if (!widgets || !widgets.length) widgets = [root]
@@ -939,7 +946,10 @@ Panel {
       if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function") root.bar.shell.updateEntryInline(root.moduleName, merged)
       if (root.setting("persistCollapsedGroups", true) === true) root.collapsedServiceGroups = root.setting("collapsedServiceGroups", {}) || {}
     }
-    onSaved: if (root.settingsSaveStatus === "saving") { root.settingsSaveStatus = "saved"; settingsSavedClear.restart() }
+    onSaved: {
+      if (root.settingsSaveStatus === "saving") { root.settingsSaveStatus = "saved"; settingsSavedClear.restart() }
+      Qt.callLater(root.reloadIfSharedSettingsAdvanced)
+    }
     onLoadFailed: root.errorText = "Unable to load saved P2P settings; using shell settings"
     onSaveFailed: { root.settingsSaveStatus = ""; root.errorText = "Unable to save P2P widget settings" }
   }
@@ -969,6 +979,9 @@ Panel {
   P2PSettingsTransferResult { id: settingsTransferResult; controller: root; moduleName: root.moduleName; onErrorRequested: function(message) { root.errorText = message } }
   Connections {
     target: root.p2pService
+    function onDurableSettingsRevisionChanged() {
+      root.reloadIfSharedSettingsAdvanced()
+    }
     function onRefreshSerialChanged() {
       if (!root.p2pService || !Array.isArray(root.p2pService.services)) return
       deferredRefresh.receive(root.p2pService.services, root.p2pService.lastFullScan, popupScroll.moving)

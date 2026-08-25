@@ -93,7 +93,9 @@ focus_capture_workspace() {
 restore_desktop() {
   local status=$?
   if [[ $restored == false ]]; then
-    [[ -n $shell_pid ]] && qs ipc --pid "$shell_pid" call shell hide "$plugin_id" >/dev/null 2>&1 || true
+    if [[ -n $shell_pid ]]; then
+      qs ipc --pid "$shell_pid" call shell hide "$plugin_id" >/dev/null 2>&1 || true
+    fi
     restore_file() {
       local source=$1 destination=$2 temporary_restore
       temporary_restore=$(mktemp "${destination}.XXXXXX")

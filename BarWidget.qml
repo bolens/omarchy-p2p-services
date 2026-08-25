@@ -710,10 +710,15 @@ Panel {
         RowLayout {
           visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
           Layout.fillWidth: true
-          Text { text: "SERVICES"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold; font.letterSpacing: 1.2 }
-          Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Util.alpha(Color.muted, 0.18) }
+          spacing: Style.spacing.sm
+          P2PFilterPill { controller: root; label: "All " + root.services.length; value: "all" }
+          P2PFilterPill { controller: root; label: "Running " + root.activeCount; value: "running" }
+          P2PFilterPill { controller: root; label: "Stopped " + root.stoppedCount; value: "stopped" }
+          P2PFilterPill { controller: root; label: "Issues " + root.errorCount; value: "issues"; visible: root.errorCount > 0 }
+          Item { Layout.fillWidth: true }
           Rectangle {
             objectName: "visibleServiceCountBadge"
+            visible: root.serviceFilter !== "all" || root.searchQuery !== ""
             implicitWidth: visibleServiceCountText.implicitWidth + Style.spacing.sm * 2
             implicitHeight: visibleServiceCountText.implicitHeight + Style.space(4)
             radius: implicitHeight / 2
@@ -721,25 +726,6 @@ Panel {
             border.width: 1
             border.color: Util.alpha(Color.muted, 0.24)
             Text { id: visibleServiceCountText; anchors.centerIn: parent; text: root.visibleServices.length + " SHOWN"; textFormat: Text.PlainText; color: Color.popups.text; opacity: 0.68; font.family: Style.font.mono || Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold; font.letterSpacing: 0.8 }
-          }
-        }
-
-        RowLayout {
-          visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
-          Layout.fillWidth: true
-          spacing: Style.spacing.sm
-          P2PFilterPill { controller: root; label: "All " + root.services.length; value: "all" }
-          P2PFilterPill { controller: root; label: "Running " + root.activeCount; value: "running" }
-          P2PFilterPill { controller: root; label: "Stopped " + root.stoppedCount; value: "stopped" }
-          P2PFilterPill { controller: root; label: "Issues " + root.errorCount; value: "issues"; visible: root.errorCount > 0 }
-          Item { Layout.fillWidth: true }
-          Text {
-            visible: root.serviceFilter !== "all" || root.searchQuery !== ""
-            text: root.visibleServices.length + " result" + (root.visibleServices.length === 1 ? "" : "s")
-            textFormat: Text.PlainText
-            color: Color.muted
-            font.family: Style.font.family
-            font.pixelSize: Style.font.caption
           }
         }
 

@@ -85,7 +85,10 @@ ShellRoot {
     mockController.serviceLayout = "grid"
     Qt.callLater(function() {
       if (!serviceList.gridView || !serviceList.twoColumnGrid || serviceList.columns !== 2 || !syncCard.compact || !syncCard.grid || namedIn(sync, "serviceGroupHeader").visible) throw new Error("responsive grid layout failed")
-      if (!namedIn(syncCard, "gridMetadataRow").visible || !namedIn(syncCard, "gridStatusPill")) throw new Error("grid card metadata did not reflow")
+      var metadataRow = namedIn(syncCard, "gridMetadataRow")
+      var metadataPill = namedIn(syncCard, "gridIndicatorPill")
+      if (!metadataRow.visible || metadataRow.leadingInset <= 0 || !metadataPill || metadataPill.horizontalPadding <= metadataRow.leadingInset || !namedIn(syncCard, "gridStatusPill"))
+        throw new Error("grid card metadata did not reflow with padded indicators and a leading inset")
       serviceList.width = 400
       if (serviceList.twoColumnGrid || serviceList.columns !== 1) throw new Error("narrow grid did not collapse to one column")
       serviceList.width = 600

@@ -130,8 +130,10 @@ Rectangle {
 
     RowLayout {
       objectName: "gridMetadataRow"
+      property int leadingInset: Style.spacing.xs
       visible: card.grid
       Layout.fillWidth: true
+      Layout.leftMargin: leadingInset
       spacing: Style.spacing.xs
       Repeater {
         model: card.grid ? Model.compactIndicators(card.entry) : []
@@ -139,7 +141,8 @@ Rectangle {
           id: gridIndicatorPill
           objectName: "gridIndicatorPill"
           required property var modelData
-          implicitWidth: gridIndicatorRow.implicitWidth + Style.spacing.sm * 2
+          property int horizontalPadding: Style.spacing.md
+          implicitWidth: gridIndicatorRow.implicitWidth + horizontalPadding * 2
           implicitHeight: gridIndicatorRow.implicitHeight + Style.space(4)
           radius: implicitHeight / 2
           color: Util.alpha(card.controller.serviceColor(card.entry), 0.11)

@@ -7,15 +7,15 @@ peer-to-peer clients and overlay-network daemons.
 [Source](https://github.com/bolens/omarchy-p2p-services) ·
 [Report an issue](https://github.com/bolens/omarchy-p2p-services/issues/new/choose)
 
-![P2P Services status panel with privacy filtering enabled](preview.png?v=bd1cd8b1ea80)
+![P2P Services status panel with privacy filtering enabled](preview.png?v=0b8d047f5d45)
 
 | General settings | Performance settings | Bar widget |
 | --- | --- | --- |
-| ![P2P Services privacy and behavior settings](docs/general.png?v=b8b3328caad4) | ![P2P Services refresh and resource settings](docs/performance.png?v=460583057e0a) | ![P2P Services Omarchy bar widget](docs/bar.png?v=f1f8ab12287a) |
+| ![P2P Services privacy and behavior settings](docs/general.png?v=fc9347ee90b7) | ![P2P Services refresh and resource settings](docs/performance.png?v=562393b380f6) | ![P2P Services Omarchy bar widget](docs/bar.png?v=f1f8ab12287a) |
 
 | Compact icon list | Two-column grid |
 | --- | --- |
-| ![P2P Services compact icon list](docs/compact.png?v=6fa1082c4655) | ![P2P Services two-column service grid](docs/grid.png?v=d5080ab638d2) |
+| ![P2P Services compact icon list](docs/compact.png?v=3066de817bb1) | ![P2P Services two-column service grid](docs/grid.png?v=ceaf8d6f9410) |
 
 Supported backends include Yggdrasil, Tailscale, ZeroTier, Nebula, Headscale,
 NetBird, NetBird Server, Netmaker, Netmaker Client, I2P/I2Pd, Freenet/Hyphanet, AirDC++,

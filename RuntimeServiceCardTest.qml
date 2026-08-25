@@ -39,8 +39,9 @@ ShellRoot {
 
   P2PServiceCard {
     id: card
+    width: 600
     controller: mockController
-    entry: ({id:"syncthing",name:"Syncthing",icon:"S",active:false,hasError:false,backend:"systemd",unit:"syncthing.service",unitScope:"user",configExists:false,hasWeb:false,processCount:0,containerCount:0,pids:[],endpoints:[],restartCount:0,lastTransition:"",failureReason:"",uptime:0,connections:0,listeners:0})
+    entry: ({id:"syncthing",name:"Syncthing",icon:"S",active:false,hasError:false,backend:"systemd",unit:"syncthing.service",unitScope:"user",config:"/home/alice/.config/syncthing/config.xml",configExists:true,hasWeb:false,processCount:0,containerCount:0,pids:[4242],endpoints:["10.0.0.2:22000 → 10.0.0.3:22000"],restartCount:0,lastTransition:"",failureReason:"",uptime:0,connections:0,listeners:0})
   }
 
   function descendant(item, name) {
@@ -61,8 +62,10 @@ ShellRoot {
     var quickActions = descendant(card, "serviceQuickActions")
     var actionLoading = descendant(card, "serviceActionLoadingIndicator")
     var expandedDetails = descendant(card, "serviceExpandedDetails")
+    var expandedDetailsContent = descendant(card, "serviceExpandedDetailsContent")
     var detailsSeparator = descendant(card, "serviceDetailsSeparator")
-    if (!status || !primary || !details || !quickActions || !actionLoading || !expandedDetails || !detailsSeparator) throw new Error("service card controls are not addressable")
+    var runtimeDetails = descendant(card, "serviceRuntimeDetailsText")
+    if (!status || !primary || !details || !quickActions || !actionLoading || !expandedDetails || !expandedDetailsContent || !detailsSeparator || !runtimeDetails) throw new Error("service card controls are not addressable")
     if (status.text !== "STOPPED" || primary.text !== "Start" || !quickActions.visible) throw new Error("stopped service presentation failed")
     primary.clicked()
     details.clicked()
@@ -70,8 +73,15 @@ ShellRoot {
       throw new Error("service card action dispatch failed")
     if (mockController.expandedServiceId !== "syncthing" || !details.active || details.text !== "Hide details")
       throw new Error("service details state failed")
-    if (!expandedDetails.visible || !detailsSeparator.visible || expandedDetails.horizontalInset <= 0)
+    if (!expandedDetails.visible || !detailsSeparator.visible || expandedDetails.horizontalInset <= 0
+        || expandedDetailsContent.x < expandedDetails.horizontalInset
+        || expandedDetailsContent.width > expandedDetails.width - expandedDetails.horizontalInset * 2)
       throw new Error("expanded service details did not retain an inset from the separator")
+    if (/4242|alice|10\.0\.0\./.test(runtimeDetails.text)) throw new Error("private expanded details leaked process, path, or endpoint data")
+    mockController.privacyFilter = false
+    if (!/4242/.test(runtimeDetails.text) || !/alice/.test(runtimeDetails.text) || !/10\.0\.0\.2/.test(runtimeDetails.text))
+      throw new Error("explicitly unfiltered expanded details omitted runtime data")
+    mockController.privacyFilter = true
     mockController.pendingService = "syncthing"
     mockController.pendingAction = "start"
     Qt.callLater(function() {

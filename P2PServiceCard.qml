@@ -217,15 +217,22 @@ Rectangle {
       }
     }
     Rectangle { objectName: "serviceDetailsSeparator"; visible: controller.expandedServiceId === entry.id; Layout.fillWidth: true; implicitHeight: 1; color: Util.alpha(controller.serviceColor(entry), 0.16) }
-    ColumnLayout {
+    Item {
       objectName: "serviceExpandedDetails"
       property int horizontalInset: Style.spacing.sm
       visible: controller.expandedServiceId === entry.id
       Layout.fillWidth: true
-      Layout.leftMargin: horizontalInset
-      Layout.rightMargin: horizontalInset
-      spacing: Style.spacing.xs
-      Text {
+      implicitHeight: expandedDetailsContent.implicitHeight
+      ColumnLayout {
+        id: expandedDetailsContent
+        objectName: "serviceExpandedDetailsContent"
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: parent.horizontalInset
+        anchors.rightMargin: parent.horizontalInset
+        spacing: Style.spacing.xs
+        Text {
+        objectName: "serviceRuntimeDetailsText"
         visible: entry.active
         Layout.fillWidth: true
         text: controller.privacyFilter
@@ -236,8 +243,8 @@ Rectangle {
         wrapMode: Text.WrapAnywhere
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
-      }
-      Text {
+        }
+        Text {
         Layout.fillWidth: true
         text: entry.unit ? entry.unitScope + " service · " + entry.unit : "Managed by exact process name"
         textFormat: Text.PlainText
@@ -246,8 +253,8 @@ Rectangle {
         horizontalAlignment: Text.AlignRight
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
-      }
-      Text {
+        }
+        Text {
         visible: entry.restartCount > 0 || entry.lastTransition || entry.failureReason
         Layout.fillWidth: true
         text: (entry.restartCount > 0 ? "Restarts: " + entry.restartCount : "No recorded restarts")
@@ -258,6 +265,7 @@ Rectangle {
         wrapMode: Text.WordWrap
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
+        }
       }
     }
   }

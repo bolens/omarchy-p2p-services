@@ -28,7 +28,7 @@ while (($#)); do
   esac
 done
 
-for command in qs hyprctl jq grim magick pngquant omarchy flock python3; do
+for command in qs hyprctl jq grim magick pngquant omarchy flock python3 wtype; do
   command -v "$command" >/dev/null || { printf 'Missing required command: %s\n' "$command" >&2; exit 1; }
 done
 
@@ -189,6 +189,10 @@ capture_panel() {
 
 capture_panel panel
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
+wtype -k Return
+sleep 1
+capture_panel details
+wtype -k Escape
 for page in general appearance services performance discovery packages; do
   open_settings_page "$page"
   sleep 2
@@ -213,7 +217,7 @@ sleep 1
 grim -o "$monitor" "$capture_dir/bar-full.png"
 magick "$capture_dir/bar-full.png" -crop "${widget_width}x50+${widget_x}+0" +repage "$capture_dir/bar.png"
 
-for image in panel compact grid general appearance services performance discovery packages bar; do
+for image in panel details compact grid general appearance services performance discovery packages bar; do
   colors=$(magick "$capture_dir/$image.png" -format '%k' info:)
   if [[ ! $colors =~ ^[0-9]+$ ]] || ((colors < 8)); then
     printf 'Capture has too little content: %s\n' "$image" >&2

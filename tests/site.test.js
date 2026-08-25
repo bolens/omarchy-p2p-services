@@ -34,4 +34,7 @@ for (const safeguard of ["flock -n", "trap restore_desktop", "settings-patch", "
 assert.match(capture, /privacyFilter[\\"]*:?[\\"]*true/);
 assert.match(capture, /for page in general appearance services performance discovery packages/);
 assert.match(capture, /update-screenshot-metadata/);
+assert.doesNotMatch(capture, /\bsleep\s+(?:1|2)\b/, "capture workflow must wait on observable IPC state, not fixed delays");
+for (const readiness of ["mainReady", "detailsReady", "panelClosed"])
+  assert.ok(capture.includes(readiness), `capture workflow is missing readiness probe: ${readiness}`);
 console.log("site checks passed");

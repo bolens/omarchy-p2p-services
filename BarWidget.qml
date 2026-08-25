@@ -313,6 +313,44 @@ Panel {
     if (target && target !== root && typeof target.applyMainView === "function") return target.applyMainView()
     return applyMainView()
   }
+  function focusedMainReady(layout, density) {
+    var target = focusedPanelInstance()
+    return !!target && target.opened === true && target.showingWidgetSettings !== true
+      && target.editingServiceId === "" && target.statusIndicatorVisible !== true
+      && Array.isArray(target.services) && target.services.length > 0
+      && String(target.setting("serviceLayout", "list")) === String(layout)
+      && String(target.setting("cardDensity", "comfortable")) === String(density)
+  }
+  function applyServiceDetails(serviceId) {
+    var requested = String(serviceId || "")
+    var found = services.some(function(entry) { return entry.id === requested })
+    if (!found) return "service not found"
+    editingServiceId = ""
+    showingWidgetSettings = false
+    selectedServiceId = requested
+    expandedServiceId = requested
+    if (!opened) open()
+    return "ok"
+  }
+  function openServiceDetails(serviceId) {
+    var target = focusedPanelInstance()
+    if (target && target !== root && typeof target.applyServiceDetails === "function") return target.applyServiceDetails(serviceId)
+    return applyServiceDetails(serviceId)
+  }
+  function focusedDetailsReady(serviceId) {
+    var target = focusedPanelInstance()
+    return !!target && target.opened === true && target.showingWidgetSettings !== true
+      && target.statusIndicatorVisible !== true && target.expandedServiceId === String(serviceId)
+  }
+  function closeFocused() {
+    var target = focusedPanelInstance()
+    if (target && typeof target.close === "function") target.close()
+    return "ok"
+  }
+  function focusedPanelClosed() {
+    var target = focusedPanelInstance()
+    return !target || target.opened !== true
+  }
   function applySettingsPage(requested) {
     requested = String(requested || "general")
     editingServiceId = ""
@@ -674,7 +712,11 @@ Panel {
   IpcHandler {
     target: root.moduleName
     function open(): string { return root.openMainView() }
-    function close(): void { root.close() }
+    function close(): string { return root.closeFocused() }
+    function mainReady(layout: string, density: string): string { return root.focusedMainReady(layout, density) ? "true" : "false" }
+    function openDetails(serviceId: string): string { return root.openServiceDetails(serviceId) }
+    function detailsReady(serviceId: string): string { return root.focusedDetailsReady(serviceId) ? "true" : "false" }
+    function panelClosed(): string { return root.focusedPanelClosed() ? "true" : "false" }
     function openSettings(page: string): string { return root.openSettings(page) }
     function settingsReady(page: string): string { return root.focusedSettingsReady(page) ? "true" : "false" }
     function reloadSettings(): string { return root.reloadSettingsAcrossInstances() }

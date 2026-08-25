@@ -28,7 +28,7 @@ while (($#)); do
   esac
 done
 
-for command in qs hyprctl jq grim magick pngquant flock python3 wtype; do
+for command in qs hyprctl jq grim magick pngquant flock python3; do
   command -v "$command" >/dev/null || { printf 'Missing required command: %s\n' "$command" >&2; exit 1; }
 done
 
@@ -86,6 +86,15 @@ reload_live_settings() {
   for _attempt in {1..80}; do
     snapshot=$(qs ipc --pid "$shell_pid" call "$plugin_id" settingsSnapshot 2>/dev/null || true)
     jq -e "$expected" <<<"${snapshot:-null}" >/dev/null 2>&1 && return 0
+    sleep .25
+  done
+  return 1
+}
+
+wait_plugin_state() {
+  local method=$1 expected=$2; shift 2
+  for _attempt in {1..80}; do
+    [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" "$method" "$@" 2>/dev/null || true) == "$expected" ]] && return 0
     sleep .25
   done
   return 1
@@ -162,8 +171,8 @@ shell_config=$(qs ipc --pid "$shell_pid" call shell listShellConfig)
 ' >/dev/null
 
 focus_capture_workspace
-qs ipc --pid "$shell_pid" call "$plugin_id" open >/dev/null
-sleep 2
+[[ $(qs ipc --pid "$shell_pid" call "$plugin_id" open) == ok ]]
+wait_plugin_state mainReady true list comfortable
 widget_x=""
 widget_width=""
 for _attempt in {1..40}; do
@@ -197,24 +206,35 @@ capture_panel() {
 }
 
 open_main_view() {
+  local layout=${1:-list} density=${2:-comfortable}
   for _attempt in {1..20}; do
-    [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" open 2>/dev/null || true) == ok ]] && return 0
+    if [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" open 2>/dev/null || true) == ok ]] \
+      && wait_plugin_state mainReady true "$layout" "$density"; then return 0; fi
     sleep .25
   done
   printf 'Could not open the main service view.\n' >&2
   return 1
 }
 
+open_service_details() {
+  local service_id=$1
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" openDetails "$service_id" 2>/dev/null || true) == ok ]] || return 1
+  wait_plugin_state detailsReady true "$service_id" || { printf 'Could not expand %s details.\n' "$service_id" >&2; return 1; }
+}
+
+close_panel() {
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" close 2>/dev/null || true) == ok ]] || return 1
+  wait_plugin_state panelClosed true
+}
+
 open_main_view
 capture_panel panel
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
-wtype -k Return
-sleep 1
+open_service_details i2p
 capture_panel details
-wtype -k Escape
+open_main_view list comfortable
 for page in general appearance services performance discovery packages; do
   open_settings_page "$page"
-  sleep 2
   if [[ $page == packages ]]; then capture_panel "$page" 400; else capture_panel "$page"; fi
 done
 
@@ -224,14 +244,12 @@ capture_layout() {
   reload_live_settings ".privacyFilter == true and .serviceLayout == \"$layout\" and .cardDensity == \"$density\""
   focus_capture_workspace
   [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed for %s.\n' "$name" >&2; return 1; }
-  open_main_view
-  sleep 2
+  open_main_view "$layout" "$density"
   capture_panel "$name"
 }
 capture_layout compact list compact
 capture_layout grid grid compact
-qs ipc --pid "$shell_pid" call shell hide "$plugin_id" >/dev/null
-sleep 1
+close_panel
 grim -o "$monitor" "$capture_dir/bar-full.png"
 magick "$capture_dir/bar-full.png" -crop "${widget_width}x50+${widget_x}+0" +repage "$capture_dir/bar.png"
 

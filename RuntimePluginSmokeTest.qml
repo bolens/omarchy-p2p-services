@@ -41,11 +41,18 @@ ShellRoot {
     property string settingsPage: requestedPage
     property bool settingsSurfaceLoaded: true
     property bool settingsIndicatorVisible: false
+    property bool statusIndicatorVisible: false
+    property string editingServiceId: ""
+    property string expandedServiceId: ""
+    property var services: [{id:"i2p"}]
     property bool durableSettingsLoaded: true
     property var durableSettings: ({privacyFilter:true,serviceLayout:"grid"})
     property int mainViewRequests: 0
     function applySettingsPage(page) { requestedPage = page; return "ok" }
     function applyMainView() { showingWidgetSettings = false; mainViewRequests += 1; return "ok" }
+    function applyServiceDetails(id) { showingWidgetSettings = false; expandedServiceId = id; return "ok" }
+    function setting(key, fallback) { var values = {serviceLayout:"grid",cardDensity:"compact"}; return values[key] === undefined ? fallback : values[key] }
+    function close() { opened = false }
     function open() {}
   }
 
@@ -82,6 +89,10 @@ ShellRoot {
         throw new Error("focused settings readiness did not identify the loaded page")
       if (widget.openMainView() !== "ok" || focusedWidgetFixture.showingWidgetSettings || focusedWidgetFixture.mainViewRequests !== 1)
         throw new Error("main view IPC did not route to the focused monitor instance")
+      if (!widget.focusedMainReady("grid", "compact")) throw new Error("focused main view readiness failed")
+      if (widget.openServiceDetails("i2p") !== "ok" || !widget.focusedDetailsReady("i2p")) throw new Error("focused details routing failed")
+      if (widget.closeFocused() !== "ok" || !widget.focusedPanelClosed()) throw new Error("focused close routing failed")
+      focusedWidgetFixture.opened = true
       var snapshot = JSON.parse(widget.focusedSettingsSnapshot())
       if (snapshot.privacyFilter !== true || snapshot.serviceLayout !== "grid") throw new Error("focused settings snapshot failed")
       barMock.routeToFocusedFixture = false

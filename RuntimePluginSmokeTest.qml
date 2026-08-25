@@ -18,6 +18,7 @@ ShellRoot {
 
   QtObject {
     id: barMock
+    property bool routeToFocusedFixture: false
     property var shell: shellMock
     property color barForeground: "#ffffff"
     property color foreground: "#ffffff"
@@ -27,6 +28,19 @@ ShellRoot {
     property string position: "top"
     property var screen: null
     function switchPanelFrom(_owner, _direction) { return false }
+    function findPanelWidget(_id) { return routeToFocusedFixture ? focusedWidgetFixture : widget }
+  }
+
+  QtObject {
+    id: focusedWidgetFixture
+    property string requestedPage: ""
+    property bool opened: true
+    property bool showingWidgetSettings: true
+    property string settingsPage: requestedPage
+    property bool settingsSurfaceLoaded: true
+    property bool settingsIndicatorVisible: false
+    function applySettingsPage(page) { requestedPage = page; return "ok" }
+    function open() {}
   }
 
   BarWidget {
@@ -49,6 +63,12 @@ ShellRoot {
       if (root.stage === 0) {
       if (widget.moduleName !== "io.github.bolens.p2p-services" || widget.p2pService !== sharedService) throw new Error("plugin service wiring failed")
       if (!widget.durableSettingsLoaded || !Array.isArray(widget.services) || widget.barText() === "") throw new Error("plugin initial load failed")
+      barMock.routeToFocusedFixture = true
+      if (widget.openSettings("packages") !== "ok" || focusedWidgetFixture.requestedPage !== "packages" || widget.showingWidgetSettings)
+        throw new Error("settings IPC did not route to the focused monitor instance")
+      if (!widget.focusedSettingsReady("packages") || widget.focusedSettingsReady("general"))
+        throw new Error("focused settings readiness did not identify the loaded page")
+      barMock.routeToFocusedFixture = false
       if (widget.statusLoading) throw new Error("initial service loading state did not settle")
       if (!widget.serviceLoadingVisible) throw new Error("fast service discovery did not retain a visible loading frame")
       widget.saveConsoleUrl("syncthing", "file:///tmp/ui")

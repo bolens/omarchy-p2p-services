@@ -79,6 +79,23 @@ wait_for_shell() {
   return 1
 }
 
+open_settings_page() {
+  local page=$1 reply
+  for _attempt in {1..20}; do
+    reply=$(qs ipc --pid "$shell_pid" call "$plugin_id" openSettings "$page" 2>/dev/null || true)
+    if [[ $reply == ok ]]; then
+      for _ready_attempt in {1..40}; do
+        [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" settingsReady "$page" 2>/dev/null || true) == true ]] && return 0
+        sleep .25
+      done
+    fi
+    wait_for_shell >/dev/null 2>&1 || true
+    sleep .25
+  done
+  printf 'Could not open %s settings.\n' "$page" >&2
+  return 1
+}
+
 focus_capture_workspace() {
   hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"$monitor\" }))" >/dev/null
   hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"$capture_workspace\" }))" >/dev/null
@@ -173,7 +190,7 @@ capture_panel() {
 capture_panel panel
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
 for page in general appearance services performance discovery packages; do
-  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" openSettings "$page") == ok ]] || { printf 'Could not open %s settings.\n' "$page" >&2; exit 1; }
+  open_settings_page "$page"
   sleep 2
   if [[ $page == packages ]]; then capture_panel "$page" 400; else capture_panel "$page"; fi
 done

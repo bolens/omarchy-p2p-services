@@ -293,14 +293,35 @@ Panel {
     if (rotation === "counterclockwise") return -90
     return 0
   }
-  function openSettings(page) {
-    var requested = String(page || "general")
-    if (["general", "appearance", "services", "performance", "discovery", "packages"].indexOf(requested) < 0) return "invalid page"
+  function focusedPanelInstance() {
+    if (bar && typeof bar.findPanelWidget === "function") return bar.findPanelWidget(moduleName)
+    return root
+  }
+  function openFocused() {
+    var target = focusedPanelInstance()
+    if (target && target !== root && typeof target.open === "function") target.open()
+    else open()
+  }
+  function applySettingsPage(requested) {
+    requested = String(requested || "general")
     editingServiceId = ""
     settingsPage = requested
     showingWidgetSettings = true
     if (!opened) open()
     return "ok"
+  }
+  function openSettings(page) {
+    var requested = String(page || "general")
+    if (["general", "appearance", "services", "performance", "discovery", "packages"].indexOf(requested) < 0) return "invalid page"
+    var target = focusedPanelInstance()
+    if (target && target !== root && typeof target.applySettingsPage === "function") return target.applySettingsPage(requested)
+    return applySettingsPage(requested)
+  }
+  function focusedSettingsReady(page) {
+    var target = focusedPanelInstance()
+    return !!target && target.opened === true && target.showingWidgetSettings === true
+      && target.settingsPage === String(page) && target.settingsSurfaceLoaded === true
+      && target.settingsIndicatorVisible !== true
   }
   function labelFor(entry) { var values = setting("serviceLabels", {}) || {}; return values[entry.id] || entry.name }
   function iconFor(entry) { var values = setting("serviceIcons", {}) || {}; return values[entry.id] || entry.icon }
@@ -615,9 +636,10 @@ Panel {
 
   IpcHandler {
     target: root.moduleName
-    function open(): void { root.showingWidgetSettings = false; root.open() }
+    function open(): void { root.showingWidgetSettings = false; root.openFocused() }
     function close(): void { root.close() }
     function openSettings(page: string): string { return root.openSettings(page) }
+    function settingsReady(page: string): string { return root.focusedSettingsReady(page) ? "true" : "false" }
     function privacyEnabled(): string { return root.privacyFilter ? "true" : "false" }
   }
 

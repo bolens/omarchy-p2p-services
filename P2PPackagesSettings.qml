@@ -8,6 +8,7 @@ import "Model.js" as Model
 ColumnLayout {
   id: page
   required property var controller
+  readonly property bool catalogEmpty: controller.missingServices.length === 0 && controller.detectedServiceCatalog.length === 0
   visible: controller.settingsPage === "packages"
   Layout.fillWidth: true
   spacing: Style.spacing.md
@@ -25,6 +26,8 @@ ColumnLayout {
             IntegerSetting { controller: page.controller; settingKey: "backupRetention"; label: "Configuration backups retained per service"; minimum: 1; maximum: 50; fallback: 10 }
           }
           RowLayout {
+            objectName: "availablePackagesHeading"
+            visible: page.controller.missingServices.length > 0
             Layout.fillWidth: true
             Text { Layout.fillWidth: true; text: "Available to install · " + page.controller.missingServices.length; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold }
             Button { objectName: "availablePackagesToggle"; text: page.controller.availablePackagesExpanded ? "Show less" : "Show all"; visible: page.controller.missingServices.length > 5; onClicked: page.controller.availablePackagesExpanded = !page.controller.availablePackagesExpanded }
@@ -57,11 +60,14 @@ ColumnLayout {
           }
 
           RowLayout {
+            objectName: "installedPackagesHeading"
+            visible: page.controller.detectedServiceCatalog.length > 0
             Layout.fillWidth: true
             Text { Layout.fillWidth: true; text: "Installed services · " + page.controller.detectedServiceCatalog.length; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold }
             Button { objectName: "installedPackagesToggle"; text: page.controller.installedPackagesExpanded ? "Show less" : "Show all"; visible: page.controller.detectedServiceCatalog.length > 5; onClicked: page.controller.installedPackagesExpanded = !page.controller.installedPackagesExpanded }
           }
-          Text { Layout.fillWidth: true; text: "Package-managed services can be removed after they are stopped. Configuration is backed up first. Container and manual installs remain externally managed."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { visible: page.controller.detectedServiceCatalog.length > 0; Layout.fillWidth: true; text: "Package-managed services can be removed after they are stopped; configuration is backed up first. Other installs remain externally managed."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { objectName: "emptyPackageCatalogText"; visible: page.catalogEmpty && !page.controller.catalogLoading; Layout.fillWidth: true; text: "No package changes are available. Manual and container services remain externally managed."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           Repeater {
             model: page.controller.settingsPage === "packages" ? page.controller.visibleDetectedServiceCatalog : []
             delegate: Rectangle {

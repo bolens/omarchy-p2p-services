@@ -11,10 +11,9 @@ ColumnLayout {
   visible: controller.settingsPage === "discovery"
   Layout.fillWidth: true
   spacing: Style.spacing.md
-          P2PSectionHeading { title: "Console routing"; description: "Choose the fallback host used for discovered container consoles." }
+          P2PSectionHeading { title: "Console routing"; description: "Fallback routing for published container consoles." }
           SettingsSurface {
-          Text { text: "Global console host"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-          Text { Layout.fillWidth: true; text: "Used with published container ports when no reverse-proxy URL is discovered. Leave empty for 127.0.0.1."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { text: "Fallback console host · blank uses 127.0.0.1"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
             Layout.fillWidth: true
             TextField { id: consoleHostEditor; objectName: "consoleHostEditor"; Layout.fillWidth: true; placeholderText: "server.home.arpa or 192.168.1.10"; text: String(page.controller.setting("consoleHost", "")); foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.persistKeepingOpen({consoleHost: text.trim()}) }
@@ -22,9 +21,8 @@ ColumnLayout {
           }
           }
 
-          P2PSectionHeading { title: "Service filtering"; description: "Limit the widget to selected detected backend IDs." }
+          P2PSectionHeading { title: "Service filtering"; description: "Optionally limit discovery to selected backend IDs." }
           SettingsSurface {
-          Text { Layout.fillWidth: true; text: "Comma-separated backend IDs. Leave empty to show every detected service."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
             Layout.fillWidth: true
             TextField { id: serviceAllowlistEditor; objectName: "serviceAllowlistEditor"; Layout.fillWidth: true; placeholderText: "yggdrasil, i2pd, syncthing"; text: Model.enabled(page.controller.setting("enabledServices", []), []).join(", "); foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family }
@@ -32,9 +30,9 @@ ColumnLayout {
           }
           }
 
-          P2PSectionHeading { title: "Custom services"; description: "Add strictly validated process or systemd-backed services." }
+          P2PSectionHeading { title: "Custom services"; description: "Add validated, observation-only process or systemd services." }
           SettingsSurface {
-          Text { Layout.fillWidth: true; text: "JSON array; IDs must begin custom-. Custom services are observation-only: executable, process, and systemd names support detection but cannot be started, stopped, restarted, or edited."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { Layout.fillWidth: true; text: "JSON array; IDs begin custom-. Executable, process, and unit fields support detection but never control actions."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
             Layout.fillWidth: true
             TextField { id: customServicesEditor; objectName: "customServicesEditor"; Layout.fillWidth: true; placeholderText: "[]"; text: JSON.stringify(page.controller.setting("customServices", [])); foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family }

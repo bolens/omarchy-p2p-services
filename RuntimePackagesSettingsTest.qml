@@ -46,7 +46,11 @@ ShellRoot {
     var stop = descendant(page, "stopPackageButton-syncthing")
     var uninstall = descendant(page, "uninstallPackageButton-syncthing")
     var loading = descendant(page, "catalogLoadingIndicator")
-    if (!availableToggle || !installedToggle || !install || !stop || !uninstall || !loading) throw new Error("package settings controls are not addressable")
+    var availableHeading = descendant(page, "availablePackagesHeading")
+    var installedHeading = descendant(page, "installedPackagesHeading")
+    var emptyCatalog = descendant(page, "emptyPackageCatalogText")
+    if (!availableToggle || !installedToggle || !install || !stop || !uninstall || !loading || !availableHeading || !installedHeading || !emptyCatalog) throw new Error("package settings controls are not addressable")
+    if (!availableHeading.visible || !installedHeading.visible || emptyCatalog.visible) throw new Error("populated package catalog presentation failed")
     if (!loading.visible || loading.label !== "QUERYING PACKAGE CATALOG") throw new Error("catalog loading state failed")
     mockController.values = ({showLoadingIndicators:false})
     if (loading.running) throw new Error("disabled loading preference did not hide active catalog indicator")
@@ -63,6 +67,9 @@ ShellRoot {
       if (stop.visible || !uninstall.enabled) throw new Error("stopped package action state failed")
       uninstall.clicked()
       if (mockController.events.length !== 3 || mockController.events[2].kind !== "uninstall" || mockController.events[2].id !== "syncthing") throw new Error("package uninstall dispatch failed")
+      mockController.missingServices = []
+      mockController.detectedServiceCatalog = []
+      if (availableHeading.visible || installedHeading.visible || !emptyCatalog.visible) throw new Error("empty package catalog did not replace zero-count headings")
       mockController.catalogLoading = true
       mockController.settingsPage = "general"
       if (page.visible || !loading.running) throw new Error("catalog loading state was not preserved while navigating away")

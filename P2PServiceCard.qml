@@ -23,6 +23,7 @@ Rectangle {
   function activateIndicator(indicator) {
     if (indicator.action === "console") controller.openConsole(entry)
     else if (indicator.action === "config") controller.act(entry, "config")
+    else if (indicator.action === "backend") controller.filterByBackend(String(entry.backend || "process"))
     else controller.toggleServiceDetails(entry.id)
   }
   implicitHeight: serviceColumn.implicitHeight + (compact ? Style.spacing.sm : Style.spacing.md) * 2
@@ -111,10 +112,12 @@ Rectangle {
           tone: controller.serviceColor(entry)
         }
         Text { objectName: "serviceStatusText"; visible: controller.pendingService !== entry.id && !card.minimal && !card.grid; text: entry.active ? (entry.hasError ? "NEEDS ATTENTION" : "RUNNING") : "STOPPED"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold; font.letterSpacing: 0.8 }
-        Rectangle {
+        P2PIndicatorPill {
+          objectName: "backendIndicatorPill"
           visible: !card.grid && controller.setting("showBackendBadge", false) === true
-          implicitWidth: backendText.implicitWidth + Style.spacing.sm * 2; implicitHeight: backendText.implicitHeight + Style.space(4); radius: implicitHeight / 2; color: Util.alpha(Color.muted, 0.10)
-          Text { id: backendText; anchors.centerIn: parent; text: String(entry.backend || "process").toUpperCase(); textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold }
+          indicator: ({icon:"", value:String(entry.backend || "process").toUpperCase(), tooltip:"Show " + String(entry.backend || "process") + " services", action:"backend"})
+          tone: Color.muted
+          onActivated: card.activateIndicator(indicator)
         }
       }
     }
@@ -138,13 +141,11 @@ Rectangle {
         }
       }
       Item { Layout.fillWidth: true }
-      Rectangle {
+      P2PIndicatorPill {
         objectName: "gridStatusPill"
-        implicitWidth: gridStatusText.implicitWidth + Style.spacing.sm * 2
-        implicitHeight: gridStatusText.implicitHeight + Style.space(4)
-        radius: implicitHeight / 2
-        color: Util.alpha(controller.serviceColor(entry), 0.11)
-        Text { id: gridStatusText; anchors.centerIn: parent; text: entry.active ? (entry.hasError ? "ISSUE" : "RUNNING") : "STOPPED"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold }
+        indicator: ({icon:"", value:entry.active ? (entry.hasError ? "ISSUE" : "RUNNING") : "STOPPED", tooltip:"Show service details", action:"details"})
+        tone: controller.serviceColor(entry)
+        onActivated: card.activateIndicator(indicator)
       }
     }
 

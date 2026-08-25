@@ -64,7 +64,9 @@ function compactIndicators(entry) {
   if (listeners) values.push({icon:"󰖟", value:String(listeners), tooltip:listeners + " listening socket" + (listeners === 1 ? "" : "s") + " · Show details", action:"details"})
   if (processes) values.push({icon:"󰆍", value:String(processes), tooltip:processes + " running process" + (processes === 1 ? "" : "es") + " · Show details", action:"details"})
   if (entry.hasWeb === true) values.push({icon:"󰖟", value:"", tooltip:"Open web console", action:"console"})
-  if (entry.configExists === true) values.push({icon:"󰒓", value:"", tooltip:"Open configuration", action:"config"})
+  if (entry.configExists === true) values.push(entry.controllable === false
+    ? {icon:"󰒓", value:"", tooltip:"Configuration detected · Observation only", action:"config", enabled:false}
+    : {icon:"󰒓", value:"", tooltip:"Open configuration", action:"config"})
   return values
 }
 

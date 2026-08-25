@@ -16,7 +16,7 @@ ShellRoot {
     property string layout: "list"
     property var events: []
     function setting(key, fallback) {
-      var values = {serviceLayout:layout,cardDensity:density,showStatusRail:true,showCardSummary:true,showQuickActions:true,showTrafficStats:false,showBackendBadge:false,showFavoriteMarker:true}
+      var values = {serviceLayout:layout,cardDensity:density,showStatusRail:true,showCardSummary:true,showQuickActions:true,showTrafficStats:false,showBackendBadge:true,showFavoriteMarker:true}
       return values[key] === undefined ? fallback : values[key]
     }
     function serviceColor(_entry) { return "#55aaff" }
@@ -35,6 +35,7 @@ ShellRoot {
     function openLogs(_entry) {}
     function copyDiagnostics(_entry) {}
     function openConsole(entry) { events = events.concat([{kind:"console",id:entry.id}]) }
+    function filterByBackend(backend) { events = events.concat([{kind:"backend",backend:backend}]) }
   }
 
   P2PServiceCard {
@@ -110,11 +111,24 @@ ShellRoot {
           if (!webPill) throw new Error("web console indicator pill missing")
           webPill.activated()
           if (mockController.events[mockController.events.length - 1].kind !== "console") throw new Error("web console indicator pill did not dispatch")
+          var backendPill = descendant(card, "backendIndicatorPill")
+          if (!backendPill) throw new Error("backend indicator pill missing")
+          backendPill.activated()
+          if (mockController.events[mockController.events.length - 1].kind !== "backend") throw new Error("backend indicator pill did not filter")
+          mockController.layout = "grid"
+          Qt.callLater(function() {
+            var statusPill = descendant(card, "gridStatusPill")
+            if (!statusPill) throw new Error("grid status pill missing")
+            var beforeStatusEvents = mockController.events.length
+            statusPill.activated()
+            if (mockController.events.length !== beforeStatusEvents + 1 || mockController.events[beforeStatusEvents].kind !== "details") throw new Error("grid status pill did not dispatch details")
+            mockController.layout = "list"
           mockController.density = "minimal"
           Qt.callLater(function() {
             if (status.visible || quickActions.visible) throw new Error("minimal indicator card retained verbose surfaces")
             console.log("P2P_QML_SERVICE_CARD_OK")
             Qt.quit()
+          })
           })
         })
       })

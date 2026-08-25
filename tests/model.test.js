@@ -14,6 +14,9 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.compactIndicators({connection
   {icon:"󰒓",value:"",tooltip:"Open configuration",action:"config"}
 ]);
 assert.deepEqual(JSON.parse(JSON.stringify(context.compactIndicators({connections:0,listeners:0,processCount:0}))), []);
+assert.deepEqual(JSON.parse(JSON.stringify(context.compactIndicators({configExists:true,controllable:false}))), [
+  {icon:"󰒓",value:"",tooltip:"Configuration detected · Observation only",action:"config",enabled:false}
+]);
 assert.equal(context.formatRate(1536), "1.5 KiB/s");
 assert.equal(context.formatRate(1500000), "1.4 MiB/s");
 assert.deepEqual(JSON.parse(JSON.stringify(context.loadingFrames("dots", ">"))), [".  ", ".. ", "..."]);

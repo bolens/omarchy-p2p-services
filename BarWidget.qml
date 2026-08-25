@@ -356,6 +356,11 @@ Panel {
     return JSON.stringify(target && target.durableSettingsLoaded ? target.durableSettings : {})
   }
   function labelFor(entry) { var values = setting("serviceLabels", {}) || {}; return values[entry.id] || entry.name }
+  function filterByBackend(backend) {
+    searchQuery = String(backend || "").trim()
+    serviceFilter = "all"
+    selectedServiceId = ""
+  }
   function iconFor(entry) { var values = setting("serviceIcons", {}) || {}; return values[entry.id] || entry.icon }
   function categorySummaries() { return Model.categorySummaries(services, setting("categoryIcons", {}) || {}, false, false) }
   function saveCategoryIcon(category, icon) {

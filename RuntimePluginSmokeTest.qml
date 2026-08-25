@@ -90,6 +90,8 @@ ShellRoot {
         throw new Error("durable settings reload was not broadcast to live instances")
       barMock.routeReloadFixture = false
       if (widget.statusLoading) throw new Error("initial service loading state did not settle")
+      widget.filterByBackend("docker")
+      if (widget.searchQuery !== "docker" || widget.serviceFilter !== "all") throw new Error("backend pill filter state failed")
       if (!widget.serviceLoadingVisible) throw new Error("fast service discovery did not retain a visible loading frame")
       widget.saveConsoleUrl("syncthing", "file:///tmp/ui")
       if (widget.errorText.indexOf("http://") < 0) throw new Error("widget console URL rejection failed")

@@ -34,7 +34,7 @@ ShellRoot {
     function toggleFavorite(_id) {}
     function openLogs(_entry) {}
     function copyDiagnostics(_entry) {}
-    function openConsole(_entry) {}
+    function openConsole(entry) { events = events.concat([{kind:"console",id:entry.id}]) }
   }
 
   P2PServiceCard {
@@ -93,8 +93,23 @@ ShellRoot {
         mockController.pendingService = ""
         mockController.density = "compact"
         Qt.callLater(function() {
-          var pill = descendant(card, "compactIndicatorPill"), count = descendant(card, "compactIndicatorCount")
+          var pill = descendant(card, "compactIndicatorPill"), count = descendant(card, "indicatorPillCount")
           if (!pill || !count || count.text !== "2" || primary.text !== "" || primary.tooltipText !== "Stop service") throw new Error("compact icon card presentation failed")
+          var beforePillEvents = mockController.events.length
+          pill.activated()
+          if (mockController.events.length !== beforePillEvents + 1 || mockController.events[beforePillEvents].kind !== "details") throw new Error("compact indicator pill did not dispatch details")
+          var webPill = null
+          function findWebPill(item) {
+            if (!item) return null
+            if (item.objectName === "compactIndicatorPill" && item.indicator && item.indicator.action === "console") return item
+            var children = item.children || []
+            for (var index = 0; index < children.length; index++) { var match = findWebPill(children[index]); if (match) return match }
+            return null
+          }
+          webPill = findWebPill(card)
+          if (!webPill) throw new Error("web console indicator pill missing")
+          webPill.activated()
+          if (mockController.events[mockController.events.length - 1].kind !== "console") throw new Error("web console indicator pill did not dispatch")
           mockController.density = "minimal"
           Qt.callLater(function() {
             if (status.visible || quickActions.visible) throw new Error("minimal indicator card retained verbose surfaces")

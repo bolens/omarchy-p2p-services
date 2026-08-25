@@ -302,6 +302,17 @@ Panel {
     if (target && target !== root && typeof target.open === "function") target.open()
     else open()
   }
+  function applyMainView() {
+    editingServiceId = ""
+    showingWidgetSettings = false
+    if (!opened) open()
+    return "ok"
+  }
+  function openMainView() {
+    var target = focusedPanelInstance()
+    if (target && target !== root && typeof target.applyMainView === "function") return target.applyMainView()
+    return applyMainView()
+  }
   function applySettingsPage(requested) {
     requested = String(requested || "general")
     editingServiceId = ""
@@ -322,6 +333,20 @@ Panel {
     return !!target && target.opened === true && target.showingWidgetSettings === true
       && target.settingsPage === String(page) && target.settingsSurfaceLoaded === true
       && target.settingsIndicatorVisible !== true
+  }
+  function reloadDurableSettings() { settingsStore.load(settings) }
+  function reloadSettingsAcrossInstances() {
+    var widgets = bar && typeof bar.moduleWidgets === "function" ? bar.moduleWidgets(moduleName) : [root]
+    if (!widgets || !widgets.length) widgets = [root]
+    for (var index = 0; index < widgets.length; index++) {
+      var widget = widgets[index]
+      if (widget && typeof widget.reloadDurableSettings === "function") widget.reloadDurableSettings()
+    }
+    return "ok"
+  }
+  function focusedSettingsSnapshot() {
+    var target = focusedPanelInstance()
+    return JSON.stringify(target && target.durableSettingsLoaded ? target.durableSettings : {})
   }
   function labelFor(entry) { var values = setting("serviceLabels", {}) || {}; return values[entry.id] || entry.name }
   function iconFor(entry) { var values = setting("serviceIcons", {}) || {}; return values[entry.id] || entry.icon }
@@ -636,10 +661,12 @@ Panel {
 
   IpcHandler {
     target: root.moduleName
-    function open(): void { root.showingWidgetSettings = false; root.openFocused() }
+    function open(): string { return root.openMainView() }
     function close(): void { root.close() }
     function openSettings(page: string): string { return root.openSettings(page) }
     function settingsReady(page: string): string { return root.focusedSettingsReady(page) ? "true" : "false" }
+    function reloadSettings(): string { return root.reloadSettingsAcrossInstances() }
+    function settingsSnapshot(): string { return root.focusedSettingsSnapshot() }
     function privacyEnabled(): string { return root.privacyFilter ? "true" : "false" }
   }
 

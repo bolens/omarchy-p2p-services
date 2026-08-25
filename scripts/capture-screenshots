@@ -28,7 +28,7 @@ while (($#)); do
   esac
 done
 
-for command in qs hyprctl jq grim magick pngquant omarchy flock python3 wtype; do
+for command in qs hyprctl jq grim magick pngquant flock python3 wtype; do
   command -v "$command" >/dev/null || { printf 'Missing required command: %s\n' "$command" >&2; exit 1; }
 done
 
@@ -79,6 +79,18 @@ wait_for_shell() {
   return 1
 }
 
+reload_live_settings() {
+  local expected=$1 snapshot
+  wait_for_shell
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" reloadSettings 2>/dev/null || true) == ok ]] || return 1
+  for _attempt in {1..80}; do
+    snapshot=$(qs ipc --pid "$shell_pid" call "$plugin_id" settingsSnapshot 2>/dev/null || true)
+    jq -e "$expected" <<<"${snapshot:-null}" >/dev/null 2>&1 && return 0
+    sleep .25
+  done
+  return 1
+}
+
 open_settings_page() {
   local page=$1 reply
   for _attempt in {1..20}; do
@@ -124,7 +136,7 @@ restore_desktop() {
     if [[ -f $capture_dir/settings.previous.json ]]; then restore_file "$capture_dir/settings.previous.json" "$previous_file"; else rm -f -- "$previous_file"; fi
     hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"$monitor\" }))" >/dev/null 2>&1 || true
     hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"$original_workspace\" }))" >/dev/null 2>&1 || true
-    omarchy restart shell >/dev/null 2>&1 || true
+    reload_live_settings 'type == "object"' >/dev/null 2>&1 || true
     restored=true
   fi
   rm -rf -- "$capture_dir"
@@ -132,17 +144,14 @@ restore_desktop() {
 }
 trap restore_desktop EXIT INT TERM
 
-# Durable settings win reconciliation; the shell copy protects the first frame.
+# Durable settings win reconciliation and are pushed reactively to every live
+# monitor instance; no Quickshell restart is needed for capture-time swaps.
 ./p2p-control settings-patch '{"privacyFilter":true,"showStopped":true,"serviceLayout":"list","cardDensity":"comfortable","serviceGroupMode":"category","showBackendBadge":true,"serviceSortMode":"name","serviceSortDirection":"automatic"}' >/dev/null
-temporary=$(mktemp "${settings_file}.XXXXXX")
-jq --arg id "$plugin_id" 'if ([.. | objects | select(.id? == $id)] | length) != 1 then error("expected exactly one configured P2P widget") else (.. | objects | select(.id? == $id) | .privacyFilter) = true end' "$settings_file" >"$temporary"
-chmod 0600 "$temporary"
-mv -- "$temporary" "$settings_file"
-omarchy restart shell >/dev/null 2>&1 || true
-wait_for_shell
+reload_live_settings '.privacyFilter == true and .serviceLayout == "list" and .cardDensity == "comfortable"'
 
 [[ $(./p2p-control settings-load | jq -r '.privacyFilter') == true ]] || { printf 'Durable privacy filter verification failed.\n' >&2; exit 1; }
-[[ $(jq -r --arg id "$plugin_id" '.. | objects | select(.id? == $id) | .privacyFilter' "$settings_file") == true ]] || { printf 'Shell privacy filter verification failed.\n' >&2; exit 1; }
+shell_config=$(qs ipc --pid "$shell_pid" call shell listShellConfig)
+[[ $(jq -r --arg id "$plugin_id" '.. | objects | select(.id? == $id) | .privacyFilter' <<<"$shell_config") == true ]] || { printf 'Shell privacy filter verification failed.\n' >&2; exit 1; }
 ./p2p-control status private "" no-stats | jq -e '
   type == "object" and (.services | type == "array") and
   all(.services[];
@@ -187,6 +196,16 @@ capture_panel() {
   return 1
 }
 
+open_main_view() {
+  for _attempt in {1..20}; do
+    [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" open 2>/dev/null || true) == ok ]] && return 0
+    sleep .25
+  done
+  printf 'Could not open the main service view.\n' >&2
+  return 1
+}
+
+open_main_view
 capture_panel panel
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
 wtype -k Return
@@ -202,11 +221,10 @@ done
 capture_layout() {
   local name=$1 layout=$2 density=$3
   ./p2p-control settings-patch "{\"privacyFilter\":true,\"showStopped\":true,\"serviceLayout\":\"$layout\",\"cardDensity\":\"$density\",\"serviceGroupMode\":\"none\",\"showBackendBadge\":true}" >/dev/null
-  omarchy restart shell >/dev/null 2>&1 || true
-  wait_for_shell
+  reload_live_settings ".privacyFilter == true and .serviceLayout == \"$layout\" and .cardDensity == \"$density\""
   focus_capture_workspace
   [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed for %s.\n' "$name" >&2; return 1; }
-  qs ipc --pid "$shell_pid" call "$plugin_id" open >/dev/null
+  open_main_view
   sleep 2
   capture_panel "$name"
 }

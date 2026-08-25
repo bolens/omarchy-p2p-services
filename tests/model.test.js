@@ -7,11 +7,11 @@ assert.equal(context.formatDuration(3660), "1h 1m");
 assert.equal(context.summary({active:false}, true), "Stopped");
 assert.equal(context.summary({active:true,connections:2,listeners:1,uptime:60}, true), "2 connected · 1 listening · up 1m · details filtered");
 assert.deepEqual(JSON.parse(JSON.stringify(context.compactIndicators({connections:2,listeners:1,processCount:3,hasWeb:true,configExists:true}))), [
-  {icon:"󰌷",value:"2",tooltip:"2 peer connections"},
-  {icon:"󰖟",value:"1",tooltip:"1 listening socket"},
-  {icon:"󰆍",value:"3",tooltip:"3 running processes"},
-  {icon:"󰖟",value:"",tooltip:"Web console available"},
-  {icon:"󰒓",value:"",tooltip:"Configuration detected"}
+  {icon:"󰌷",value:"2",tooltip:"2 peer connections · Show details",action:"details"},
+  {icon:"󰖟",value:"1",tooltip:"1 listening socket · Show details",action:"details"},
+  {icon:"󰆍",value:"3",tooltip:"3 running processes · Show details",action:"details"},
+  {icon:"󰖟",value:"",tooltip:"Open web console",action:"console"},
+  {icon:"󰒓",value:"",tooltip:"Open configuration",action:"config"}
 ]);
 assert.deepEqual(JSON.parse(JSON.stringify(context.compactIndicators({connections:0,listeners:0,processCount:0}))), []);
 assert.equal(context.formatRate(1536), "1.5 KiB/s");

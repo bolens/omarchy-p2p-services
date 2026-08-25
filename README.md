@@ -7,15 +7,15 @@ peer-to-peer clients and overlay-network daemons.
 [Source](https://github.com/bolens/omarchy-p2p-services) ·
 [Report an issue](https://github.com/bolens/omarchy-p2p-services/issues/new/choose)
 
-![P2P Services status panel with privacy filtering enabled](preview.png?v=346db756e930)
+![P2P Services status panel with privacy filtering enabled](preview.png?v=5aad341911a4)
 
 | General settings | Performance settings | Bar widget |
 | --- | --- | --- |
-| ![P2P Services privacy and behavior settings](docs/general.png?v=dfeb9721209f) | ![P2P Services refresh and resource settings](docs/performance.png?v=f81ed121368c) | ![P2P Services Omarchy bar widget](docs/bar.png?v=f1f8ab12287a) |
+| ![P2P Services privacy and behavior settings](docs/general.png?v=81a119e19155) | ![P2P Services refresh and resource settings](docs/performance.png?v=a1dd9df53782) | ![P2P Services Omarchy bar widget](docs/bar.png?v=f1f8ab12287a) |
 
 | Expanded I2P details | Compact icon list | Two-column grid |
 | --- | --- | --- |
-| ![I2P Router with privacy-filtered details expanded](docs/details.png?v=05db707bcfef) | ![P2P Services compact icon list](docs/compact.png?v=34a8858116ee) | ![P2P Services two-column service grid](docs/grid.png?v=6a9795f376b4) |
+| ![I2P Router with privacy-filtered details expanded](docs/details.png?v=68df3e53905f) | ![P2P Services compact icon list](docs/compact.png?v=8b38017ba79c) | ![P2P Services two-column service grid](docs/grid.png?v=46296710a3bd) |
 
 Supported backends include Yggdrasil, Tailscale, ZeroTier, Nebula, Headscale,
 NetBird, NetBird Server, Netmaker, Netmaker Client, I2P/I2Pd, Freenet/Hyphanet, AirDC++,

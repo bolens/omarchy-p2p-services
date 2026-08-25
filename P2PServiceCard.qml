@@ -20,6 +20,11 @@ Rectangle {
   readonly property bool grid: controller.setting("serviceLayout", "list") === "grid"
   readonly property bool compact: density !== "comfortable" || grid
   readonly property bool minimal: density === "minimal"
+  function activateIndicator(indicator) {
+    if (indicator.action === "console") controller.openConsole(entry)
+    else if (indicator.action === "config") controller.act(entry, "config")
+    else controller.toggleServiceDetails(entry.id)
+  }
   implicitHeight: serviceColumn.implicitHeight + (compact ? Style.spacing.sm : Style.spacing.md) * 2
   radius: Style.cornerRadius
   color: Util.alpha(controller.serviceColor(entry), controller.selectedServiceId === entry.id ? 0.13 : (hovered ? 0.09 : (entry.active ? 0.065 : 0.025)))
@@ -86,26 +91,12 @@ Rectangle {
         spacing: Style.spacing.xs
         Repeater {
           model: card.compact && !card.grid ? Model.compactIndicators(card.entry) : []
-          delegate: Rectangle {
-            id: indicatorPill
+          delegate: P2PIndicatorPill {
             objectName: "compactIndicatorPill"
             required property var modelData
-            implicitWidth: indicatorRow.implicitWidth + Style.spacing.sm * 2
-            implicitHeight: indicatorRow.implicitHeight + Style.space(4)
-            radius: implicitHeight / 2
-            color: Util.alpha(card.controller.serviceColor(card.entry), 0.11)
-            border.width: 1
-            border.color: Util.alpha(card.controller.serviceColor(card.entry), 0.2)
-            Row {
-              id: indicatorRow
-              anchors.centerIn: parent
-              spacing: Style.space(3)
-              Text { text: indicatorPill.modelData.icon; textFormat: Text.PlainText; color: card.controller.serviceColor(card.entry); font.family: Style.font.family; font.pixelSize: Style.font.caption }
-              Text { objectName: "compactIndicatorCount"; visible: text !== ""; text: indicatorPill.modelData.value; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.mono || Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold }
-            }
-            HoverHandler { id: indicatorHover }
-            ToolTip.visible: indicatorHover.hovered
-            ToolTip.text: indicatorPill.modelData.tooltip
+            indicator: modelData
+            tone: card.controller.serviceColor(card.entry)
+            onActivated: card.activateIndicator(indicator)
           }
         }
         Text { visible: !card.grid; text: "●"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption }
@@ -137,27 +128,13 @@ Rectangle {
       spacing: Style.spacing.xs
       Repeater {
         model: card.grid ? Model.compactIndicators(card.entry) : []
-        delegate: Rectangle {
-          id: gridIndicatorPill
+        delegate: P2PIndicatorPill {
           objectName: "gridIndicatorPill"
           required property var modelData
-          property int horizontalPadding: Style.spacing.md
-          implicitWidth: gridIndicatorRow.implicitWidth + horizontalPadding * 2
-          implicitHeight: gridIndicatorRow.implicitHeight + Style.space(4)
-          radius: implicitHeight / 2
-          color: Util.alpha(card.controller.serviceColor(card.entry), 0.11)
-          border.width: 1
-          border.color: Util.alpha(card.controller.serviceColor(card.entry), 0.2)
-          Row {
-            id: gridIndicatorRow
-            anchors.centerIn: parent
-            spacing: Style.space(3)
-            Text { text: gridIndicatorPill.modelData.icon; textFormat: Text.PlainText; color: card.controller.serviceColor(card.entry); font.family: Style.font.family; font.pixelSize: Style.font.caption }
-            Text { visible: text !== ""; text: gridIndicatorPill.modelData.value; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.mono || Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold }
-          }
-          HoverHandler { id: gridIndicatorHover }
-          ToolTip.visible: gridIndicatorHover.hovered
-          ToolTip.text: gridIndicatorPill.modelData.tooltip
+          indicator: modelData
+          tone: card.controller.serviceColor(card.entry)
+          horizontalPadding: Style.spacing.md
+          onActivated: card.activateIndicator(indicator)
         }
       }
       Item { Layout.fillWidth: true }

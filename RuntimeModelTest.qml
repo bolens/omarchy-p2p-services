@@ -27,7 +27,7 @@ ShellRoot {
     if (Model.loadingFrame("spinner", ">", 1) !== "⠙") throw new Error("bar spinner frame failed")
     if (Model.loadingFrame("glyph", " # ", 9) !== "#") throw new Error("bar custom loading glyph failed")
     var indicators = Model.compactIndicators({connections:2,listeners:1,processCount:1,hasWeb:true,configExists:false})
-    if (indicators.length !== 4 || indicators[0].value !== "2" || indicators[0].tooltip !== "2 peer connections") throw new Error("compact service indicators failed")
+    if (indicators.length !== 4 || indicators[0].value !== "2" || indicators[0].action !== "details" || indicators[3].action !== "console") throw new Error("compact service indicators failed")
     var saved = Model.savedViewSelection({search:"sync",filter:"running",sortMode:"name",groupMode:"category"})
     if (saved.search !== "sync" || saved.filter !== "running" || saved.patch.serviceSortMode !== "name" || saved.patch.serviceGroupMode !== "category") throw new Error("saved view selection failed")
     if (Model.serviceNotificationPolicy({syncthing:"failures"}, "syncthing") !== "failures" || !Model.shouldNotifyService("failures", 1, false)) throw new Error("service notification policy failed")

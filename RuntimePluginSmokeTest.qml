@@ -19,6 +19,7 @@ ShellRoot {
   QtObject {
     id: barMock
     property bool routeToFocusedFixture: false
+    property bool routeReloadFixture: false
     property var shell: shellMock
     property color barForeground: "#ffffff"
     property color foreground: "#ffffff"
@@ -29,6 +30,7 @@ ShellRoot {
     property var screen: null
     function switchPanelFrom(_owner, _direction) { return false }
     function findPanelWidget(_id) { return routeToFocusedFixture ? focusedWidgetFixture : widget }
+    function moduleWidgets(_id) { return routeReloadFixture ? [reloadWidgetFixture] : [widget] }
   }
 
   QtObject {
@@ -39,8 +41,18 @@ ShellRoot {
     property string settingsPage: requestedPage
     property bool settingsSurfaceLoaded: true
     property bool settingsIndicatorVisible: false
+    property bool durableSettingsLoaded: true
+    property var durableSettings: ({privacyFilter:true,serviceLayout:"grid"})
+    property int mainViewRequests: 0
     function applySettingsPage(page) { requestedPage = page; return "ok" }
+    function applyMainView() { showingWidgetSettings = false; mainViewRequests += 1; return "ok" }
     function open() {}
+  }
+
+  QtObject {
+    id: reloadWidgetFixture
+    property int reloads: 0
+    function reloadDurableSettings() { reloads += 1 }
   }
 
   BarWidget {
@@ -68,7 +80,15 @@ ShellRoot {
         throw new Error("settings IPC did not route to the focused monitor instance")
       if (!widget.focusedSettingsReady("packages") || widget.focusedSettingsReady("general"))
         throw new Error("focused settings readiness did not identify the loaded page")
+      if (widget.openMainView() !== "ok" || focusedWidgetFixture.showingWidgetSettings || focusedWidgetFixture.mainViewRequests !== 1)
+        throw new Error("main view IPC did not route to the focused monitor instance")
+      var snapshot = JSON.parse(widget.focusedSettingsSnapshot())
+      if (snapshot.privacyFilter !== true || snapshot.serviceLayout !== "grid") throw new Error("focused settings snapshot failed")
       barMock.routeToFocusedFixture = false
+      barMock.routeReloadFixture = true
+      if (widget.reloadSettingsAcrossInstances() !== "ok" || reloadWidgetFixture.reloads !== 1)
+        throw new Error("durable settings reload was not broadcast to live instances")
+      barMock.routeReloadFixture = false
       if (widget.statusLoading) throw new Error("initial service loading state did not settle")
       if (!widget.serviceLoadingVisible) throw new Error("fast service discovery did not retain a visible loading frame")
       widget.saveConsoleUrl("syncthing", "file:///tmp/ui")

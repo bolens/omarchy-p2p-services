@@ -60,11 +60,11 @@ function compactIndicators(entry) {
   var connections = Math.max(0, Number(entry.connections) || 0)
   var listeners = Math.max(0, Number(entry.listeners) || 0)
   var processes = Math.max(0, Number(entry.processCount) || 0)
-  if (connections) values.push({icon:"󰌷", value:String(connections), tooltip:connections + " peer connection" + (connections === 1 ? "" : "s")})
-  if (listeners) values.push({icon:"󰖟", value:String(listeners), tooltip:listeners + " listening socket" + (listeners === 1 ? "" : "s")})
-  if (processes) values.push({icon:"󰆍", value:String(processes), tooltip:processes + " running process" + (processes === 1 ? "" : "es")})
-  if (entry.hasWeb === true) values.push({icon:"󰖟", value:"", tooltip:"Web console available"})
-  if (entry.configExists === true) values.push({icon:"󰒓", value:"", tooltip:"Configuration detected"})
+  if (connections) values.push({icon:"󰌷", value:String(connections), tooltip:connections + " peer connection" + (connections === 1 ? "" : "s") + " · Show details", action:"details"})
+  if (listeners) values.push({icon:"󰖟", value:String(listeners), tooltip:listeners + " listening socket" + (listeners === 1 ? "" : "s") + " · Show details", action:"details"})
+  if (processes) values.push({icon:"󰆍", value:String(processes), tooltip:processes + " running process" + (processes === 1 ? "" : "es") + " · Show details", action:"details"})
+  if (entry.hasWeb === true) values.push({icon:"󰖟", value:"", tooltip:"Open web console", action:"console"})
+  if (entry.configExists === true) values.push({icon:"󰒓", value:"", tooltip:"Open configuration", action:"config"})
   return values
 }
 

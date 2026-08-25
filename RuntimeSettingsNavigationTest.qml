@@ -19,7 +19,7 @@ ShellRoot {
     }
   }
 
-  P2PSettingsNavigation { id: navigation; controller: mockController }
+  P2PSettingsNavigation { id: navigation; width: 600; controller: mockController }
 
   function descendant(item, name) {
     if (!item) return null
@@ -37,7 +37,11 @@ ShellRoot {
     var back = descendant(navigation, "settingsBackButton")
     var saving = descendant(navigation, "settingsSaveLoadingIndicator")
     var saved = descendant(navigation, "settingsSavedStatus")
+    var pageGrid = descendant(navigation, "settingsPageGrid")
     if (!services || !back || !saving || !saved) throw new Error("settings navigation controls are not addressable")
+    if (!navigation.wideTabs || !pageGrid || pageGrid.columns !== 6) throw new Error("wide settings navigation did not use one row")
+    navigation.width = 400
+    if (navigation.wideTabs || pageGrid.columns !== 3) throw new Error("narrow settings navigation did not wrap responsively")
     if (!saving.visible || saved.visible) throw new Error("settings saving presentation failed")
     mockController.settingsSaveStatus = "saved"
     if (saving.visible || !saved.visible) throw new Error("settings saved presentation failed")

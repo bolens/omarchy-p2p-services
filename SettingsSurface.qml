@@ -9,7 +9,7 @@ Rectangle {
   property color accent: Color.muted
 
   Layout.fillWidth: true
-  implicitHeight: surfaceColumn.implicitHeight + Style.spacing.md * 2
+  implicitHeight: surfaceColumn.implicitHeight + Style.spacing.sm * 2
   radius: Style.cornerRadius
   color: Util.alpha(accent, 0.035)
   border.width: 1
@@ -18,7 +18,7 @@ Rectangle {
   ColumnLayout {
     id: surfaceColumn
     anchors.fill: parent
-    anchors.margins: Style.spacing.md
-    spacing: Style.spacing.md
+    anchors.margins: Style.spacing.sm
+    spacing: Style.spacing.sm
   }
 }

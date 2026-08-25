@@ -25,8 +25,10 @@ ColumnLayout {
             Button { text: "Save"; onClicked: page.saveWidgetIcon(widgetIconEditor.text) }
           }
 
-          IntegerSetting { controller: page.controller; settingKey: "popupMaxHeight"; label: "Popup maximum height"; minimum: 360; maximum: 900; fallback: 600 }
-          IntegerSetting { controller: page.controller; settingKey: "popupWidth"; label: "Popup width"; minimum: 420; maximum: 800; fallback: 600 }
+          P2PSettingsGrid {
+            IntegerSetting { controller: page.controller; settingKey: "popupMaxHeight"; label: "Popup maximum height"; minimum: 360; maximum: 900; fallback: 600 }
+            IntegerSetting { controller: page.controller; settingKey: "popupWidth"; label: "Popup width"; minimum: 420; maximum: 800; fallback: 600 }
+          }
           Dropdown { objectName: "barPresentationDropdown"; Layout.fillWidth: true; label: "Bar presentation"; value: String(page.controller.setting("barPresentation","active")); options: [{value:"icon",label:"Icon only"},{value:"active",label:"Active count"},{value:"active-total",label:"Active / total"},{value:"health",label:"Health indicator"},{value:"category-active",label:"Category active counts"},{value:"category-active-total",label:"Category active / total"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({barPresentation:next}) } }
           P2PSettingToggle { controller: page.controller; settingKey: "hideZeroCount"; label: "Hide zero count"; fallback: false; description: "Show only the icon when no services are active." }
           ColumnLayout {
@@ -46,10 +48,12 @@ ColumnLayout {
               }
             }
           }
-          IntegerSetting { controller: page.controller; settingKey: "barFontSize"; label: "Bar font size"; minimum: 8; maximum: 28; fallback: 14 }
-          IntegerSetting { controller: page.controller; settingKey: "barHorizontalMargin"; label: "Horizontal margin"; minimum: 0; maximum: 24; fallback: 8 }
-          IntegerSetting { controller: page.controller; settingKey: "barVerticalPadding"; label: "Vertical padding"; minimum: 0; maximum: 16; fallback: 6 }
-          IntegerSetting { controller: page.controller; settingKey: "barFixedWidth"; label: "Fixed width (0 = automatic)"; minimum: 0; maximum: 240; fallback: 0 }
+          P2PSettingsGrid {
+            IntegerSetting { controller: page.controller; settingKey: "barFontSize"; label: "Bar font size"; minimum: 8; maximum: 28; fallback: 14 }
+            IntegerSetting { controller: page.controller; settingKey: "barHorizontalMargin"; label: "Horizontal margin"; minimum: 0; maximum: 24; fallback: 8 }
+            IntegerSetting { controller: page.controller; settingKey: "barVerticalPadding"; label: "Vertical padding"; minimum: 0; maximum: 16; fallback: 6 }
+            IntegerSetting { controller: page.controller; settingKey: "barFixedWidth"; label: "Fixed width (0 = automatic)"; minimum: 0; maximum: 240; fallback: 0 }
+          }
           Dropdown { objectName: "barTextRotationDropdown"; Layout.fillWidth: true; label: "Text rotation"; value: String(page.controller.setting("barTextRotation", "normal")); options: [{value:"normal",label:"Normal"},{value:"clockwise",label:"Clockwise"},{value:"counterclockwise",label:"Counterclockwise"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({barTextRotation:next}) } }
           P2PThemeRoleSetting { controller: page.controller; settingKey: "barForegroundColorRole"; label: "Idle color"; fallback: "foreground" }
           P2PThemeRoleSetting { controller: page.controller; settingKey: "barActiveColorRole"; label: "Active color"; fallback: "accent" }

@@ -48,7 +48,9 @@ ColumnLayout {
           P2PSettingToggle { controller: page.controller; settingKey: "notifyRecovery"; label: "Service recovery"; fallback: false }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyUnhealthy"; label: "Unhealthy services"; fallback: true }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyRestartEvents"; label: "Restart threshold"; fallback: true }
-          IntegerSetting { controller: page.controller; settingKey: "notificationCooldownSeconds"; label: "Notification cooldown, seconds"; minimum: 0; maximum: 300; fallback: 30 }
-          IntegerSetting { controller: page.controller; settingKey: "restartWarningThreshold"; label: "Restart warning threshold"; minimum: 1; maximum: 100; fallback: 3 }
+          P2PSettingsGrid {
+            IntegerSetting { controller: page.controller; settingKey: "notificationCooldownSeconds"; label: "Notification cooldown, seconds"; minimum: 0; maximum: 300; fallback: 30 }
+            IntegerSetting { controller: page.controller; settingKey: "restartWarningThreshold"; label: "Restart warning threshold"; minimum: 1; maximum: 100; fallback: 3 }
+          }
           }
 }

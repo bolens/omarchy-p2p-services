@@ -7,6 +7,7 @@ import qs.Ui
 ColumnLayout {
   id: navigation
   required property var controller
+  readonly property bool wideTabs: width >= Style.space(540)
   Layout.fillWidth: true
   spacing: Style.spacing.md
 
@@ -43,8 +44,9 @@ ColumnLayout {
   PanelSeparator { Layout.fillWidth: true; foreground: navigation.controller.bar ? navigation.controller.bar.foreground : Color.popups.text }
 
   GridLayout {
+    objectName: "settingsPageGrid"
     Layout.fillWidth: true
-    columns: 3
+    columns: navigation.wideTabs ? 6 : 3
     rowSpacing: Style.spacing.sm
     columnSpacing: Style.spacing.sm
     Repeater {
@@ -65,7 +67,7 @@ ColumnLayout {
         selected: active
         bordered: true
         fontSize: Style.font.bodySmall
-        horizontalPadding: Style.spacing.controlPaddingX
+        horizontalPadding: navigation.wideTabs ? Style.spacing.controlGap : Style.spacing.controlPaddingX
         verticalPadding: Style.spacing.controlPaddingY
         onClicked: navigation.controller.showSettingsPage(modelData.value)
       }

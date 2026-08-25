@@ -29,9 +29,12 @@ ColumnLayout {
           }
           P2PSectionHeading { title: "Refresh cadence"; description: "Set periodic polling and full reconciliation intervals." }
           SettingsSurface {
-          IntegerSetting { controller: page.controller; settingKey: "refreshSeconds"; label: "Open-panel refresh interval, seconds"; minimum: 2; maximum: 60; fallback: 5 }
-          IntegerSetting { controller: page.controller; settingKey: "backgroundRefreshSeconds"; label: "Background refresh interval, seconds"; minimum: 15; maximum: 300; fallback: 15 }
-          IntegerSetting { controller: page.controller; settingKey: "reconcileSeconds"; label: "Full container reconciliation, seconds"; minimum: 30; maximum: 600; fallback: 60; description: "Full scans include stopped containers; normal refreshes inspect running containers only." }
+          P2PSettingsGrid {
+            id: refreshCadenceGrid
+            IntegerSetting { controller: page.controller; settingKey: "refreshSeconds"; label: "Open-panel refresh interval, seconds"; minimum: 2; maximum: 60; fallback: 5 }
+            IntegerSetting { controller: page.controller; settingKey: "backgroundRefreshSeconds"; label: "Background refresh interval, seconds"; minimum: 15; maximum: 300; fallback: 15 }
+            IntegerSetting { Layout.columnSpan: refreshCadenceGrid.twoColumns ? 2 : 1; controller: page.controller; settingKey: "reconcileSeconds"; label: "Full container reconciliation, seconds"; minimum: 30; maximum: 600; fallback: 60; description: "Full scans include stopped containers; normal refreshes inspect running containers only." }
+          }
           }
           P2PSectionHeading { title: "Refresh triggers"; description: "Control event-driven and immediate refresh behavior." }
           SettingsSurface {
@@ -43,12 +46,13 @@ ColumnLayout {
           }
           P2PSectionHeading { title: "Traffic sampling"; description: "Smooth container counters and ignore insignificant transfer activity." }
           SettingsSurface {
-          IntegerSetting { controller: page.controller; settingKey: "trafficSmoothingSeconds"; label: "Traffic smoothing window, seconds"; minimum: 1; maximum: 30; fallback: 3 }
-          IntegerSetting { controller: page.controller; settingKey: "trafficMinimumBytesPerSecond"; label: "Minimum visible traffic, B/s"; minimum: 0; maximum: 10485760; fallback: 1024 }
+          P2PSettingsGrid {
+            IntegerSetting { controller: page.controller; settingKey: "trafficSmoothingSeconds"; label: "Traffic smoothing window, seconds"; minimum: 1; maximum: 30; fallback: 3 }
+            IntegerSetting { controller: page.controller; settingKey: "trafficMinimumBytesPerSecond"; label: "Minimum visible traffic, B/s"; minimum: 0; maximum: 10485760; fallback: 1024 }
+          }
           }
           P2PSectionHeading { title: "Monitor diagnostics"; description: "Live health from the shared background watcher." }
           SettingsSurface {
           Text { Layout.fillWidth: true; text: page.controller.monitoringTelemetryText(); textFormat: Text.PlainText; color: page.controller.p2pService && page.controller.p2pService.watcherHealth === "healthy" ? Color.muted : Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           }
 }
-

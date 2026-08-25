@@ -6,7 +6,7 @@ ColumnLayout {
   property string title: ""
   property string description: ""
   Layout.fillWidth: true
-  Layout.topMargin: Style.spacing.sm
+  Layout.topMargin: 0
   spacing: 1
   RowLayout {
     Layout.fillWidth: true

@@ -105,14 +105,18 @@ class DiscoveryIntegrationTests(ControlTestCase):
   def test_fuse_btfs_is_not_detected_as_btfs_node(self):
     service = self.service("btfs")
     original_which, original_run = CONTROL.shutil.which, CONTROL.run
+    original_isfile, original_access = CONTROL.os.path.isfile, CONTROL.os.access
     try:
       CONTROL.shutil.which = lambda command: "/usr/bin/btfs" if command == "btfs" else None
+      CONTROL.os.path.isfile = lambda path: str(path) == "/usr/bin/btfs" or original_isfile(path)
+      CONTROL.os.access = lambda path, mode: str(path) == "/usr/bin/btfs" or original_access(path, mode)
       CONTROL.run = lambda args, timeout=2: type("Result", (), {"returncode": 255, "stdout": "", "stderr": "Find metadata failed"})()
       self.assertEqual(CONTROL.command_path(service), "")
       CONTROL.run = lambda args, timeout=2: type("Result", (), {"returncode": 0, "stdout": "btfs version 2.3.1", "stderr": ""})()
       self.assertEqual(CONTROL.command_path(service), "/usr/bin/btfs")
     finally:
       CONTROL.shutil.which, CONTROL.run = original_which, original_run
+      CONTROL.os.path.isfile, CONTROL.os.access = original_isfile, original_access
     self.assertEqual(CONTROL.PACKAGE_HINTS["btfs"], [])
 
   def test_monerod_rpc_is_not_exposed_as_browser_console(self):

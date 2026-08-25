@@ -307,6 +307,7 @@ class ControlIntegrationTests(ControlTestCase):
     original_docker = CONTROL.PROBE.docker_matches
     original_unit = CONTROL.PROBE.unit_state
     original_popen = CONTROL.subprocess.Popen
+    original_which = CONTROL.shutil.which
     try:
       with tempfile.TemporaryDirectory() as directory:
         root = pathlib.Path(directory)
@@ -317,6 +318,7 @@ class ControlIntegrationTests(ControlTestCase):
         item["_runtime_cmd"] = "/usr/bin/docker"
         CONTROL.PROBE.docker_matches = lambda _service: [item]
         CONTROL.PROBE.unit_state = lambda _units, _user: ("", False)
+        CONTROL.shutil.which = lambda command: "/usr/bin/omarchy-launch-config-editor" if command == "omarchy-launch-config-editor" else original_which(command)
         launched = []
         CONTROL.subprocess.Popen = lambda args, **kwargs: launched.append(args)
         self.assertEqual(CONTROL.config_targets(self.service("syncthing"), [item]), [str(compose)])
@@ -327,6 +329,7 @@ class ControlIntegrationTests(ControlTestCase):
       CONTROL.PROBE.docker_matches = original_docker
       CONTROL.PROBE.unit_state = original_unit
       CONTROL.subprocess.Popen = original_popen
+      CONTROL.shutil.which = original_which
 
   def test_config_targets_ignore_missing_and_outside_compose_paths(self):
     with tempfile.TemporaryDirectory() as directory:
@@ -347,6 +350,7 @@ class ControlIntegrationTests(ControlTestCase):
     original_unit = CONTROL.PROBE.unit_state
     original_access = CONTROL.os.access
     original_popen = CONTROL.subprocess.Popen
+    original_terminal_editor = CONTROL.terminal_editor
     try:
       with tempfile.TemporaryDirectory() as directory:
         config = pathlib.Path(directory)/"service.conf"
@@ -355,6 +359,7 @@ class ControlIntegrationTests(ControlTestCase):
         CONTROL.PROBE.docker_matches = lambda _service: []
         CONTROL.PROBE.unit_state = lambda _units, _user: ("", False)
         CONTROL.os.access = lambda path, mode: False if str(path) == str(config) else original_access(path, mode)
+        CONTROL.terminal_editor = lambda: "/usr/bin/vim"
         launched = []
         CONTROL.subprocess.Popen = lambda args, **kwargs: launched.append((args, kwargs))
         CONTROL.control(service, "config")
@@ -369,6 +374,7 @@ class ControlIntegrationTests(ControlTestCase):
       CONTROL.PROBE.unit_state = original_unit
       CONTROL.os.access = original_access
       CONTROL.subprocess.Popen = original_popen
+      CONTROL.terminal_editor = original_terminal_editor
 
   def test_amule_managed_start_enables_external_connections(self):
     amule = self.service("amule")

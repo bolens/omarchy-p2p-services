@@ -2,7 +2,7 @@
 set -euo pipefail
 
 plugin_dir="$(cd -- "$(dirname -- "$0")/.." && pwd)"
-# shellcheck source=tests/tooling_env.sh
+# shellcheck disable=SC1091 -- resolved from the absolute plugin directory
 source "$plugin_dir/tests/tooling_env.sh"
 quickshell_bin="$(find_command "${QUICKSHELL_BIN:-}" quickshell "$HOME/.local/opt/quickshell-git/usr/bin/quickshell")"
 shell_root="$(find_omarchy_shell_root)"

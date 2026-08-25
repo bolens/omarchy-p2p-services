@@ -3,7 +3,7 @@ set -euo pipefail
 
 plugin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$plugin_dir"
-# shellcheck disable=SC1091 -- resolved from the absolute plugin directory
+# shellcheck disable=SC1091
 source "$plugin_dir/tests/tooling_env.sh"
 python_bin="$(find_command "${PYTHON_BIN:-}" python3)"
 shell_root="$(find_omarchy_shell_root)"

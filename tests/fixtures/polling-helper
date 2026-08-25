@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+if [ "${1:-}" = watch ]; then
+  printf '%s\n' '{"type":"watch-event","version":1,"kind":"heartbeat","healthy":true,"code":"polling-only"}'
+  exit 3
+fi
+exit 1

@@ -1,0 +1,490 @@
+#!/usr/bin/python3
+"""Discovery, status, and narrowly-scoped controls for the P2P Services widget."""
+import hashlib, json, os, pathlib, re, secrets, selectors, shutil, signal, subprocess, sys, time
+from p2p_backups import restore_plan
+from p2p_backup_store import ConfigBackupStore
+from p2p_actions import CONTROL_ACTIONS, container_action_commands, systemd_action_command
+from p2p_cache import cached_status
+from p2p_catalog import (
+  AUR_INSTALL_IDS, AUR_SIGNING_KEYS, DOCKER_ALIASES, PACKAGE_HINTS, SERVICES,
+)
+from p2p_inspection import ServiceInspector
+from p2p_packages import install_command, uninstall_command
+from p2p_registry import normalize_custom_services, validate_registry
+from p2p_runtime import RuntimeProbe
+from p2p_settings import reconcile_settings, sanitize_settings
+from p2p_settings_store import SettingsStore
+from p2p_secure_files import atomic_private_write, ensure_private_directory, read_or_create_secret, read_private_text
+from p2p_snapshot import SnapshotContext
+from p2p_validation import safe_http_url
+
+HOME = pathlib.Path.home()
+
+def xdg_directory(variable, fallback):
+  configured = os.environ.get(variable, "").strip()
+  candidate = pathlib.Path(configured) if configured else pathlib.Path(fallback)
+  return candidate if candidate.is_absolute() else pathlib.Path(fallback)
+
+STATE_HOME = xdg_directory("XDG_STATE_HOME", HOME/".local/state")
+DATA_HOME = xdg_directory("XDG_DATA_HOME", HOME/".local/share")
+STATE_ROOT = STATE_HOME/"omarchy/p2p-services"
+SETTINGS_FILE = STATE_ROOT/"settings.json"
+SETTINGS = SettingsStore(STATE_ROOT, SETTINGS_FILE, sanitize_settings)
+STATUS_CACHE_ROOT = xdg_directory("XDG_RUNTIME_DIR", "/run/user/"+str(os.getuid()))/"omarchy-p2p-services"
+BACKUPS = ConfigBackupStore(HOME, restore_plan, DATA_HOME)
+GPG = "/usr/bin/gpg"
+CURL = "/usr/bin/curl"
+PACMAN = "/usr/bin/pacman"
+PS = "/usr/bin/ps"
+SS = "/usr/bin/ss"
+SNAPSHOT = SnapshotContext()
+SYSTEMCTL = "/usr/bin/systemctl"
+PKEXEC = "/usr/bin/pkexec"
+SUDOEDIT = "/usr/bin/sudoedit"
+SUDO = "/usr/bin/sudo"
+XDG_OPEN = "/usr/bin/xdg-open"
+TERMINAL_EDITORS = ("nvim", "vim", "micro", "nano", "hx", "helix", "fresh")
+
+def data_home():
+  """Return the active XDG data directory; keeping this dynamic also aids isolation."""
+  return xdg_directory("XDG_DATA_HOME", HOME/".local/share")
+
+def terminal_editor():
+  configured=os.environ.get("EDITOR", "").strip()
+  candidates=([configured] if configured and not re.search(r"\s", configured) else []) + list(TERMINAL_EDITORS)
+  for candidate in candidates:
+    name=os.path.basename(candidate)
+    if name not in TERMINAL_EDITORS: continue
+    resolved=shutil.which(candidate)
+    if resolved: return os.path.realpath(resolved)
+  raise RuntimeError("no supported terminal editor is available")
+
+def validate_service_registry(services):
+  return validate_registry(services, PACKAGE_HINTS, DOCKER_ALIASES, AUR_INSTALL_IDS)
+
+SERVICE_IDS=validate_service_registry(SERVICES)
+
+def normalized_custom_services(raw):
+  return normalize_custom_services(raw, SERVICE_IDS)
+
+def all_services():
+  return SERVICES + normalized_custom_services(SETTINGS.load().get("customServices",[]))
+
+def run(args, timeout=2):
+  try: return subprocess.run(args, text=True, capture_output=True, timeout=timeout)
+  except subprocess.TimeoutExpired:
+    SNAPSHOT.warning("command_timeout",command=os.path.basename(str(args[0])),timeoutSeconds=timeout)
+    return None
+  except (OSError,ValueError) as error:
+    SNAPSHOT.warning("command_failed",command=os.path.basename(str(args[0])),detail=type(error).__name__)
+    return None
+
+PROBE = RuntimeProbe(SNAPSHOT, lambda *args: run(*args), lambda: all_services(), PS, SYSTEMCTL, DOCKER_ALIASES)
+
+def command_path(service):
+  candidates=[]
+  for command in service["commands"]:
+    found=shutil.which(command)
+    if found: candidates.append(os.path.realpath(found))
+  if service["id"] == "btfs":
+    candidates += [str(HOME/".btfs/bin/btfs"),str(HOME/".local/bin/btfs")]
+  for candidate in dict.fromkeys(candidates):
+    if not os.path.isfile(candidate) or not os.access(candidate,os.X_OK): continue
+    if service["id"] == "btfs":
+      result=run([candidate,"version"],3)
+      identity="" if not result else result.stdout+result.stderr
+      if not result or result.returncode != 0 or not re.search(r"(?:go-)?btfs\s+version",identity,re.I): continue
+    return candidate
+  return ""
+
+def detected(service):
+  if SNAPSHOT.packages is None:
+    SNAPSHOT.packages=package_snapshot()
+  packaged=any(name in SNAPSHOT.packages for name in PACKAGE_HINTS.get(service["id"],[]))
+  return packaged or bool(PROBE.docker_matches(service)) or bool(command_path(service)) or bool(PROBE.pids_for(service["processes"])) or any(PROBE.unit_state(service["units"], u)[0] for u in (True,False))
+
+def package_database_generation():
+  try: generation=pathlib.Path("/var/lib/pacman/local").stat().st_mtime_ns
+  except OSError: generation=0
+  return generation
+
+def package_snapshot():
+  """Reuse the expensive package inventory briefly; pacman database changes select a new key."""
+  generation=package_database_generation()
+  def produce():
+    result=run([PACMAN,"-Qq"],5)
+    return {"packages":result.stdout.split() if result and result.returncode == 0 else []}
+  payload=cached_status("packages:"+str(generation),produce,STATUS_CACHE_ROOT/"packages",ttl=15,max_entries=2)
+  return set(payload.get("packages",[]))
+
+def socket_lines():
+  if SNAPSHOT.socket_lines is None:
+    result=run([SS,"-H","-tunap"],3)
+    SNAPSHOT.socket_lines=[] if not result else result.stdout.splitlines()
+  return SNAPSHOT.socket_lines
+
+def sockets(pids, private):
+  if not pids: return 0, 0, []
+  lines=[x for x in socket_lines() if any(("pid="+str(p)) in x for p in pids)]
+  listening=sum(1 for x in lines if "LISTEN" in x)
+  connected=sum(1 for x in lines if "ESTAB" in x)
+  endpoints=[]
+  if not private:
+    for line in lines[:6]:
+      fields=line.split()
+      if len(fields)>5: endpoints.append(fields[4]+" → "+fields[5])
+  return connected,listening,endpoints
+
+def config_targets(service, items=None):
+  """Resolve editable host config paths, preferring Compose project files."""
+  targets=[]
+  for item in (PROBE.docker_matches(service) if items is None else items):
+    labels=(item.get("Config",{}).get("Labels") or {})
+    workdir=labels.get("com.docker.compose.project.working_dir","")
+    try:
+      root=pathlib.Path(workdir).resolve(strict=True)
+      if not root.is_dir(): continue
+    except (OSError,ValueError): continue
+    for value in labels.get("com.docker.compose.project.config_files","").split(","):
+      if not value: continue
+      try: path=pathlib.Path(value).resolve(strict=True)
+      except (OSError,ValueError): continue
+      if path.is_file() and (path.is_relative_to(root) or path.is_relative_to(HOME)) and path not in targets: targets.append(path)
+  if targets: return [str(path) for path in targets]
+  native=pathlib.Path(os.path.expanduser(service["config"]))
+  return [str(native)] if native.exists() or native.is_symlink() or service.get("protectedConfig") else []
+
+INSPECTOR = ServiceInspector(PROBE, SNAPSHOT, lambda *args: sockets(*args), lambda *args: config_targets(*args))
+
+def show_logs(service):
+  docker_items=PROBE.docker_matches(service)
+  if docker_items:
+    item=docker_items[0]; runtime=item.get("_runtime_cmd") or shutil.which(item.get("_runtime","docker")); name=str(item.get("Name","")).lstrip("/")
+    if runtime and name: return subprocess.call([runtime,"logs","--tail","200","-f",name])
+  user_unit,_=PROBE.unit_state(service["units"],True); system_unit,_=PROBE.unit_state(service["units"],False)
+  if user_unit: return subprocess.call([SYSTEMCTL.replace("systemctl","journalctl"),"--user","-u",user_unit,"-n","200","-f"])
+  if system_unit: return subprocess.call([SYSTEMCTL.replace("systemctl","journalctl"),"-u",system_unit,"-n","200","-f"])
+  raise RuntimeError("no systemd or container log source is available")
+
+def export_settings():
+  target=data_home()/"omarchy/p2p-services/settings-export.json"
+  atomic_private_write(target,json.dumps(SETTINGS.load(),indent=2,sort_keys=True)+"\n",data_home())
+  return target
+
+def watch_event_payload(kind="heartbeat",healthy=True,code="ok"):
+  return {"type":"watch-event","version":1,"kind":kind,"healthy":healthy,"code":str(code)[:64],"timestampMs":int(time.time()*1000)}
+
+def watch_events():
+  commands=[]
+  busctl=shutil.which("busctl")
+  if busctl: commands.append([os.path.realpath(busctl),"monitor","org.freedesktop.systemd1"])
+  for runtime in ("docker","podman"):
+    command=shutil.which(runtime)
+    if command: commands.append([os.path.realpath(command),"events","--filter","type=container"])
+  processes=[]; selector=selectors.DefaultSelector()
+  def stop_watching(_signum, _frame): raise KeyboardInterrupt()
+  previous_term=signal.signal(signal.SIGTERM,stop_watching)
+  try:
+    for command in commands:
+      try:
+        process=subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
+        processes.append(process); selector.register(process.stdout,selectors.EVENT_READ)
+      except OSError: pass
+    last_emit=0.0; last_heartbeat=0.0
+    print(json.dumps(watch_event_payload(),separators=(",",":")),flush=True)
+    if not processes:
+      print(json.dumps(watch_event_payload("heartbeat",True,"polling-only"),separators=(",",":")),flush=True)
+      return False
+    while processes:
+      events=selector.select(timeout=15)
+      for key,_mask in events:
+        line=key.fileobj.readline()
+        if not line: continue
+        now=time.monotonic()
+        if now-last_emit >= 1.0: print(json.dumps(watch_event_payload("changed"),separators=(",",":")),flush=True); last_emit=now
+      now=time.monotonic()
+      if not events and now-last_heartbeat >= 15.0:
+        print(json.dumps(watch_event_payload(),separators=(",",":")),flush=True); last_heartbeat=now
+      processes=[process for process in processes if process.poll() is None]
+  except KeyboardInterrupt: pass
+  finally:
+    for process in processes:
+      try: process.terminate()
+      except (OSError,ProcessLookupError): pass
+    signal.signal(signal.SIGTERM,previous_term)
+  return True
+
+def service_by_id(sid):
+  return next((s for s in all_services() if s["id"]==sid),None)
+
+def reset_discovery():
+  SNAPSHOT.reset()
+
+def verify_action(service, action, timeout=8.0, interval=0.25):
+  if action not in CONTROL_ACTIONS: return
+  deadline=time.monotonic()+max(0,float(timeout))
+  state={"active":False,"hasError":False}
+  while True:
+    reset_discovery()
+    state=INSPECTOR.inspect(service,True)
+    satisfied=(not state["active"]) if action == "stop" else state["active"] and not state["hasError"]
+    if satisfied: return
+    if time.monotonic() >= deadline: break
+    time.sleep(min(max(0.01,float(interval)),max(0,deadline-time.monotonic())))
+  if action == "stop": raise RuntimeError(service["name"]+" is still running after the stop timeout")
+  raise RuntimeError(service["name"]+" failed to become healthy before the start timeout; check its service or container logs")
+
+def aur_environment(service):
+  env=os.environ.copy()
+  keys=AUR_SIGNING_KEYS.get(service["id"], ())
+  if not keys: return env
+  keyring=data_home()/"omarchy/p2p-services/aur-gnupg"
+  ensure_private_directory(keyring,data_home())
+  for fingerprint in keys:
+    listed=subprocess.run([GPG,"--homedir",str(keyring),"--batch","--list-keys",fingerprint],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    if listed.returncode != 0:
+      fetched=subprocess.run([CURL,"--fail","--silent","--show-error","--location","--max-time","15","https://keys.openpgp.org/vks/v1/by-fingerprint/"+fingerprint],capture_output=True)
+      if fetched.returncode != 0 or not fetched.stdout or len(fetched.stdout) > 1048576: raise RuntimeError("required AUR signing key could not be downloaded")
+      subprocess.run([GPG,"--homedir",str(keyring),"--batch","--import"],input=fetched.stdout,check=True,stdout=subprocess.DEVNULL)
+      listed=subprocess.run([GPG,"--homedir",str(keyring),"--batch","--list-keys",fingerprint],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+      if listed.returncode != 0: raise RuntimeError("required AUR signing key could not be verified")
+  env["GNUPGHOME"]=str(keyring)
+  return env
+
+
+def install_service(service, auto_start=False):
+  packages=PACKAGE_HINTS.get(service["id"],[])
+  omarchy=shutil.which("omarchy")
+  if not omarchy: raise RuntimeError("Omarchy package installer is unavailable")
+  command=install_command(os.path.realpath(omarchy),service["id"],packages,AUR_INSTALL_IDS)
+  install_env=aur_environment(service) if service["id"] in AUR_INSTALL_IDS else None
+  subprocess.check_call(command, **({"env":install_env} if install_env else {}))
+  print("Completed stage: package installed",flush=True)
+  if auto_start:
+    try:
+      reset_discovery()
+      control(service,"start",terminal_auth=True)
+      verify_action(service,"start")
+      print("Completed stage: service started",flush=True)
+    except Exception as error:
+      raise RuntimeError("package installed, but automatic start failed: "+str(error)) from error
+
+def installed_packages(service):
+  """Return only exact, allowlisted package names from one package snapshot."""
+  if SNAPSHOT.packages is None:
+    SNAPSHOT.packages=package_snapshot()
+  return [package for package in PACKAGE_HINTS.get(service["id"],[]) if package in SNAPSHOT.packages]
+
+def uninstall_service(service, retention=10):
+  packages=installed_packages(service)
+  if not packages: raise RuntimeError("no removable Omarchy-managed package is installed for this service")
+  if INSPECTOR.inspect(service,True)["active"]: raise RuntimeError("stop the service before uninstalling it")
+  backup=BACKUPS.backup(service,retention)
+  omarchy=shutil.which("omarchy")
+  if not omarchy: raise RuntimeError("Omarchy package remover is unavailable")
+  if backup: print("Configuration backup: "+backup,flush=True)
+  subprocess.check_call(uninstall_command(os.path.realpath(omarchy),packages))
+  print("Completed stage: package removed",flush=True)
+
+def launch_command(service):
+  command=command_path(service)
+  if not command: return []
+
+  if service["id"] == "aria2":
+    return [command,"--conf-path="+os.path.expanduser(service["config"]),"--enable-rpc=true","--daemon=false","--rpc-listen-all=false"]
+  return [command]
+
+def privileged_call(args, terminal_auth=False):
+  subprocess.check_call(([SUDO] if terminal_auth else [PKEXEC])+args)
+
+def terminate_matching_process(pid, names, proc_root=pathlib.Path("/proc")):
+  """Signal the process object only while its UID and executable identity still match."""
+  pidfd = None
+  try:
+    if hasattr(os,"pidfd_open") and hasattr(signal,"pidfd_send_signal"): pidfd=os.pidfd_open(pid,0)
+    process_root=pathlib.Path(proc_root)/str(pid)
+    if process_root.stat().st_uid != os.getuid(): return False
+    comm=process_root.joinpath("comm").read_text(errors="replace").strip()
+    raw=process_root.joinpath("cmdline").read_bytes().split(b"\0",1)[0]
+    argv0=os.path.basename(raw.decode("utf-8","replace")) if raw else ""
+    if comm not in names and argv0 not in names: return False
+    if pidfd is not None: signal.pidfd_send_signal(pidfd,signal.SIGTERM)
+    else: os.kill(pid,signal.SIGTERM)
+    return True
+  except (OSError,ValueError): return False
+  finally:
+    if pidfd is not None: os.close(pidfd)
+
+def prepare_service_start(service, system_unit, terminal_auth=False):
+  if service["id"] != "amule" or not system_unit: return
+  config="/var/lib/amule/.aMule/amule.conf"
+  credential_dir=data_home()/"omarchy/p2p-services/credentials"
+  ensure_private_directory(credential_dir,data_home())
+  credential_file=credential_dir/"amule-ec-password"
+  if not credential_file.exists() and not os.path.exists(config):
+    privileged_call([SYSTEMCTL,"start",system_unit],terminal_auth)
+    time.sleep(1.0)
+  password=read_or_create_secret(credential_file,lambda: secrets.token_urlsafe(24),base=data_home())
+  digest=hashlib.md5(password.encode("utf-8"),usedforsecurity=False).hexdigest()
+  web_edit=r"/^\[WebServer\]"+chr(36)+r"/,/^\[GUI\]$/{s/^Enabled=.*/Enabled=1/;s/^Password="+chr(36)+"/Password="+digest+"/;s/^Template="+chr(36)+"/Template=default/;}"
+  privileged_call(["/usr/bin/sed", "-i", "-e", "s/^AcceptExternalConnections=.*/AcceptExternalConnections=1/", "-e", "s/^ECPassword="+chr(36)+"/ECPassword="+digest+"/", "-e", web_edit, config], terminal_auth)
+
+def control(service, action, terminal_auth=False):
+  if service.get("controllable") is False and action in CONTROL_ACTIONS.union({"config"}):
+    raise RuntimeError("custom services are observation-only")
+  docker_items=PROBE.docker_matches(service)
+  if docker_items and action in CONTROL_ACTIONS:
+    for command in container_action_commands(docker_items,action): subprocess.check_call(command)
+    return
+  user_unit,user_active=PROBE.unit_state(service["units"],True); system_unit,system_active=PROBE.unit_state(service["units"],False)
+  if action=="open":
+    items=PROBE.docker_matches(service)
+    routes=PROBE.proxy_candidates(items)
+    target=safe_http_url((routes[0][1] if routes else "") or PROBE.published_url(service,items,"") or service["web"])
+    if not target: raise RuntimeError("no valid console URL is available")
+    subprocess.Popen([XDG_OPEN,target],start_new_session=True); return
+  if action=="config":
+    targets=config_targets(service,docker_items)
+    if not targets: raise RuntimeError("configuration path does not exist yet")
+    target=targets[0]
+    if os.path.isdir(target): subprocess.Popen([XDG_OPEN,target],start_new_session=True); return
+    if os.access(target,os.W_OK):
+      launcher=shutil.which("omarchy-launch-config-editor")
+      if not launcher: raise RuntimeError("Omarchy config editor is unavailable")
+      subprocess.Popen([os.path.realpath(launcher),target],start_new_session=True); return
+    editor=terminal_editor()
+    editor_env=os.environ.copy()
+    editor_env.update(SUDO_EDITOR=editor,VISUAL=editor,EDITOR=editor)
+    subprocess.Popen(["omarchy-launch-terminal",SUDOEDIT,target],env=editor_env,start_new_session=True); return
+  if action in CONTROL_ACTIONS:
+    if user_unit:
+      if (action == "start" and user_active) or (action == "stop" and not user_active): return
+      subprocess.check_call(systemd_action_command(SYSTEMCTL,user_unit,True,action)); return
+    if system_unit:
+      if (action == "start" and system_active) or (action == "stop" and not system_active): return
+      if action=="restart" and service["id"]=="amule":
+        privileged_call([SYSTEMCTL,"stop",system_unit],terminal_auth)
+        prepare_service_start(service,system_unit,terminal_auth)
+        privileged_call([SYSTEMCTL,"start",system_unit],terminal_auth); return
+      if action in ("start","restart"): prepare_service_start(service,system_unit,terminal_auth)
+      privileged_call([SYSTEMCTL,action,system_unit],terminal_auth); return
+    pids=PROBE.pids_for(service["processes"], current_user_only=True)
+    if action in ("stop","restart"):
+      for pid in pids: terminate_matching_process(pid,service["processes"])
+      if action=="stop": return
+      time.sleep(.3)
+    command=launch_command(service)
+    if command: subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True); return
+  raise RuntimeError("unsupported action")
+
+def status_snapshot(private=True, console_host="", traffic=True, all_containers=True):
+  SNAPSHOT.all_containers=all_containers
+  selected=[service for service in all_services() if detected(service)]
+  if traffic:
+    matched=[item for service in selected for item in PROBE.docker_matches(service) if item.get("State",{}).get("Running")]
+    unique={(item.get("_runtime"),str(item.get("Name","")).lstrip("/")):item for item in matched}
+    PROBE.container_stats(list(unique.values()))
+  else:
+    SNAPSHOT.container_stats={}
+  return [INSPECTOR.inspect(service,private,console_host) for service in selected]
+
+def main():
+  if len(sys.argv)<2: raise SystemExit(2)
+  if sys.argv[1]=="settings-load" and len(sys.argv)==2:
+    print(json.dumps(SETTINGS.load(),separators=(",",":"))); return
+  if sys.argv[1]=="settings-save" and len(sys.argv)==3:
+    try: SETTINGS.save(sys.argv[2])
+    except (OSError,ValueError,TypeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="settings-patch" and len(sys.argv)==3:
+    try: print(json.dumps(SETTINGS.patch(sys.argv[2]),separators=(",",":")))
+    except (OSError,ValueError,TypeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="settings-undo" and len(sys.argv)==2:
+    try: print(json.dumps(SETTINGS.undo(),separators=(",",":")))
+    except (OSError,ValueError,TypeError,RuntimeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="settings-reconcile" and len(sys.argv)==3:
+    try:
+      shell=json.loads(sys.argv[2]); durable=SETTINGS.load(); merged=reconcile_settings(shell,durable)
+      if SETTINGS.last_recovery: print("Recovered settings; quarantined corrupt data at "+SETTINGS.last_recovery,file=sys.stderr)
+      if merged != durable: SETTINGS.save(json.dumps(merged))
+      print(json.dumps(merged,separators=(",",":")))
+    except (OSError,ValueError,TypeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="settings-export" and len(sys.argv)==2:
+    print(str(export_settings())); return
+  if sys.argv[1]=="settings-import" and len(sys.argv)==2:
+    target=data_home()/"omarchy/p2p-services/settings-export.json"
+    try:
+      raw=read_private_text(target,SETTINGS.MAX_PAYLOAD_BYTES); SETTINGS.save(raw); print(json.dumps(SETTINGS.load(),separators=(",",":")))
+    except (OSError,ValueError,TypeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="watch" and len(sys.argv)==2:
+    if not watch_events(): raise SystemExit(3)
+    return
+  if sys.argv[1] in ("list","status"):
+    started=time.monotonic()
+    private=(len(sys.argv)<3 or sys.argv[2] != "unsafe")
+    console_host=str(sys.argv[3]).strip() if len(sys.argv)>3 else ""
+    traffic=(len(sys.argv)<5 or sys.argv[4] != "no-stats")
+    all_containers=(len(sys.argv)<6 or sys.argv[5] != "running-containers")
+    bypass=(len(sys.argv)>6 and sys.argv[6] == "bypass-cache")
+    cache_key=json.dumps([private,console_host,traffic,all_containers,SETTINGS.load().get("customServices",[])],sort_keys=True,separators=(",",":"))
+    def produce_status():
+      services=status_snapshot(private,console_host,traffic,all_containers)
+      return {"services":services,"diagnostics":list(SNAPSHOT.diagnostics),"durationMs":round((time.monotonic()-started)*1000)}
+    payload=cached_status(cache_key,produce_status,STATUS_CACHE_ROOT,bypass=bypass)
+    if sys.argv[1]=="list": payload=payload["services"]
+    print(json.dumps(payload,separators=(",",":"))); return
+  if sys.argv[1]=="catalog":
+    print(json.dumps([dict(id=s["id"],name=s["name"],icon=s["icon"],category=s["category"],detected=detected(s),packages=PACKAGE_HINTS.get(s["id"],[]),installedPackages=installed_packages(s),backups=BACKUPS.records(s["id"])) for s in all_services()],separators=(",",":"))); return
+  if sys.argv[1]=="install" and len(sys.argv) in (3,4):
+    service=service_by_id(sys.argv[2])
+    if not service: raise SystemExit("unknown service")
+    if service.get("custom"): raise SystemExit("custom services are observation-only")
+    try: install_service(service,len(sys.argv)==4 and sys.argv[3]=="start")
+    except subprocess.CalledProcessError as error: raise SystemExit(error.returncode)
+    except Exception as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="uninstall" and len(sys.argv) in (3,4):
+    service=service_by_id(sys.argv[2])
+    if not service: raise SystemExit("unknown service")
+    if service.get("custom"): raise SystemExit("custom services are observation-only")
+    try: uninstall_service(service,int(sys.argv[3]) if len(sys.argv)==4 else 10)
+    except subprocess.CalledProcessError as error: raise SystemExit(error.returncode)
+    except Exception as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="restore-backup" and len(sys.argv)==4:
+    service=service_by_id(sys.argv[2])
+    if not service: raise SystemExit("unknown service")
+    if service.get("custom"): raise SystemExit("custom services are observation-only")
+    try: print(BACKUPS.restore(service,sys.argv[3]))
+    except Exception as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="open-url" and len(sys.argv)==3:
+    url=safe_http_url(sys.argv[2])
+    if not url: raise SystemExit("invalid console URL")
+    subprocess.Popen([XDG_OPEN,url],start_new_session=True); return
+  if sys.argv[1]=="copy-diagnostics" and len(sys.argv) in (3,4):
+    service=service_by_id(sys.argv[2])
+    if not service or not detected(service): raise SystemExit("service not detected")
+    clipboard=shutil.which("wl-copy")
+    if not clipboard: raise SystemExit("wl-copy is unavailable")
+    private=len(sys.argv)<4 or sys.argv[3] != "unsafe"
+    subprocess.run([os.path.realpath(clipboard)],input=INSPECTOR.diagnostics_text(service,private),text=True,check=True); return
+  if sys.argv[1]=="logs" and len(sys.argv)==3:
+    service=service_by_id(sys.argv[2])
+    if not service or not detected(service): raise SystemExit("service not detected")
+    raise SystemExit(show_logs(service))
+  if sys.argv[1]=="action" and len(sys.argv)==4:
+    service=service_by_id(sys.argv[2])
+    if not service or not detected(service): raise SystemExit("service not detected")
+    try: control(service,sys.argv[3]); verify_action(service,sys.argv[3])
+    except subprocess.CalledProcessError as error:
+      raise SystemExit(error.returncode)
+    except Exception as error:
+      print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  raise SystemExit(2)
+if __name__=="__main__": main()

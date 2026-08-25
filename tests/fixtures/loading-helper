@@ -1,0 +1,19 @@
+#!/usr/bin/sh
+case "$1" in
+  settings-reconcile|settings-save|settings-patch)
+    if [ "$#" -ge 2 ]; then printf '%s' "$2"; else printf '%s' '{}'; fi
+    ;;
+  status)
+    sleep 0.35
+    if [ "${2:-private}" = "unsafe" ]; then exit 7; fi
+    printf '%s' '{"services":[],"diagnostics":[],"durationMs":350}'
+    ;;
+  catalog)
+    sleep 0.9
+    printf '%s' '[]'
+    ;;
+  watch)
+    exit 0
+    ;;
+  *) exit 2 ;;
+esac

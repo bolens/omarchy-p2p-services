@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+set -euo pipefail
+trap 'printf "Capture failed at line %s.\n" "$LINENO" >&2' ERR
+
+plugin_id="io.github.bolens.p2p-services"
+monitor=""
+capture_workspace=""
+panel_width=600
+side_padding=16
+panel_height=600
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/capture-screenshots [--monitor NAME] [--workspace ID]
+
+Capture privacy-filtered live plugin examples on an empty workspace. The
+workflow forces and verifies privacy filtering before capture, strips image
+metadata, and restores settings and the original workspace afterward.
+EOF
+}
+
+while (($#)); do
+  case "$1" in
+    --monitor) monitor=${2:-}; shift 2 ;;
+    --workspace) capture_workspace=${2:-}; shift 2 ;;
+    --help|-h) usage; exit 0 ;;
+    *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+for command in qs hyprctl jq grim magick pngquant omarchy flock python3; do
+  command -v "$command" >/dev/null || { printf 'Missing required command: %s\n' "$command" >&2; exit 1; }
+done
+
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$repo_root"
+lock_file="${XDG_RUNTIME_DIR:-/tmp}/p2p-services-screenshots-${UID}.lock"
+exec 9>"$lock_file"
+flock -n 9 || { printf 'Another P2P screenshot capture is running.\n' >&2; exit 1; }
+
+monitor_json=$(hyprctl monitors -j)
+if [[ -z $monitor ]]; then
+  monitor=$(jq -r '.[] | select(.focused) | .name' <<<"$monitor_json" | head -n1)
+fi
+[[ $monitor =~ ^[A-Za-z0-9_.-]+$ ]] || { printf 'Invalid monitor name: %s\n' "$monitor" >&2; exit 2; }
+monitor_width=$(jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .width' <<<"$monitor_json")
+original_workspace=$(jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .activeWorkspace.id' <<<"$monitor_json")
+[[ $monitor_width =~ ^[1-9][0-9]*$ && $original_workspace =~ ^-?[0-9]+$ ]] || { printf 'Monitor is not active: %s\n' "$monitor" >&2; exit 2; }
+
+if [[ -z $capture_workspace ]]; then
+  capture_workspace=$(jq -r --arg monitor "$monitor" '[.[] | select(.monitor == $monitor and .id > 0 and .windows == 0) | .id] | sort | reverse | .[0] // empty' < <(hyprctl workspaces -j))
+fi
+[[ $capture_workspace =~ ^[1-9][0-9]*$ ]] || { printf 'Choose an empty positive workspace with --workspace.\n' >&2; exit 2; }
+window_count=$(jq -r --argjson workspace "$capture_workspace" '[.[] | select(.workspace.id == $workspace)] | length' < <(hyprctl clients -j))
+((window_count == 0)) || { printf 'Workspace %s is not empty.\n' "$capture_workspace" >&2; exit 2; }
+
+capture_dir=$(mktemp -d)
+settings_file="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/shell.json"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/p2p-services"
+durable_file="$state_dir/settings.json"
+previous_file="$state_dir/settings.previous.json"
+install -m 0600 "$settings_file" "$capture_dir/shell.json"
+[[ -f $durable_file ]] && install -m 0600 "$durable_file" "$capture_dir/settings.json"
+[[ -f $previous_file ]] && install -m 0600 "$previous_file" "$capture_dir/settings.previous.json"
+restored=false
+shell_pid=""
+
+wait_for_shell() {
+  local candidate reply
+  for _attempt in {1..80}; do
+    while read -r candidate; do
+      [[ $candidate =~ ^[1-9][0-9]*$ ]] || continue
+      reply=$(qs ipc --pid "$candidate" call shell ping 2>/dev/null || true)
+      if [[ $reply == ok ]]; then shell_pid=$candidate; return 0; fi
+    done < <(qs list --all | awk '/Process ID:/ { print $3 }' | sort -rn)
+    sleep .25
+  done
+  printf 'Omarchy Shell did not become IPC-ready.\n' >&2
+  return 1
+}
+
+focus_capture_workspace() {
+  hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"$monitor\" }))" >/dev/null
+  hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"$capture_workspace\" }))" >/dev/null
+  for _attempt in {1..30}; do
+    state=$(hyprctl monitors -j | jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | "\(.focused) \(.activeWorkspace.id)"')
+    [[ $state == "true $capture_workspace" ]] && return 0
+    sleep .1
+  done
+  return 1
+}
+
+restore_desktop() {
+  local status=$?
+  if [[ $restored == false ]]; then
+    [[ -n $shell_pid ]] && qs ipc --pid "$shell_pid" call shell hide "$plugin_id" >/dev/null 2>&1 || true
+    restore_file() {
+      local source=$1 destination=$2 temporary_restore
+      temporary_restore=$(mktemp "${destination}.XXXXXX")
+      install -m 0600 "$source" "$temporary_restore"
+      mv -- "$temporary_restore" "$destination"
+    }
+    restore_file "$capture_dir/shell.json" "$settings_file"
+    if [[ -f $capture_dir/settings.json ]]; then restore_file "$capture_dir/settings.json" "$durable_file"; else rm -f -- "$durable_file"; fi
+    if [[ -f $capture_dir/settings.previous.json ]]; then restore_file "$capture_dir/settings.previous.json" "$previous_file"; else rm -f -- "$previous_file"; fi
+    hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"$monitor\" }))" >/dev/null 2>&1 || true
+    hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"$original_workspace\" }))" >/dev/null 2>&1 || true
+    omarchy restart shell >/dev/null 2>&1 || true
+    restored=true
+  fi
+  rm -rf -- "$capture_dir"
+  return "$status"
+}
+trap restore_desktop EXIT INT TERM
+
+# Durable settings win reconciliation; the shell copy protects the first frame.
+./p2p-control settings-patch '{"privacyFilter":true,"showStopped":true,"serviceLayout":"list","cardDensity":"comfortable","serviceGroupMode":"category","showBackendBadge":true,"serviceSortMode":"name","serviceSortDirection":"automatic"}' >/dev/null
+temporary=$(mktemp "${settings_file}.XXXXXX")
+jq --arg id "$plugin_id" 'if ([.. | objects | select(.id? == $id)] | length) != 1 then error("expected exactly one configured P2P widget") else (.. | objects | select(.id? == $id) | .privacyFilter) = true end' "$settings_file" >"$temporary"
+chmod 0600 "$temporary"
+mv -- "$temporary" "$settings_file"
+omarchy restart shell >/dev/null 2>&1 || true
+wait_for_shell
+
+[[ $(./p2p-control settings-load | jq -r '.privacyFilter') == true ]] || { printf 'Durable privacy filter verification failed.\n' >&2; exit 1; }
+[[ $(jq -r --arg id "$plugin_id" '.. | objects | select(.id? == $id) | .privacyFilter' "$settings_file") == true ]] || { printf 'Shell privacy filter verification failed.\n' >&2; exit 1; }
+./p2p-control status private "" no-stats | jq -e '
+  type == "object" and (.services | type == "array") and
+  all(.services[];
+    .privacyFiltered == true and (.pids | length == 0) and
+    (.endpoints | length == 0) and (.web == "" or .web == "Available") and
+    (.proxy == "" or .proxy == "caddy") and
+    (.config == "" or .config == "Hidden"))
+' >/dev/null
+
+focus_capture_workspace
+qs ipc --pid "$shell_pid" call "$plugin_id" open >/dev/null
+sleep 2
+widget_x=""
+widget_width=""
+for _attempt in {1..40}; do
+  geometry=$(qs ipc --pid "$shell_pid" call shell debugBarGeometry 2>/dev/null || true)
+  widget_row=$(jq -c --arg id "$plugin_id" --argjson width "$monitor_width" '[.[] | select(.id == $id and .visible and .width > 0)] | sort_by((((.x + (.width / 2)) - ($width / 2)) | fabs)) | .[0]' <<<"${geometry:-[]}" 2>/dev/null || true)
+  widget_x=$(jq -r '.x // empty' <<<"${widget_row:-null}")
+  widget_width=$(jq -r '.width // empty' <<<"${widget_row:-null}")
+  [[ $widget_x =~ ^[0-9]+$ && $widget_width =~ ^[1-9][0-9]*$ ]] && break
+  sleep .25
+done
+[[ $widget_x =~ ^[0-9]+$ && $widget_width =~ ^[1-9][0-9]*$ ]] || { printf 'Could not resolve P2P bar geometry.\n' >&2; exit 1; }
+crop_width=$((panel_width + side_padding * 2))
+panel_x=$((widget_x + widget_width / 2 - crop_width / 2))
+((panel_x < 0)) && panel_x=0
+((panel_x + crop_width <= monitor_width)) || panel_x=$((monitor_width - crop_width))
+
+capture_panel() {
+  local name=$1
+  local height=${2:-$panel_height}
+  local colors
+  for _attempt in {1..4}; do
+    focus_capture_workspace
+    grim -o "$monitor" "$capture_dir/$name-full.png"
+    magick "$capture_dir/$name-full.png" -crop "${crop_width}x${height}+${panel_x}+20" +repage "$capture_dir/$name.png"
+    colors=$(magick "$capture_dir/$name.png" -format '%k' info: 2>/dev/null || true)
+    [[ $colors =~ ^[0-9]+$ ]] && ((colors >= 8)) && return 0
+    sleep .5
+  done
+  printf 'Could not capture populated %s view.\n' "$name" >&2
+  return 1
+}
+
+capture_panel panel
+[[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
+for page in general appearance services performance discovery packages; do
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" openSettings "$page") == ok ]] || { printf 'Could not open %s settings.\n' "$page" >&2; exit 1; }
+  sleep 2
+  if [[ $page == packages ]]; then capture_panel "$page" 400; else capture_panel "$page"; fi
+done
+
+capture_layout() {
+  local name=$1 layout=$2 density=$3
+  ./p2p-control settings-patch "{\"privacyFilter\":true,\"showStopped\":true,\"serviceLayout\":\"$layout\",\"cardDensity\":\"$density\",\"serviceGroupMode\":\"none\",\"showBackendBadge\":true}" >/dev/null
+  omarchy restart shell >/dev/null 2>&1 || true
+  wait_for_shell
+  focus_capture_workspace
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed for %s.\n' "$name" >&2; return 1; }
+  qs ipc --pid "$shell_pid" call "$plugin_id" open >/dev/null
+  sleep 2
+  capture_panel "$name"
+}
+capture_layout compact list compact
+capture_layout grid grid compact
+qs ipc --pid "$shell_pid" call shell hide "$plugin_id" >/dev/null
+sleep 1
+grim -o "$monitor" "$capture_dir/bar-full.png"
+magick "$capture_dir/bar-full.png" -crop "${widget_width}x50+${widget_x}+0" +repage "$capture_dir/bar.png"
+
+for image in panel compact grid general appearance services performance discovery packages bar; do
+  colors=$(magick "$capture_dir/$image.png" -format '%k' info:)
+  if [[ ! $colors =~ ^[0-9]+$ ]] || ((colors < 8)); then
+    printf 'Capture has too little content: %s\n' "$image" >&2
+    exit 1
+  fi
+  magick "$capture_dir/$image.png" -strip -define png:compression-level=9 "docs/$image.png"
+  pngquant --force --quality=82-95 --speed 1 --strip --output "docs/$image.png" "docs/$image.png"
+done
+[[ $(sha256sum docs/panel.png docs/compact.png docs/grid.png docs/general.png docs/appearance.png docs/services.png docs/performance.png docs/discovery.png docs/packages.png | cut -d' ' -f1 | sort -u | wc -l) == 9 ]] || { printf 'Panel, layout, and settings captures are not distinct.\n' >&2; exit 1; }
+install -m 0644 docs/panel.png docs/preview.png
+install -m 0644 docs/panel.png preview.png
+scripts/update-screenshot-metadata docs/index.html docs README.md
+
+restore_desktop
+trap - EXIT INT TERM
+printf 'Updated privacy-filtered screenshots from %s workspace %s; restored workspace %s.\n' "$monitor" "$capture_workspace" "$original_workspace"

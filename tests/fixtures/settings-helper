@@ -1,0 +1,20 @@
+#!/usr/bin/sh
+case "$1" in
+  settings-reconcile)
+    case "$2" in
+      *malformed-load*) printf '%s' 'not-json'; exit 0 ;;
+      *nonzero-load*) exit 9 ;;
+    esac
+    printf '%s' '{"id":"foreign-module","serviceSortMode":"name"}'
+    ;;
+  settings-patch)
+    case "$2" in *malformedPatch*) printf '%s' 'not-json'; exit 0 ;; esac
+    printf '%s' '{"serviceSortMode":"activity","showGroupIcons":false}'
+    ;;
+  settings-save)
+    printf '%s' "$2"
+    ;;
+  *)
+    exit 2
+    ;;
+esac

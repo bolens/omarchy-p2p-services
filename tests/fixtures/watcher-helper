@@ -1,0 +1,15 @@
+#!/usr/bin/sh
+case "$1" in
+  watch)
+    printf '%s\n' '{"type":"watch-event","version":1,"kind":"changed","healthy":true,"code":"first"}'
+    sleep 0.05
+    printf '%s\n' '{"type":"watch-event","version":1,"kind":"changed","healthy":true,"code":"second"}'
+    sleep 5
+    ;;
+  status)
+    printf '%s' '{"services":[],"diagnostics":[],"durationMs":2}'
+    ;;
+  *)
+    exit 2
+    ;;
+esac

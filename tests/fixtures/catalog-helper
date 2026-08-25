@@ -1,0 +1,5 @@
+#!/usr/bin/sh
+if [ "$1" != "catalog" ]; then exit 2; fi
+if [ "${P2P_CATALOG_MALFORMED:-}" = "1" ]; then printf '%s' 'not-json'; exit 0; fi
+sleep 0.05
+printf '%s' '[{"id":"syncthing"},{"id":"tailscale"}]'

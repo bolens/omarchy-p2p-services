@@ -1,0 +1,9 @@
+{
+  "name": "omarchy-p2p-services-site",
+  "private": true,
+  "scripts": {
+    "test": "bash tests/run_all.sh",
+    "build:site": "bash scripts/build-site.sh",
+    "test:site": "node tests/site.test.js"
+  }
+}

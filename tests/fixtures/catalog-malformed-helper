@@ -1,0 +1,3 @@
+#!/usr/bin/sh
+if [ "$1" != "catalog" ]; then exit 2; fi
+printf '%s' 'not-json'

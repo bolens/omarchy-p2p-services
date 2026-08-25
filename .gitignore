@@ -1,0 +1,9 @@
+*.orig
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+*.tar.gz
+*.tar.gz.sha256
+_site/
+npm-debug.log*

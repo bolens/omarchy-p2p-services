@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'capture-preview now refreshes the complete privacy-filtered gallery.\n' >&2
+exec "$(dirname "$0")/capture-screenshots" "$@"

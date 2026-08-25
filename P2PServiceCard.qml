@@ -216,41 +216,49 @@ Rectangle {
         Button { iconText: "󰏫"; tooltipText: "Customize service"; horizontalPadding: Style.spacing.controlGap; onClicked: controller.editService(entry.id) }
       }
     }
-    Rectangle { visible: controller.expandedServiceId === entry.id; Layout.fillWidth: true; implicitHeight: 1; color: Util.alpha(controller.serviceColor(entry), 0.16) }
-    Text {
-      visible: controller.expandedServiceId === entry.id && entry.active
-      Layout.fillWidth: true
-      text: controller.privacyFilter
-        ? (entry.processCount + " process" + (entry.processCount === 1 ? "" : "es") + (entry.hasWeb ? " · Web console available" : ""))
-        : ((entry.pids.length ? "PID: " + entry.pids.join(", ") : "PID: managed by " + (entry.unit || "an external launcher")) + "\nConfig: " + entry.config + (entry.endpoints.length ? "\n" + entry.endpoints.join("\n") : ""))
-      textFormat: Text.PlainText
-      color: Color.muted
-      wrapMode: Text.WrapAnywhere
-      font.family: Style.font.family
-      font.pixelSize: Style.font.caption
-    }
-    Text {
+    Rectangle { objectName: "serviceDetailsSeparator"; visible: controller.expandedServiceId === entry.id; Layout.fillWidth: true; implicitHeight: 1; color: Util.alpha(controller.serviceColor(entry), 0.16) }
+    ColumnLayout {
+      objectName: "serviceExpandedDetails"
+      property int horizontalInset: Style.spacing.sm
       visible: controller.expandedServiceId === entry.id
       Layout.fillWidth: true
-      text: entry.unit ? entry.unitScope + " service · " + entry.unit : "Managed by exact process name"
-      textFormat: Text.PlainText
-      color: Color.muted
-      elide: Text.ElideMiddle
-      horizontalAlignment: Text.AlignRight
-      font.family: Style.font.family
-      font.pixelSize: Style.font.caption
-    }
-    Text {
-      visible: controller.expandedServiceId === entry.id && (entry.restartCount > 0 || entry.lastTransition || entry.failureReason)
-      Layout.fillWidth: true
-      text: (entry.restartCount > 0 ? "Restarts: " + entry.restartCount : "No recorded restarts")
-        + (entry.lastTransition ? " · changed " + entry.lastTransition : "")
-        + (entry.failureReason ? "\nLast failure: " + entry.failureReason : "")
-      textFormat: Text.PlainText
-      color: entry.failureReason ? Color.urgent : Color.muted
-      wrapMode: Text.WordWrap
-      font.family: Style.font.family
-      font.pixelSize: Style.font.caption
+      Layout.leftMargin: horizontalInset
+      Layout.rightMargin: horizontalInset
+      spacing: Style.spacing.xs
+      Text {
+        visible: entry.active
+        Layout.fillWidth: true
+        text: controller.privacyFilter
+          ? (entry.processCount + " process" + (entry.processCount === 1 ? "" : "es") + (entry.hasWeb ? " · Web console available" : ""))
+          : ((entry.pids.length ? "PID: " + entry.pids.join(", ") : "PID: managed by " + (entry.unit || "an external launcher")) + "\nConfig: " + entry.config + (entry.endpoints.length ? "\n" + entry.endpoints.join("\n") : ""))
+        textFormat: Text.PlainText
+        color: Color.muted
+        wrapMode: Text.WrapAnywhere
+        font.family: Style.font.family
+        font.pixelSize: Style.font.caption
+      }
+      Text {
+        Layout.fillWidth: true
+        text: entry.unit ? entry.unitScope + " service · " + entry.unit : "Managed by exact process name"
+        textFormat: Text.PlainText
+        color: Color.muted
+        elide: Text.ElideMiddle
+        horizontalAlignment: Text.AlignRight
+        font.family: Style.font.family
+        font.pixelSize: Style.font.caption
+      }
+      Text {
+        visible: entry.restartCount > 0 || entry.lastTransition || entry.failureReason
+        Layout.fillWidth: true
+        text: (entry.restartCount > 0 ? "Restarts: " + entry.restartCount : "No recorded restarts")
+          + (entry.lastTransition ? " · changed " + entry.lastTransition : "")
+          + (entry.failureReason ? "\nLast failure: " + entry.failureReason : "")
+        textFormat: Text.PlainText
+        color: entry.failureReason ? Color.urgent : Color.muted
+        wrapMode: Text.WordWrap
+        font.family: Style.font.family
+        font.pixelSize: Style.font.caption
+      }
     }
   }
 }

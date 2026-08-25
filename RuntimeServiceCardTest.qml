@@ -60,7 +60,9 @@ ShellRoot {
     var details = descendant(card, "serviceDetailsButton")
     var quickActions = descendant(card, "serviceQuickActions")
     var actionLoading = descendant(card, "serviceActionLoadingIndicator")
-    if (!status || !primary || !details || !quickActions || !actionLoading) throw new Error("service card controls are not addressable")
+    var expandedDetails = descendant(card, "serviceExpandedDetails")
+    var detailsSeparator = descendant(card, "serviceDetailsSeparator")
+    if (!status || !primary || !details || !quickActions || !actionLoading || !expandedDetails || !detailsSeparator) throw new Error("service card controls are not addressable")
     if (status.text !== "STOPPED" || primary.text !== "Start" || !quickActions.visible) throw new Error("stopped service presentation failed")
     primary.clicked()
     details.clicked()
@@ -68,6 +70,8 @@ ShellRoot {
       throw new Error("service card action dispatch failed")
     if (mockController.expandedServiceId !== "syncthing" || !details.active || details.text !== "Hide details")
       throw new Error("service details state failed")
+    if (!expandedDetails.visible || !detailsSeparator.visible || expandedDetails.horizontalInset <= 0)
+      throw new Error("expanded service details did not retain an inset from the separator")
     mockController.pendingService = "syncthing"
     mockController.pendingAction = "start"
     Qt.callLater(function() {

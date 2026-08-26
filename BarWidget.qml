@@ -79,7 +79,7 @@ Panel {
   readonly property int refreshSeconds: Math.max(2, Math.min(60, Number(setting("refreshSeconds", 5)) || 5))
   readonly property int backgroundRefreshSeconds: Math.max(15, Math.min(300, Number(setting("backgroundRefreshSeconds", 15)) || 15))
   readonly property int reconcileSeconds: Math.max(30, Math.min(600, Number(setting("reconcileSeconds", 60)) || 60))
-  readonly property bool intrinsicMainWidth: editingServiceId === "" && !showingWidgetSettings && serviceList.contentWidthHint > 0
+  readonly property bool intrinsicMainWidth: editingServiceId === "" && !showingWidgetSettings && expandedServiceId === "" && serviceList.contentWidthHint > 0
   readonly property real configuredPanelWidth: Style.space(Math.max(420, Math.min(800, Number(setting("popupWidth", 600)) || 600)))
   readonly property real scrollbarGutter: popupScrollBar.visible ? popupScrollBar.implicitWidth + Style.spacing.xs : 0
   readonly property real desiredPanelWidth: intrinsicMainWidth ? Math.min(configuredPanelWidth, serviceList.contentWidthHint + scrollbarGutter) : configuredPanelWidth

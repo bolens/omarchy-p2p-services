@@ -35,7 +35,9 @@ ShellRoot {
     var wideHeight = filterBar.childrenRect.height
     var backend = descendant(filterBar, "activeBackendFilterPill")
     var count = descendant(filterBar, "visibleServiceCountText")
-    if (!backend || !count || count.text !== "3 SHOWN") throw new Error("filter controls are not addressable")
+    var primary = descendant(filterBar, "primaryFilterPill")
+    if (!backend || !count || !primary || count.text !== "3 SHOWN") throw new Error("filter controls are not addressable")
+    if (filterBar.primaryFilterCount !== 4 || primary.width <= primary.implicitWidth) throw new Error("wide primary filters did not fill their row evenly")
     backend.activate()
     if (mockController.backendActivations !== 1 || mockController.backendFilter !== "") throw new Error("backend filter pill did not remain actionable")
     mockController.backendFilter = "docker"

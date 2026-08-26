@@ -88,7 +88,8 @@ ShellRoot {
       throw new Error("service details state failed")
     if (!expandedDetails.visible || !detailsSeparator.visible || expandedDetails.horizontalInset <= 0
         || expandedDetailsContent.x < expandedDetails.horizontalInset
-        || expandedDetailsContent.width > expandedDetails.width - expandedDetails.horizontalInset * 2)
+        || expandedDetailsContent.width > expandedDetails.width - expandedDetails.horizontalInset * 2
+        || expandedDetails.implicitHeight <= expandedDetailsContent.implicitHeight || expandedDetails.border.width !== 1)
       throw new Error("expanded service details did not retain an inset from the separator")
     if (/4242|alice|10\.0\.0\./.test(runtimeDetails.text)) throw new Error("private expanded details leaked process, path, or endpoint data")
     mockController.privacyFilter = false

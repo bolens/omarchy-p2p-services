@@ -92,6 +92,9 @@ ShellRoot {
         throw new Error("main view IPC did not route to the focused monitor instance")
       if (!widget.focusedMainReady("grid", "compact")) throw new Error("focused main view readiness failed")
       if (widget.scrollbarGutter < 0 || widget.desiredPanelWidth <= 0) throw new Error("panel scrollbar gutter sizing failed")
+      widget.expandedServiceId = "syncthing"
+      if (widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.configuredPanelWidth) throw new Error("expanded details retained narrow intrinsic panel width")
+      widget.expandedServiceId = ""
       if (widget.openServiceDetails("i2p") !== "ok" || !widget.focusedDetailsReady("i2p")) throw new Error("focused details routing failed")
       if (widget.closeFocused() !== "ok" || !widget.focusedPanelClosed()) throw new Error("focused close routing failed")
       focusedWidgetFixture.opened = true

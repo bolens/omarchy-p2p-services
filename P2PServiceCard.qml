@@ -236,19 +236,25 @@ Rectangle {
       }
     }
     Rectangle { objectName: "serviceDetailsSeparator"; visible: controller.expandedServiceId === entry.id; Layout.fillWidth: true; implicitHeight: 1; color: Util.alpha(controller.serviceColor(entry), 0.16) }
-    Item {
+    Rectangle {
       objectName: "serviceExpandedDetails"
       property int horizontalInset: Style.spacing.sm
       visible: controller.expandedServiceId === entry.id
       Layout.fillWidth: true
-      implicitHeight: expandedDetailsContent.implicitHeight
+      implicitHeight: expandedDetailsContent.implicitHeight + Style.spacing.sm * 2
+      radius: Style.cornerRadius
+      color: Util.alpha(controller.serviceColor(entry), 0.045)
+      border.width: 1
+      border.color: Util.alpha(controller.serviceColor(entry), 0.12)
       ColumnLayout {
         id: expandedDetailsContent
         objectName: "serviceExpandedDetailsContent"
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.top: parent.top
         anchors.leftMargin: parent.horizontalInset
         anchors.rightMargin: parent.horizontalInset
+        anchors.topMargin: Style.spacing.sm
         spacing: Style.spacing.xs
         Text {
         objectName: "serviceRuntimeDetailsText"

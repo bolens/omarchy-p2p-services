@@ -9,12 +9,14 @@ Flow {
   objectName: "serviceFilterBar"
   Layout.fillWidth: true
   spacing: Style.spacing.sm
+  readonly property int primaryFilterCount: controller.errorCount > 0 ? 4 : 3
+  readonly property real primaryFilterWidth: Math.max(0, (width - spacing * (primaryFilterCount - 1)) / primaryFilterCount)
   onWidthChanged: forceLayout()
 
-  P2PFilterPill { width: implicitWidth; height: implicitHeight; controller: filterBar.controller; label: "All " + filterBar.controller.services.length; value: "all" }
-  P2PFilterPill { width: implicitWidth; height: implicitHeight; controller: filterBar.controller; label: "Running " + filterBar.controller.activeCount; value: "running" }
-  P2PFilterPill { width: implicitWidth; height: implicitHeight; controller: filterBar.controller; label: "Stopped " + filterBar.controller.stoppedCount; value: "stopped" }
-  P2PFilterPill { width: implicitWidth; height: implicitHeight; controller: filterBar.controller; label: "Issues " + filterBar.controller.errorCount; value: "issues"; visible: filterBar.controller.errorCount > 0 }
+  P2PFilterPill { objectName: "primaryFilterPill"; width: Math.max(implicitWidth, filterBar.primaryFilterWidth); height: implicitHeight; controller: filterBar.controller; label: "All " + filterBar.controller.services.length; value: "all" }
+  P2PFilterPill { objectName: "primaryFilterPill"; width: Math.max(implicitWidth, filterBar.primaryFilterWidth); height: implicitHeight; controller: filterBar.controller; label: "Running " + filterBar.controller.activeCount; value: "running" }
+  P2PFilterPill { objectName: "primaryFilterPill"; width: Math.max(implicitWidth, filterBar.primaryFilterWidth); height: implicitHeight; controller: filterBar.controller; label: "Stopped " + filterBar.controller.stoppedCount; value: "stopped" }
+  P2PFilterPill { objectName: "primaryFilterPill"; width: Math.max(implicitWidth, filterBar.primaryFilterWidth); height: implicitHeight; controller: filterBar.controller; label: "Issues " + filterBar.controller.errorCount; value: "issues"; visible: filterBar.controller.errorCount > 0 }
   P2PIndicatorPill {
     objectName: "activeBackendFilterPill"
     width: implicitWidth

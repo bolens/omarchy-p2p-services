@@ -11,7 +11,7 @@ QtObject {
   signal restoreConfirmed(var entry, string backupName)
 
   function requestUninstall(entry) {
-    if (!entry) return false
+    if (!entry || !entry.id) return false
     cancelRestore()
     uninstallTarget = entry
     uninstallOpen = true
@@ -26,7 +26,7 @@ QtObject {
     return true
   }
   function requestRestore(entry, backupName) {
-    if (!entry || !backupName) return false
+    if (!entry || !entry.id || !backupName) return false
     cancelUninstall()
     restoreTarget = entry
     restoreBackupName = String(backupName)

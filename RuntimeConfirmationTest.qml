@@ -13,6 +13,7 @@ ShellRoot {
 
   Component.onCompleted: Qt.callLater(function() {
     if (confirmations.requestUninstall(null)) throw new Error("invalid uninstall confirmation opened")
+    if (confirmations.requestUninstall({})) throw new Error("id-less uninstall confirmation opened")
     if (!confirmations.requestUninstall({id:"syncthing"}) || !confirmations.uninstallOpen) throw new Error("uninstall confirmation did not open")
     confirmations.cancelUninstall()
     if (confirmations.uninstallOpen || confirmations.uninstallTarget) throw new Error("uninstall cancellation did not clear state")
@@ -20,6 +21,7 @@ ShellRoot {
     if (root.events.length !== 1 || root.events[0].kind !== "uninstall" || confirmations.uninstallOpen) throw new Error("uninstall confirmation failed")
 
     if (confirmations.requestRestore({id:"syncthing"}, "")) throw new Error("invalid restore confirmation opened")
+    if (confirmations.requestRestore({}, "backup-1")) throw new Error("id-less restore confirmation opened")
     confirmations.requestRestore({id:"syncthing"}, "backup-1")
     confirmations.confirmRestore()
     if (root.events.length !== 2 || root.events[1].backup !== "backup-1" || confirmations.restoreOpen || confirmations.restoreTarget)

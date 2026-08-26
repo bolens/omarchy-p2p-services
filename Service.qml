@@ -26,6 +26,8 @@ Item {
   property double settingsWatcherLastEventAt: 0
   property int settingsWatcherLastExitCode: -1
   property int settingsWatcherRetryMilliseconds: 1000
+  property int settingsWatcherHandshakeTimeoutMilliseconds: 15000
+  property bool settingsWatcherTimedOut: false
   property string helper: PathUtils.localFilePath(Qt.resolvedUrl("p2p-control"))
 
   function configure(next) {
@@ -55,15 +57,25 @@ Item {
       settingsWatcherCode = "ok"
       settingsWatcherLastEventAt = Number(now) || Date.now()
       settingsWatcherRetryMilliseconds = 1000
+      settingsWatcherTimedOut = false
+      settingsWatcherHandshake.stop()
       if (revision > durableSettingsRevision) durableSettingsRevision = revision
       return true
     } catch (error) { return false }
   }
 
+  function handleSettingsWatcherHandshakeTimeout() {
+    settingsWatcherTimedOut = true
+    settingsWatcherHealth = "degraded"
+    settingsWatcherCode = "handshake_timeout"
+  }
+
   function handleSettingsWatcherExit(exitCode) {
+    settingsWatcherHandshake.stop()
     var state = Model.watcherExitState(true, settingsWatcherRetryMilliseconds)
     settingsWatcherHealth = state.health
-    settingsWatcherCode = state.code
+    settingsWatcherCode = settingsWatcherTimedOut ? "handshake_timeout" : state.code
+    settingsWatcherTimedOut = false
     settingsWatcherLastExitCode = Number(exitCode)
     settingsWatcherRetry.interval = state.delay
     settingsWatcherRetryMilliseconds = state.nextRetryMilliseconds
@@ -112,10 +124,20 @@ Item {
     id: settingsWatcherProc
     command: [root.helper, "settings-watch"]
     running: true
+    onRunningChanged: {
+      if (running) { root.settingsWatcherTimedOut = false; settingsWatcherHandshake.start() }
+      else settingsWatcherHandshake.stop()
+    }
     stdout: SplitParser {
       onRead: function(line) { root.handleSettingsWatcherLine(line, Date.now()) }
     }
     onExited: function(exitCode) { root.handleSettingsWatcherExit(exitCode) }
+  }
+  P2PProcessWatchdog {
+    id: settingsWatcherHandshake
+    process: settingsWatcherProc
+    timeoutMilliseconds: root.settingsWatcherHandshakeTimeoutMilliseconds
+    onTimedOut: root.handleSettingsWatcherHandshakeTimeout()
   }
   Timer {
     id: settingsWatcherRetry

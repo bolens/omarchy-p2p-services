@@ -38,6 +38,8 @@ points and sibling imports relative to the installed plugin directory.
 - `Service.qml` owns the single durable-settings watcher; monitor-specific widgets
   reconcile only when its observed revision advances beyond their local revision.
   The shared service also owns watcher health, bounded retry backoff, and telemetry.
+  A handshake watchdog requires the settings watcher to emit its initial revision
+  event before it is considered healthy.
 - `BarWidget.qml` composes presentation state; extracted QML components own
   refresh scheduling, action dispatch, settings navigation, headers, lists,
   cards, quick controls, repeated boolean-setting mutation, and message surfaces.

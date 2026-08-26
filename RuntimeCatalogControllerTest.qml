@@ -36,6 +36,9 @@ ShellRoot {
   Timer { interval: 3000; running: true; onTriggered: { throw new Error("catalog test timed out at stage " + root.stage) } }
 
   Component.onCompleted: {
+    catalog.helper = "   "
+    if (catalog.request() || catalog.running || catalog.pending) throw new Error("blank catalog helper changed controller state")
+    catalog.helper = root.fixtureHelper
     if (!catalog.request()) throw new Error("catalog request did not start")
     if (catalog.request()) throw new Error("concurrent catalog request was not rejected")
   }

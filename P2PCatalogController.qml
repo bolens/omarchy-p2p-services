@@ -15,6 +15,7 @@ QtObject {
   signal failed(int exitCode)
 
   function request() {
+    if (String(helper || "").trim() === "") return false
     if (busy) { pending = true; return false }
     busy = true
     timedOut = false

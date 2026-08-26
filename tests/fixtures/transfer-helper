@@ -4,6 +4,9 @@ case "$1" in
     sleep 0.05
     printf '%s' 'export-ok'
     ;;
+  settings-can-undo)
+    sleep 0.05
+    ;;
   *)
     exit 2
     ;;

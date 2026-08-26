@@ -18,16 +18,25 @@ Rectangle {
   Layout.fillWidth: true
   readonly property string density: String(controller.setting("cardDensity", "comfortable"))
   readonly property bool grid: controller.setting("serviceLayout", "list") === "grid"
-  readonly property bool compact: density !== "comfortable" || grid
+  readonly property bool compact: density !== "comfortable"
   readonly property bool minimal: density === "minimal"
+  readonly property bool minimalList: minimal && !grid
+  readonly property bool iconActions: compact || grid
+  readonly property real cardPadding: minimal ? Style.spacing.xs : (compact ? Style.spacing.sm : Style.spacing.md)
   readonly property var compactIndicators: compact ? Model.compactIndicators(entry) : []
+  readonly property var comfortableIndicators: !compact ? Model.comfortableIndicators(entry, controller.privacyFilter) : []
+  readonly property real identityWidthHint: Math.min(serviceNameText.implicitWidth, Style.space(180))
+  readonly property real headerWidthHint: serviceIcon.implicitWidth
+    + identityWidthHint
+    + serviceStatusBlock.implicitWidth + serviceHeaderRow.spacing * 2 + Style.spacing.lg
+  readonly property real contentWidthHint: Math.max(headerWidthHint, serviceQuickActions.implicitWidth) + cardPadding * 2
   function activateIndicator(indicator) {
     if (indicator.action === "console") controller.openConsole(entry)
     else if (indicator.action === "config") controller.act(entry, "config")
     else if (indicator.action === "backend") controller.filterByBackend(String(entry.backend || "process"))
     else controller.toggleServiceDetails(entry.id)
   }
-  implicitHeight: serviceColumn.implicitHeight + (compact ? Style.spacing.sm : Style.spacing.md) * 2
+  implicitHeight: serviceColumn.implicitHeight + cardPadding * 2
   radius: Style.cornerRadius
   color: Util.alpha(controller.serviceColor(entry), controller.selectedServiceId === entry.id ? 0.13 : (hovered ? 0.09 : (entry.active ? 0.065 : 0.025)))
   border.width: controller.selectedServiceId === entry.id ? 2 : 1
@@ -66,32 +75,49 @@ Rectangle {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.verticalCenter: parent.verticalCenter
-    anchors.margins: card.compact ? Style.spacing.sm : Style.spacing.md
+    anchors.margins: card.cardPadding
     spacing: card.compact ? Style.spacing.xs : Style.spacing.sm
 
     RowLayout {
+      id: serviceHeaderRow
       Layout.fillWidth: true
       Rectangle {
-        implicitWidth: Style.space(card.compact ? 30 : 36)
-        implicitHeight: Style.space(card.compact ? 30 : 36)
+        id: serviceIcon
+        implicitWidth: Style.space(card.minimal ? 26 : (card.compact ? 30 : 36))
+        implicitHeight: Style.space(card.minimal ? 26 : (card.compact ? 30 : 36))
         radius: Style.cornerRadius
         color: Util.alpha(controller.serviceColor(entry), 0.13)
         Text { anchors.centerIn: parent; text: controller.iconFor(entry); textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.icon }
       }
       ColumnLayout {
         objectName: "serviceIdentityBlock"
-        Layout.fillWidth: card.grid
-        Layout.maximumWidth: card.grid ? Style.space(1000) : Style.space(260)
+        Layout.fillWidth: true
+        Layout.maximumWidth: Style.space(1000)
         spacing: 1
         RowLayout {
           Layout.fillWidth: true
           spacing: Style.spacing.xs
-          Text { Layout.fillWidth: true; text: controller.labelFor(entry); textFormat: Text.PlainText; color: Color.popups.text; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.body; font.weight: Font.DemiBold }
+          Text {
+            id: serviceNameText
+            objectName: "serviceNameText"
+            readonly property string fullLabel: controller.labelFor(entry)
+            Layout.fillWidth: true
+            text: fullLabel
+            textFormat: Text.PlainText
+            color: Color.popups.text
+            elide: Text.ElideRight
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+            font.weight: Font.DemiBold
+            HoverHandler { id: serviceNameHover }
+            ToolTip.visible: serviceNameText.truncated && serviceNameHover.hovered
+            ToolTip.text: serviceNameText.fullLabel
+          }
           Text { visible: controller.setting("showFavoriteMarker", true) === true && controller.isFavorite(entry.id); text: "󰓎"; textFormat: Text.PlainText; color: controller.themeColor(String(controller.setting("favoriteColorRole","accent")), Color.accent); font.family: Style.font.family; font.pixelSize: Style.font.caption }
         }
-        Text { visible: !card.compact && controller.setting("showCardSummary", true) === true; Layout.fillWidth: true; text: Model.summary(entry, controller.privacyFilter); textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
       }
       RowLayout {
+        id: serviceStatusBlock
         objectName: "serviceStatusBlock"
         spacing: Style.spacing.xs
         Repeater {
@@ -104,7 +130,15 @@ Rectangle {
             onTriggered: card.activateIndicator(indicator)
           }
         }
-        Text { visible: !card.grid; text: "●"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption }
+        P2PIndicatorPill {
+          objectName: "minimalStatusPill"
+          visible: card.minimal
+          indicator: ({icon:entry.hasError ? "󰅚" : (entry.active ? "󰐊" : "󰓛"),value:"",tooltip:(entry.hasError ? "Needs attention" : (entry.active ? "Running" : "Stopped")) + " · Show details",action:"details"})
+          tone: controller.serviceColor(entry)
+          horizontalPadding: Style.spacing.sm
+          onTriggered: card.activateIndicator(indicator)
+        }
+        Text { objectName: "serviceStatusDot"; visible: !card.minimal && (!card.grid || card.density === "comfortable"); text: "●"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption }
         P2PLoadingIndicator {
           objectName: "serviceActionLoadingIndicator"
           running: controller.pendingService === entry.id
@@ -115,7 +149,7 @@ Rectangle {
           speed: Number(controller.setting("loadingIndicatorSpeed", 140)) || 140
           tone: controller.serviceColor(entry)
         }
-        Text { objectName: "serviceStatusText"; visible: controller.pendingService !== entry.id && !card.minimal && !card.grid; text: entry.active ? (entry.hasError ? "NEEDS ATTENTION" : "RUNNING") : "STOPPED"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold; font.letterSpacing: 0.8 }
+        Text { objectName: "serviceStatusText"; visible: controller.pendingService !== entry.id && !card.minimal && (!card.grid || card.density === "comfortable"); text: entry.active ? (entry.hasError ? "NEEDS ATTENTION" : "RUNNING") : "STOPPED"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold; font.letterSpacing: 0.8 }
         P2PIndicatorPill {
           objectName: "backendIndicatorPill"
           visible: !card.grid && controller.setting("showBackendBadge", false) === true
@@ -124,18 +158,36 @@ Rectangle {
           onTriggered: card.activateIndicator(indicator)
         }
       }
-      Item { Layout.fillWidth: true }
+    }
+
+    Flow {
+      id: comfortableMetadata
+      objectName: "comfortableMetadata"
+      visible: !card.compact && entry.active && controller.setting("showCardSummary", true) === true
+      Layout.fillWidth: true
+      spacing: Style.spacing.xs
+      Repeater {
+        model: comfortableMetadata.visible ? card.comfortableIndicators : []
+        delegate: P2PIndicatorPill {
+          objectName: "comfortableIndicatorPill"
+          required property var modelData
+          indicator: modelData
+          tone: card.controller.serviceColor(card.entry)
+          horizontalPadding: Style.spacing.md
+          onTriggered: card.activateIndicator(indicator)
+        }
+      }
     }
 
     RowLayout {
       objectName: "gridMetadataRow"
       property int leadingInset: Style.spacing.xs
-      visible: card.grid
+      visible: card.grid && card.density === "compact"
       Layout.fillWidth: true
       Layout.leftMargin: leadingInset
       spacing: Style.spacing.xs
       Repeater {
-        model: card.grid ? card.compactIndicators : []
+        model: card.grid && card.density === "compact" ? card.compactIndicators : []
         delegate: P2PIndicatorPill {
           objectName: "gridIndicatorPill"
           required property var modelData
@@ -165,16 +217,17 @@ Rectangle {
     }
 
     RowLayout {
+      id: serviceQuickActions
       objectName: "serviceQuickActions"
       visible: controller.setting("showQuickActions", true) === true && !card.minimal
       Layout.fillWidth: true
-      Button { objectName: "servicePrimaryActionButton"; visible: entry.controllable !== false; text: card.compact ? "" : (entry.active ? "Stop" : "Start"); iconText: card.compact ? (entry.active ? "󰓛" : "󰐊") : ""; tooltipText: card.compact ? (entry.active ? "Stop service" : "Start service") : ""; horizontalPadding: card.compact ? Style.spacing.controlGap : Style.spacing.controlPaddingX; enabled: controller.pendingService === ""; onClicked: controller.act(entry, entry.active ? "stop" : "start") }
-      Button { text: card.compact ? "" : "Restart"; iconText: card.compact ? "󰑐" : ""; tooltipText: card.compact ? "Restart service" : ""; horizontalPadding: card.compact ? Style.spacing.controlGap : Style.spacing.controlPaddingX; visible: entry.active && entry.controllable !== false; enabled: controller.pendingService === ""; onClicked: controller.act(entry, "restart") }
-      Button { objectName: "serviceDetailsButton"; text: card.compact ? "" : (controller.expandedServiceId === entry.id ? "Hide details" : "Details"); iconText: card.compact ? (controller.expandedServiceId === entry.id ? "󰁈" : "󰁅") : ""; tooltipText: card.compact ? (controller.expandedServiceId === entry.id ? "Hide details" : "Show details") : ""; horizontalPadding: card.compact ? Style.spacing.controlGap : Style.spacing.controlPaddingX; active: controller.expandedServiceId === entry.id; selected: active; onClicked: controller.toggleServiceDetails(entry.id) }
+      Button { objectName: "servicePrimaryActionButton"; visible: entry.controllable !== false; text: card.iconActions ? "" : (entry.active ? "Stop" : "Start"); iconText: card.iconActions ? (entry.active ? "󰓛" : "󰐊") : ""; tooltipText: card.iconActions ? (entry.active ? "Stop service" : "Start service") : ""; horizontalPadding: card.iconActions ? Style.spacing.controlGap : Style.spacing.controlPaddingX; enabled: controller.pendingService === ""; onClicked: controller.act(entry, entry.active ? "stop" : "start") }
+      Button { text: card.iconActions ? "" : "Restart"; iconText: card.iconActions ? "󰑐" : ""; tooltipText: card.iconActions ? "Restart service" : ""; horizontalPadding: card.iconActions ? Style.spacing.controlGap : Style.spacing.controlPaddingX; visible: entry.active && entry.controllable !== false; enabled: controller.pendingService === ""; onClicked: controller.act(entry, "restart") }
+      Button { objectName: "serviceDetailsButton"; text: card.iconActions ? "" : (controller.expandedServiceId === entry.id ? "Hide details" : "Details"); iconText: card.iconActions ? (controller.expandedServiceId === entry.id ? "󰁈" : "󰁅") : ""; tooltipText: card.iconActions ? (controller.expandedServiceId === entry.id ? "Hide details" : "Show details") : ""; horizontalPadding: card.iconActions ? Style.spacing.controlGap : Style.spacing.controlPaddingX; active: controller.expandedServiceId === entry.id; selected: active; onClicked: controller.toggleServiceDetails(entry.id) }
       Item { Layout.fillWidth: true }
       Button { iconText: "󰖟"; tooltipText: "Open web console"; visible: controller.hasConsole(entry); horizontalPadding: Style.spacing.controlGap; onClicked: controller.openConsole(entry) }
       Button { iconText: "󰒓"; tooltipText: "Open configuration"; visible: entry.configExists && entry.controllable !== false; horizontalPadding: Style.spacing.controlGap; onClicked: controller.act(entry, "config") }
-      Button { iconText: "󰏫"; tooltipText: "Customize service"; horizontalPadding: Style.spacing.controlGap; onClicked: controller.editService(entry.id) }
+      Button { objectName: "serviceCustomizeButton"; iconText: "󰏫"; tooltipText: "Customize service"; horizontalPadding: Style.spacing.controlGap; onClicked: controller.editService(entry.id) }
     }
     Rectangle {
       objectName: "contextActionsSurface"

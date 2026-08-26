@@ -69,10 +69,17 @@ ShellRoot {
     var runtimeDetails = descendant(card, "serviceRuntimeDetailsText")
     var identityBlock = descendant(card, "serviceIdentityBlock")
     var statusBlock = descendant(card, "serviceStatusBlock")
-    if (!status || !primary || !details || !quickActions || !actionLoading || !expandedDetails || !expandedDetailsContent || !detailsSeparator || !runtimeDetails) throw new Error("service card controls are not addressable")
+    var serviceName = descendant(card, "serviceNameText")
+    var comfortableMetadata = descendant(card, "comfortableMetadata")
+    if (!status || !serviceName || !comfortableMetadata || !primary || !details || !quickActions || !actionLoading || !expandedDetails || !expandedDetailsContent || !detailsSeparator || !runtimeDetails) throw new Error("service card controls are not addressable")
+    if (serviceName.text !== "Home Sync" || serviceName.fullLabel !== "Home Sync") throw new Error("service name tooltip omitted the full label")
+    var comfortableWidthHint = card.contentWidthHint
+    if (comfortableMetadata.visible || card.identityWidthHint < serviceName.implicitWidth) throw new Error("stopped comfortable card retained redundant metadata")
     if (status.text !== "STOPPED" || primary.text !== "Start" || !quickActions.visible) throw new Error("stopped service presentation failed")
     if (!identityBlock || !statusBlock || statusBlock.x - (identityBlock.x + identityBlock.width) > 24)
       throw new Error("list service metadata retained excessive middle spacing")
+    if (identityBlock.width <= 260 || card.width - (statusBlock.x + statusBlock.width) > 24)
+      throw new Error("list service row left usable horizontal space empty")
     primary.clicked()
     details.clicked()
     if (mockController.events.length !== 2 || mockController.events[0].action !== "start" || mockController.events[1].kind !== "details")
@@ -95,6 +102,7 @@ ShellRoot {
       card.entry = Object.assign({}, card.entry, {controllable:false})
       mockController.density = "compact"
       Qt.callLater(function() {
+        if (comfortableMetadata.visible || card.contentWidthHint >= comfortableWidthHint) throw new Error("compact layout retained comfortable width")
         if (primary.visible) throw new Error("observation-only service exposed mutation control")
         var disabledConfigPill = null
         function findDisabledConfigPill(item) {
@@ -138,16 +146,26 @@ ShellRoot {
           mockController.layout = "grid"
           Qt.callLater(function() {
             var statusPill = descendant(card, "gridStatusPill")
-            if (!statusPill) throw new Error("grid status pill missing")
+            var gridMetadata = descendant(card, "gridMetadataRow")
+            if (!statusPill || !gridMetadata.visible || !card.compact || !card.iconActions) throw new Error("compact grid treatment missing")
             var beforeStatusEvents = mockController.events.length
             statusPill.activate()
             if (mockController.events.length !== beforeStatusEvents + 1 || mockController.events[beforeStatusEvents].kind !== "details") throw new Error("grid status pill did not dispatch details")
-            mockController.layout = "list"
+          mockController.density = "comfortable"
+          Qt.callLater(function() {
+            if (card.compact || !card.iconActions || gridMetadata.visible || !comfortableMetadata.visible || primary.text !== "")
+              throw new Error("comfortable grid was forced into compact presentation")
           mockController.density = "minimal"
           Qt.callLater(function() {
-            if (status.visible || quickActions.visible) throw new Error("minimal indicator card retained verbose surfaces")
+            var minimalStatus = descendant(card, "minimalStatusPill"), statusDot = descendant(card, "serviceStatusDot")
+            if (status.visible || quickActions.visible || gridMetadata.visible || comfortableMetadata.visible || !minimalStatus || !minimalStatus.visible || statusDot.visible || card.cardPadding >= 8) throw new Error("minimal grid retained verbose surfaces")
+            var beforeMinimalStatus = mockController.events.length
+            minimalStatus.activate()
+            if (mockController.events.length !== beforeMinimalStatus + 1 || mockController.events[beforeMinimalStatus].kind !== "details") throw new Error("minimal status pill did not open details")
+            mockController.layout = "list"
             console.log("P2P_QML_SERVICE_CARD_OK")
             Qt.quit()
+          })
           })
           })
         })

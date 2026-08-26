@@ -28,6 +28,8 @@ ShellRoot {
     if (Model.loadingFrame("glyph", " # ", 9) !== "#") throw new Error("bar custom loading glyph failed")
     var indicators = Model.compactIndicators({connections:2,listeners:1,processCount:1,hasWeb:true,configExists:false})
     if (indicators.length !== 4 || indicators[0].value !== "2" || indicators[0].action !== "details" || indicators[3].action !== "console") throw new Error("compact service indicators failed")
+    var comfortable = Model.comfortableIndicators({active:true,connections:0,listeners:0,uptime:3660}, true)
+    if (comfortable.length !== 4 || comfortable[0].value !== "0 connected" || comfortable[2].value !== "up 1h 1m" || comfortable[3].value !== "private") throw new Error("comfortable service indicators failed")
     var saved = Model.savedViewSelection({search:"sync",filter:"running",backend:"docker",sortMode:"name",groupMode:"category"})
     if (saved.search !== "sync" || saved.filter !== "running" || saved.backend !== "docker" || saved.patch.serviceSortMode !== "name" || saved.patch.serviceGroupMode !== "category") throw new Error("saved view selection failed")
     if (Model.serviceNotificationPolicy({syncthing:"failures"}, "syncthing") !== "failures" || !Model.shouldNotifyService("failures", 1, false)) throw new Error("service notification policy failed")

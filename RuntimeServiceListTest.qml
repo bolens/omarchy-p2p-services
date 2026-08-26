@@ -82,13 +82,13 @@ ShellRoot {
     if (!namedIn(sync, "serviceGroupHeader").visible || !namedIn(tail, "serviceGroupHeader").visible || namedIn(nebula, "serviceGroupHeader").visible)
       throw new Error("category header repeated before every service")
     if (serviceList.gridView || serviceList.columns !== 1) throw new Error("list layout default failed")
+    if (serviceList.contentWidthHint <= 0 || serviceList.contentWidthHint >= serviceList.width)
+      throw new Error("list did not expose an intrinsic content width")
     mockController.serviceLayout = "grid"
     Qt.callLater(function() {
-      if (!serviceList.gridView || !serviceList.twoColumnGrid || serviceList.columns !== 2 || !syncCard.compact || !syncCard.grid || namedIn(sync, "serviceGroupHeader").visible) throw new Error("responsive grid layout failed")
-      var metadataRow = namedIn(syncCard, "gridMetadataRow")
-      var metadataPill = namedIn(syncCard, "gridIndicatorPill")
-      if (!metadataRow.visible || metadataRow.leadingInset <= 0 || !metadataPill || metadataPill.horizontalPadding <= metadataRow.leadingInset || !namedIn(syncCard, "gridStatusPill"))
-        throw new Error("grid card metadata did not reflow with padded indicators and a leading inset")
+      if (!serviceList.gridView || !serviceList.twoColumnGrid || serviceList.columns !== 2 || syncCard.compact || !syncCard.grid || namedIn(sync, "serviceGroupHeader").visible) throw new Error("responsive comfortable grid layout failed")
+      if (!namedIn(syncCard, "comfortableMetadata").visible || namedIn(syncCard, "gridMetadataRow").visible)
+        throw new Error("comfortable grid did not preserve glanceable metadata")
       serviceList.width = 400
       if (serviceList.twoColumnGrid || serviceList.columns !== 1) throw new Error("narrow grid did not collapse to one column")
       serviceList.width = 600

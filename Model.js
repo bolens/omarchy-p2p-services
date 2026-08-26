@@ -71,6 +71,20 @@ function compactIndicators(entry) {
   return values
 }
 
+function comfortableIndicators(entry, filtered) {
+  if (!entry || entry.active !== true) return []
+  var connections = Math.max(0, Number(entry.connections) || 0)
+  var listeners = Math.max(0, Number(entry.listeners) || 0)
+  var uptime = Math.max(0, Number(entry.uptime) || 0)
+  var values = [
+    {icon:"󰌷", value:connections + " connected", tooltip:"Peer connections · Show details", action:"details"},
+    {icon:"󰖟", value:listeners + " listening", tooltip:"Listening sockets · Show details", action:"details"},
+    {icon:"󰥔", value:"up " + formatDuration(uptime), tooltip:"Service uptime · Show details", action:"details"}
+  ]
+  if (filtered === true) values.push({icon:"󰒃", value:"private", tooltip:"Sensitive runtime details are filtered · Show details", action:"details"})
+  return values
+}
+
 function formatRate(bytesPerSecond) {
   var value = Math.max(0, Number(bytesPerSecond) || 0)
   var units = ["B/s", "KiB/s", "MiB/s", "GiB/s"]

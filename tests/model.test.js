@@ -17,6 +17,13 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.compactIndicators({connection
 assert.deepEqual(JSON.parse(JSON.stringify(context.compactIndicators({configExists:true,controllable:false}))), [
   {icon:"󰒓",value:"",tooltip:"Configuration detected · Observation only",action:"config",enabled:false}
 ]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.comfortableIndicators({active:true,connections:0,listeners:0,uptime:3660}, true))), [
+  {icon:"󰌷",value:"0 connected",tooltip:"Peer connections · Show details",action:"details"},
+  {icon:"󰖟",value:"0 listening",tooltip:"Listening sockets · Show details",action:"details"},
+  {icon:"󰥔",value:"up 1h 1m",tooltip:"Service uptime · Show details",action:"details"},
+  {icon:"󰒃",value:"private",tooltip:"Sensitive runtime details are filtered · Show details",action:"details"}
+]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.comfortableIndicators({active:false}, true))), []);
 assert.equal(context.formatRate(1536), "1.5 KiB/s");
 assert.equal(context.formatRate(1500000), "1.4 MiB/s");
 assert.deepEqual(JSON.parse(JSON.stringify(context.loadingFrames("dots", ">"))), [".  ", ".. ", "..."]);

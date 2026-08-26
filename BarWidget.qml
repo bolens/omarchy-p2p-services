@@ -79,6 +79,10 @@ Panel {
   readonly property int refreshSeconds: Math.max(2, Math.min(60, Number(setting("refreshSeconds", 5)) || 5))
   readonly property int backgroundRefreshSeconds: Math.max(15, Math.min(300, Number(setting("backgroundRefreshSeconds", 15)) || 15))
   readonly property int reconcileSeconds: Math.max(30, Math.min(600, Number(setting("reconcileSeconds", 60)) || 60))
+  readonly property bool intrinsicListWidth: editingServiceId === "" && !showingWidgetSettings && setting("serviceLayout", "list") !== "grid" && serviceList.contentWidthHint > 0
+  readonly property real configuredPanelWidth: Style.space(Math.max(420, Math.min(800, Number(setting("popupWidth", 600)) || 600)))
+  readonly property real scrollbarGutter: popupScrollBar.visible ? popupScrollBar.implicitWidth + Style.spacing.xs : 0
+  readonly property real desiredPanelWidth: intrinsicListWidth ? Math.min(configuredPanelWidth, serviceList.contentWidthHint + scrollbarGutter) : configuredPanelWidth
   readonly property int pollIntervalMilliseconds: (opened ? refreshSeconds : Math.max(backgroundRefreshSeconds, refreshSeconds)) * 1000 * Model.refreshBackoff(consecutiveRefreshFailures)
   readonly property var visibleServices: {
     var revision = organizationState.revision
@@ -789,7 +793,7 @@ Panel {
     bar: root.bar
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: fittedContentWidth(Style.space(Math.max(420, Math.min(800, Number(root.setting("popupWidth", 600)) || 600))))
+    contentWidth: fittedContentWidth(root.desiredPanelWidth)
     contentHeight: fittedContentHeight(content.implicitHeight, Style.space(Math.max(360, Math.min(900, Number(root.setting("popupMaxHeight", 600)) || 600))))
 
     PanelKeyCatcher {
@@ -813,7 +817,7 @@ Panel {
       Flickable {
         id: popupScroll
         anchors.fill: parent
-        contentWidth: width
+        contentWidth: content.width
         contentHeight: content.implicitHeight
         clip: true
         pixelAligned: true
@@ -822,11 +826,11 @@ Panel {
         interactive: contentHeight > height
         onMovementStarted: root.captureSortOrder()
         onMovementEnded: root.flushDeferredRefresh()
-        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+        ScrollBar.vertical: ScrollBar { id: popupScrollBar; policy: ScrollBar.AsNeeded }
 
         ColumnLayout {
           id: content
-          width: popupScroll.width
+          width: Math.max(1, popupScroll.width - root.scrollbarGutter)
           spacing: Style.spacing.md
 
         P2PHeader {

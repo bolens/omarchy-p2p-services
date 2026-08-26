@@ -2,8 +2,11 @@ import json
 import pathlib
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from unittest import mock
 
-from p2p_settings_watch import SettingsChangeTracker
+from p2p_settings_watch import SettingsChangeTracker, watch_settings
 from p2p_settings import sanitize_settings
 from p2p_settings_store import SettingsStore
 
@@ -46,6 +49,17 @@ class SettingsChangeTrackerTests(unittest.TestCase):
       restored = store.undo()
       self.assertTrue(restored["showCount"])
       self.assertEqual(tracker.poll(), restored["_p2pRevision"])
+
+  def test_watcher_emits_compact_versioned_json_and_honors_interval(self):
+    with tempfile.TemporaryDirectory() as directory:
+      settings = pathlib.Path(directory) / "settings.json"
+      settings.write_text('{"_p2pRevision":7}')
+      output = StringIO()
+      with mock.patch("p2p_settings_watch.time.sleep", side_effect=RuntimeError("stop")) as sleep:
+        with redirect_stdout(output), self.assertRaisesRegex(RuntimeError, "stop"):
+          watch_settings(settings, interval=0.125)
+      self.assertEqual(json.loads(output.getvalue()), {"type":"settings-changed", "version":1, "revision":7})
+      sleep.assert_called_once_with(0.125)
 
 
 if __name__ == "__main__": unittest.main()

@@ -226,6 +226,15 @@ class ControlCliTests(ControlTestCase):
         self.invoke("action", "aria2", "start")
     self.assertEqual(raised.exception.code, 17)
 
+  def test_invalid_uninstall_retention_is_a_clean_failure_before_mutation(self):
+    service = self.service("aria2")
+    with mock.patch.object(CONTROL, "service_by_id", return_value=service), \
+         mock.patch.object(CONTROL, "uninstall_service") as uninstall:
+      with self.assertRaises(SystemExit) as raised:
+        self.invoke("uninstall", "aria2", "not-a-number")
+    self.assertEqual(raised.exception.code, 1)
+    uninstall.assert_not_called()
+
   def test_watch_without_available_backends_reports_polling_only_and_stops_retrying(self):
     previous_handler = object()
     signal_calls = []

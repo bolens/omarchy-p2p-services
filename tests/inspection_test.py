@@ -1,6 +1,6 @@
 import unittest
 
-from p2p_inspection import ServiceInspector
+from p2p_inspection import ServiceInspector, public_web_fields
 from p2p_snapshot import SnapshotContext
 
 
@@ -72,6 +72,13 @@ class ServiceInspectorTests(unittest.TestCase):
     self.assertEqual(private["failureReason"], "Service reported an error")
     self.assertEqual(public["failureReason"], "failed at /home/alice/secret.conf on 10.0.0.8")
     self.assertNotIn("/home/alice", self.inspector.diagnostics_text(self.service, True))
+
+  def test_web_projection_never_reports_invalid_urls_as_available(self):
+    self.assertEqual(public_web_fields("javascript:alert(1)", False), ("", "", False))
+    self.assertEqual(public_web_fields("javascript:alert(1)", True), ("", "", False))
+    self.assertEqual(public_web_fields(" https://node.example.test/ui ", False),
+                     ("https://node.example.test/ui", "https://node.example.test/ui", True))
+    self.assertEqual(public_web_fields("https://node.example.test/ui", True), ("Available", "", True))
 
 
 if __name__ == "__main__":

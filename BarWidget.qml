@@ -31,6 +31,7 @@ Panel {
   readonly property bool durableSettingsLoaded: settingsStore.loaded
   readonly property bool settingsSurfaceLoaded: settingsPageLoader.item !== null
   readonly property bool serviceLoadingVisible: serviceLoadingIndicator.visible
+  readonly property bool serviceFiltersRowVisible: serviceFilterBar.visible
   property url settingsSurfaceSource: ""
   readonly property bool catalogLoading: catalogLoadingState.visible
   property double refreshStartedAt: 0
@@ -48,6 +49,7 @@ Panel {
   property string searchQuery: ""
   property string serviceFilter: "all"
   property string backendFilter: ""
+  property bool serviceFiltersExpanded: false
   property string expandedServiceId: ""
   property string contextServiceId: ""
   property string selectedServiceId: ""
@@ -79,7 +81,7 @@ Panel {
   readonly property int refreshSeconds: Math.max(2, Math.min(60, Number(setting("refreshSeconds", 5)) || 5))
   readonly property int backgroundRefreshSeconds: Math.max(15, Math.min(300, Number(setting("backgroundRefreshSeconds", 15)) || 15))
   readonly property int reconcileSeconds: Math.max(30, Math.min(600, Number(setting("reconcileSeconds", 60)) || 60))
-  readonly property bool intrinsicMainWidth: editingServiceId === "" && !showingWidgetSettings && expandedServiceId === "" && serviceList.contentWidthHint > 0
+  readonly property bool intrinsicMainWidth: editingServiceId === "" && !showingWidgetSettings && expandedServiceId === "" && !serviceFiltersExpanded && serviceList.contentWidthHint > 0
   readonly property real configuredPanelWidth: Style.space(Math.max(420, Math.min(800, Number(setting("popupWidth", 600)) || 600)))
   readonly property real scrollbarGutter: popupScrollBar.visible ? popupScrollBar.implicitWidth + Style.spacing.xs : 0
   readonly property real desiredPanelWidth: intrinsicMainWidth ? Math.min(configuredPanelWidth, serviceList.contentWidthHint + scrollbarGutter) : configuredPanelWidth
@@ -389,6 +391,22 @@ Panel {
     var target = focusedPanelInstance()
     return !!target && target.opened === true && target.showingWidgetSettings !== true
       && target.statusIndicatorVisible !== true && target.expandedServiceId === String(serviceId)
+  }
+  function applyFiltersExpanded(expanded) {
+    editingServiceId = ""
+    showingWidgetSettings = false
+    serviceFiltersExpanded = expanded === true
+    if (!opened) open()
+    return "ok"
+  }
+  function setFiltersExpanded(expanded) {
+    var target = focusedPanelInstance()
+    if (target && target !== root && typeof target.applyFiltersExpanded === "function") return target.applyFiltersExpanded(expanded)
+    return applyFiltersExpanded(expanded)
+  }
+  function focusedFiltersExpanded() {
+    var target = focusedPanelInstance()
+    return !!target && target.opened === true && target.serviceFiltersExpanded === true
   }
   function closeFocused() {
     var target = focusedPanelInstance()
@@ -743,6 +761,7 @@ Panel {
     } else {
       confirmationState.cancelAll()
       expandedServiceId = ""
+      serviceFiltersExpanded = false
       settingsPage = "general"
       if (privacyToggleInProgress) Qt.callLater(function() { root.open() })
       else persistPrivacyFilter()
@@ -778,6 +797,8 @@ Panel {
     function mainReady(layout: string, density: string): string { return root.focusedMainReady(layout, density) ? "true" : "false" }
     function openDetails(serviceId: string): string { return root.openServiceDetails(serviceId) }
     function detailsReady(serviceId: string): string { return root.focusedDetailsReady(serviceId) ? "true" : "false" }
+    function showFilters(): string { return root.setFiltersExpanded(true) }
+    function filtersReady(): string { return root.focusedFiltersExpanded() ? "true" : "false" }
     function panelClosed(): string { return root.focusedPanelClosed() ? "true" : "false" }
     function openSettings(page: string): string { return root.openSettings(page) }
     function settingsReady(page: string): string { return root.focusedSettingsReady(page) ? "true" : "false" }
@@ -846,6 +867,7 @@ Panel {
         }
 
         RowLayout {
+          objectName: "serviceSearchRow"
           visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
           Layout.fillWidth: true
           TextField {
@@ -865,6 +887,15 @@ Panel {
             horizontalPadding: Style.spacing.controlGap
             onClicked: { root.searchQuery = ""; serviceSearch.forceActiveFocus() }
           }
+          Button {
+            objectName: "serviceFiltersToggle"
+            iconText: "󰈲"
+            tooltipText: root.serviceFiltersExpanded ? "Hide service filters" : "Show service filters"
+            active: root.serviceFiltersExpanded || root.serviceFilter !== "all" || root.backendFilter !== ""
+            selected: active
+            horizontalPadding: Style.spacing.controlGap
+            onClicked: root.serviceFiltersExpanded = !root.serviceFiltersExpanded
+          }
         }
 
         P2PSavedViews {
@@ -874,7 +905,9 @@ Panel {
         }
 
         P2PFilterBar {
-          visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
+          id: serviceFilterBar
+          objectName: "serviceFiltersRow"
+          visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0 && root.serviceFiltersExpanded
           controller: root
           Layout.fillWidth: true
         }

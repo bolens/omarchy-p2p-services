@@ -47,11 +47,13 @@ ShellRoot {
     property string expandedServiceId: ""
     property var services: [{id:"i2p"}]
     property bool durableSettingsLoaded: true
+    property bool serviceFiltersExpanded: false
     property var durableSettings: ({privacyFilter:true,serviceLayout:"grid"})
     property int mainViewRequests: 0
     function applySettingsPage(page) { requestedPage = page; return "ok" }
     function applyMainView() { showingWidgetSettings = false; mainViewRequests += 1; return "ok" }
     function applyServiceDetails(id) { showingWidgetSettings = false; expandedServiceId = id; return "ok" }
+    function applyFiltersExpanded(expanded) { showingWidgetSettings = false; serviceFiltersExpanded = expanded; return "ok" }
     function setting(key, fallback) { var values = {serviceLayout:"grid",cardDensity:"compact"}; return values[key] === undefined ? fallback : values[key] }
     function close() { opened = false }
     function open() {}
@@ -83,6 +85,12 @@ ShellRoot {
       if (root.stage === 0) {
       if (widget.moduleName !== "io.github.bolens.p2p-services" || widget.p2pService !== sharedService) throw new Error("plugin service wiring failed")
       if (!widget.durableSettingsLoaded || !Array.isArray(widget.services) || widget.barText() === "") throw new Error("plugin initial load failed")
+      if (widget.serviceFiltersExpanded) throw new Error("service filters were not hidden by default")
+      if (widget.serviceFiltersRowVisible) throw new Error("hidden service filters retained layout visibility")
+      widget.serviceFiltersExpanded = true
+      if (!widget.serviceFiltersExpanded) throw new Error("service filter disclosure did not expand")
+      if (widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.configuredPanelWidth) throw new Error("expanded service filters retained narrow intrinsic panel width")
+      widget.serviceFiltersExpanded = false
       barMock.routeToFocusedFixture = true
       if (widget.openSettings("packages") !== "ok" || focusedWidgetFixture.requestedPage !== "packages" || widget.showingWidgetSettings)
         throw new Error("settings IPC did not route to the focused monitor instance")
@@ -96,6 +104,7 @@ ShellRoot {
       if (widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.configuredPanelWidth) throw new Error("expanded details retained narrow intrinsic panel width")
       widget.expandedServiceId = ""
       if (widget.openServiceDetails("i2p") !== "ok" || !widget.focusedDetailsReady("i2p")) throw new Error("focused details routing failed")
+      if (widget.setFiltersExpanded(true) !== "ok" || !widget.focusedFiltersExpanded()) throw new Error("focused filter disclosure routing failed")
       if (widget.closeFocused() !== "ok" || !widget.focusedPanelClosed()) throw new Error("focused close routing failed")
       focusedWidgetFixture.opened = true
       var snapshot = JSON.parse(widget.focusedSettingsSnapshot())
@@ -107,6 +116,10 @@ ShellRoot {
       barMock.routeReloadFixture = false
       if (widget.statusLoading) throw new Error("initial service loading state did not settle")
       widget.services = [{id:"container",name:"Container",backend:"docker",active:true,hasError:false},{id:"unit",name:"Unit",backend:"systemd",active:true,hasError:false}]
+      widget.serviceFiltersExpanded = true
+      if (!widget.serviceFiltersRowVisible) throw new Error("expanded service filters remained hidden")
+      widget.serviceFiltersExpanded = false
+      if (widget.serviceFiltersRowVisible) throw new Error("collapsed service filters retained layout visibility")
       widget.filterByBackend("docker")
       if (widget.backendFilter !== "docker" || widget.searchQuery !== "" || widget.serviceFilter !== "all") throw new Error("backend pill filter state failed")
       if (widget.visibleServices.length !== 1 || widget.visibleServices[0].id !== "container") throw new Error("structured backend filter did not constrain services")

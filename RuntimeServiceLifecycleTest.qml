@@ -14,6 +14,11 @@ ShellRoot {
     service.configure({eventRefresh:false,privacyFilter:true})
     if (service.settings.privacyFilter !== true || service.watcherHealth !== "disabled" || service.watcherCode !== "disabled")
       throw new Error("event refresh disablement failed")
+    service.refreshFreshnessMilliseconds = 10000
+    service.lastRefreshRequestAt = Date.now()
+    service.lastRefreshRequestFullScan = true
+    service.lastRefreshRequestSignature = JSON.stringify([service.helper,"status","private","","stats"])
+    if (service.requestRefresh(false, false) !== false) throw new Error("duplicate shared refresh was not suppressed")
     service.configure({eventRefresh:false,_p2pRevision:7})
     service.configure({eventRefresh:false,_p2pRevision:3})
     if (service.durableSettingsRevision !== 7) throw new Error("durable settings revision regressed")

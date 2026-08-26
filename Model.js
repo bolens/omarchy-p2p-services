@@ -335,6 +335,13 @@ function refreshBackoff(failures) {
   return Math.pow(2, Math.min(2, Math.max(0, Number(failures) || 0)))
 }
 
+function shouldStartSharedRefresh(lastAt, lastFullScan, lastSignature, now, fullScan, bypassCache, signature, freshnessMilliseconds) {
+  if (bypassCache === true) return true
+  if (String(signature || "") !== String(lastSignature || "")) return true
+  if (fullScan === true && lastFullScan !== true) return true
+  return Number(now) - Number(lastAt || 0) >= Math.max(0, Number(freshnessMilliseconds) || 0)
+}
+
 function mergeRefreshRequest(current, forceCatalog, fullContainers, bypassCache) {
   var pending = current || {}
   return {
@@ -539,10 +546,18 @@ function categorySummaries(entries, iconOverrides, includeTotal, hideZero) {
   }).filter(function(row) { return hideZero !== true || row.active > 0 })
 }
 
-function barPresentationText(entries, mode, icon, categoryIcons, hideZero) {
+function barPresentationText(entries, mode, icon, categoryIcons, hideZero, summary) {
   var rows = entries || [], fallback = String(icon || "󰒍")
-  var active = rows.filter(function(entry) { return entry && entry.active === true }).length
-  var errors = rows.filter(function(entry) { return entry && entry.active === true && entry.hasError === true }).length
+  var indexed = summary && typeof summary === "object" ? summary : null
+  var active = indexed ? Number(indexed.active) || 0 : 0
+  var errors = indexed ? Number(indexed.errors) || 0 : 0
+  if (!indexed) rows.forEach(function(entry) {
+    if (entry && entry.active === true) {
+      active++
+      if (entry.hasError === true) errors++
+    }
+  })
+  var total = indexed ? Number(indexed.total) || 0 : rows.length
   if (mode === "category-active" || mode === "category-active-total") {
     var categories = categorySummaries(rows, categoryIcons || {}, mode === "category-active-total", hideZero === true)
     return categories.length ? categories.map(function(row) { return row.text }).join("  ") : fallback
@@ -550,8 +565,19 @@ function barPresentationText(entries, mode, icon, categoryIcons, hideZero) {
   if (mode === "icon") return fallback
   if (mode === "health") return fallback + (errors ? " !" : (active ? " ●" : ""))
   if (hideZero === true && active === 0) return fallback
-  if (mode === "active-total") return fallback + " " + active + "/" + rows.length
+  if (mode === "active-total") return fallback + " " + active + "/" + total
   return fallback + " " + active
+}
+
+function catalogIndexes(entries) {
+  var byId = {}, missing = [], detected = []
+  ;(entries || []).forEach(function(entry) {
+    if (!entry || !entry.id) return
+    byId[entry.id] = entry
+    if (entry.detected === true) detected.push(entry)
+    else if (entry.packages && entry.packages.length) missing.push(entry)
+  })
+  return {byId:byId,missing:missing,detected:detected}
 }
 
 function categoryIconMap(current, category, icon) {

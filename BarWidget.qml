@@ -84,8 +84,9 @@ Panel {
   readonly property int activeCount: serviceIndexes.active
   readonly property int stoppedCount: serviceIndexes.total - activeCount
   readonly property int errorCount: serviceIndexes.errors
-  readonly property var missingServices: serviceCatalog.filter(function(s) { return !s.detected && s.packages && s.packages.length })
-  readonly property var detectedServiceCatalog: serviceCatalog.filter(function(s) { return s.detected })
+  readonly property var catalogIndexes: Model.catalogIndexes(serviceCatalog)
+  readonly property var missingServices: catalogIndexes.missing
+  readonly property var detectedServiceCatalog: catalogIndexes.detected
   readonly property var visibleMissingServices: availablePackagesExpanded ? missingServices : missingServices.slice(0, 5)
   readonly property var visibleDetectedServiceCatalog: installedPackagesExpanded ? detectedServiceCatalog : detectedServiceCatalog.slice(0, 5)
   property string helper: PathUtils.localFilePath(Qt.resolvedUrl("p2p-control"))
@@ -299,7 +300,7 @@ Panel {
     }
     return Model.barPresentationText(services, String(setting("barPresentation", "active")),
       String(setting("widgetIcon", "󰒍")), setting("categoryIcons", {}) || {},
-      setting("hideZeroCount", false) === true)
+      setting("hideZeroCount", false) === true, serviceIndexes)
   }
   function barRotation() {
     var rotation = String(setting("barTextRotation", "normal"))
@@ -443,7 +444,7 @@ Panel {
   function openLogs(entry) { serviceActions.openLogs(entry) }
   function copyDiagnostics(entry) { serviceActions.copyDiagnostics(entry, entry ? labelFor(entry) : "Service") }
   function installService(entry) { serviceActions.install(entry) }
-  function catalogEntry(id) { return serviceCatalog.find(function(entry) { return entry.id === id }) || null }
+  function catalogEntry(id) { return catalogIndexes.byId[id] || null }
   function canUninstall(entry) {
     var catalog = entry ? catalogEntry(entry.id) : null
     return !!catalog && catalog.installedPackages && catalog.installedPackages.length > 0

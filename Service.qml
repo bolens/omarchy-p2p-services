@@ -28,6 +28,10 @@ Item {
   property int settingsWatcherRetryMilliseconds: 1000
   property int settingsWatcherHandshakeTimeoutMilliseconds: 15000
   property bool settingsWatcherTimedOut: false
+  property int refreshFreshnessMilliseconds: 500
+  property double lastRefreshRequestAt: 0
+  property bool lastRefreshRequestFullScan: false
+  property string lastRefreshRequestSignature: ""
   property string helper: PathUtils.localFilePath(Qt.resolvedUrl("p2p-control"))
 
   function configure(next) {
@@ -43,9 +47,17 @@ Item {
   }
 
   function requestRefresh(fullContainers, bypassCache) {
-    refreshController.request([helper, "status", settings.privacyFilter === false ? "unsafe" : "private",
-      String(settings.consoleHost || "").trim(), settings.showTrafficStats === false ? "no-stats" : "stats"],
-      fullContainers, bypassCache)
+    var command = [helper, "status", settings.privacyFilter === false ? "unsafe" : "private",
+      String(settings.consoleHost || "").trim(), settings.showTrafficStats === false ? "no-stats" : "stats"]
+    var now = Date.now(), signature = JSON.stringify(command)
+    if (!Model.shouldStartSharedRefresh(lastRefreshRequestAt, lastRefreshRequestFullScan,
+        lastRefreshRequestSignature, now, fullContainers, bypassCache, signature,
+        refreshFreshnessMilliseconds)) return false
+    lastRefreshRequestAt = now
+    lastRefreshRequestFullScan = fullContainers === true
+    lastRefreshRequestSignature = signature
+    refreshController.request(command, fullContainers, bypassCache)
+    return true
   }
 
   function handleSettingsWatcherLine(line, now) {

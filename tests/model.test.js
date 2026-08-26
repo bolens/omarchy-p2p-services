@@ -45,6 +45,12 @@ assert.equal(context.refreshBackoff(0), 1);
 assert.equal(context.refreshBackoff(1), 2);
 assert.equal(context.refreshBackoff(2), 4);
 assert.equal(context.refreshBackoff(20), 4);
+assert.equal(context.shouldStartSharedRefresh(1000, false, "a", 1200, false, false, "a", 500), false);
+assert.equal(context.shouldStartSharedRefresh(1000, false, "a", 1200, true, false, "a", 500), true);
+assert.equal(context.shouldStartSharedRefresh(1000, true, "a", 1200, false, false, "a", 500), false);
+assert.equal(context.shouldStartSharedRefresh(1000, true, "a", 1200, false, false, "b", 500), true);
+assert.equal(context.shouldStartSharedRefresh(1000, true, "a", 1200, false, true, "a", 500), true);
+assert.equal(context.shouldStartSharedRefresh(1000, true, "a", 1600, false, false, "a", 500), true);
 assert.deepEqual(
   JSON.parse(JSON.stringify(context.mergeRefreshRequest({forceCatalog:false,fullContainers:true,bypassCache:false}, true, false, true))),
   {forceCatalog:true,fullContainers:true,bypassCache:true}
@@ -105,6 +111,16 @@ assert.equal(context.barPresentationText(barEntries, "category-active-total", "W
 assert.equal(context.barPresentationText(barEntries, "category-active", "W", {}, true), "S 1");
 assert.equal(context.barPresentationText([], "category-active", "W", {}, true), "W");
 assert.equal(context.barPresentationText(barEntries, "active-total", "W", {}, false), "W 1/2");
+assert.equal(context.barPresentationText([], "active-total", "W", {}, false, {active:3,errors:1,total:7}), "W 3/7");
+assert.equal(context.barPresentationText([], "health", "W", {}, false, {active:3,errors:1,total:7}), "W !");
+const catalogIndexes = context.catalogIndexes([
+  {id:"available",detected:false,packages:["available"]},
+  {id:"external",detected:false,packages:[]},
+  {id:"running",detected:true,packages:["running"]}
+]);
+assert.deepEqual(catalogIndexes.missing.map(row => row.id), ["available"]);
+assert.deepEqual(catalogIndexes.detected.map(row => row.id), ["running"]);
+assert.equal(catalogIndexes.byId.external.id, "external");
 assert.deepEqual(JSON.parse(JSON.stringify(context.categoryIconMap({Existing:"E"}, "File sync", " S "))), {Existing:"E","File sync":"S"});
 assert.deepEqual(JSON.parse(JSON.stringify(context.categoryIconMap({Existing:"E","File sync":"S"}, "File sync", "  "))), {Existing:"E"});
 assert.equal(context.groupCountText([{active:true},{active:false}], "active-total"), "1/2 active");

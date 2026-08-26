@@ -21,8 +21,8 @@ ShellRoot {
   }
 
   Component.onCompleted: {
-    if (!result.apply("import", '{"popupWidth":700}')) throw new Error("valid import was rejected")
-    if (root.events[0].kind !== "import" || root.events[0].settings.popupWidth !== 700 || root.events[1].kind !== "notify")
+    if (!result.apply("import", '{"id":"another-plugin","popupWidth":700}')) throw new Error("valid import was rejected")
+    if (root.events[0].kind !== "import" || root.events[0].settings.id !== "p2p-services" || root.events[0].settings.popupWidth !== 700 || root.events[1].kind !== "notify")
       throw new Error("import result application failed")
     if (!result.apply("undo", '{"popupWidth":650}')) throw new Error("valid undo was rejected")
     if (root.events[2].kind !== "undo" || root.events[2].settings.id !== "p2p-services" || root.events[3].kind !== "notify")

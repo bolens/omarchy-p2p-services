@@ -276,8 +276,8 @@ assert.equal(context.monitoringHealthSeverity("polling", "starting", "waiting"),
 assert.equal(context.monitoringHealthSeverity("degraded", "healthy", "ok"), "urgent");
 assert.equal(context.monitoringHealthSeverity("healthy", "starting", "restarting"), "urgent");
 assert.equal(context.monitoringHealthSeverity("healthy", "degraded", "handshake_timeout"), "urgent");
-assert.deepEqual(JSON.parse(JSON.stringify(context.parseTransferredSettings('{"popupWidth":700}', "plugin-id", "import"))), {
-  valid:true,settings:{popupWidth:700}
+assert.deepEqual(JSON.parse(JSON.stringify(context.parseTransferredSettings('{"id":"foreign-id","popupWidth":700}', "plugin-id", "import"))), {
+  valid:true,settings:{id:"plugin-id",popupWidth:700}
 });
 assert.deepEqual(JSON.parse(JSON.stringify(context.parseTransferredSettings('{"popupWidth":700}', "plugin-id", "undo"))), {
   valid:true,settings:{popupWidth:700,id:"plugin-id"}

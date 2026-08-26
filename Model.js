@@ -327,7 +327,7 @@ function parseTransferredSettings(payload, moduleName, mode) {
   try {
     var parsed = JSON.parse(String(payload || "{}"))
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {valid:false,settings:{}}
-    if (mode === "undo") parsed.id = String(moduleName || "")
+    if (mode === "import" || mode === "undo") parsed.id = String(moduleName || "")
     return {valid:true,settings:parsed}
   } catch (error) { return {valid:false,settings:{}} }
 }

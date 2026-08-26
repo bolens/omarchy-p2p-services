@@ -19,6 +19,10 @@ ShellRoot {
     if (deferred.flush() || root.applied.length !== 1) throw new Error("empty deferred refresh flushed twice")
     deferred.receive([{id:"immediate"}], false, false)
     if (root.applied.length !== 2 || root.applied[1].services[0].id !== "immediate") throw new Error("stationary refresh was not applied immediately")
+    deferred.receive([{id:"stale"}], true, true)
+    deferred.receive([{id:"newest"}], false, false)
+    if (deferred.pending || deferred.flush() || root.applied.length !== 3 || root.applied[2].services[0].id !== "newest")
+      throw new Error("newer immediate refresh did not supersede deferred state")
     console.log("P2P_QML_DEFERRED_REFRESH_OK")
     Qt.quit()
   }

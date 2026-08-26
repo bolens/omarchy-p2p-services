@@ -10,6 +10,7 @@ QtObject {
       pending = {services:Array.isArray(services) ? services : [],fullScan:fullScan === true}
       return false
     }
+    pending = null
     applyRequested(Array.isArray(services) ? services : [], fullScan === true)
     return true
   }

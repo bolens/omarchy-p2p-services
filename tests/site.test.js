@@ -4,6 +4,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "docs/index.html"), "utf8");
+const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
+assert.equal(new Set(ids).size, ids.length, "site element IDs must be unique");
+for (const match of html.matchAll(/href="#([^"]+)"/g))
+  assert.ok(ids.includes(match[1]), `site link targets missing #${match[1]}`);
 
 function dimensions(name) {
   const image = fs.readFileSync(path.join(root, "docs", name));
@@ -17,6 +21,10 @@ assert.match(html, /bolens\/omarchy-p2p-services/);
 assert.match(html, /__PLUGIN_VERSION__/);
 assert.match(html, /privacy filter is forced on/i);
 assert.doesNotMatch(html, /omarchy-privacy-devices/);
+for (const section of ["guide", "usage", "configuration", "services", "privacy", "performance", "troubleshooting", "removal"])
+  assert.match(html, new RegExp(`id="${section}"`), `user guide is missing #${section}`);
+assert.match(html, /omarchy plugin remove io\.github\.bolens\.p2p-services/);
+assert.match(html, /\$XDG_STATE_HOME/);
 assert.equal((html.match(/<div class="showcase" data-showcase>/g) || []).length, 2);
 assert.equal((html.match(/role="tablist"/g) || []).length, 2);
 assert.equal((html.match(/<button class="tab" role="tab"/g) || []).length, 10);

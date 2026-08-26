@@ -51,12 +51,13 @@ ColumnLayout {
           Dropdown { objectName: "barPresentationDropdown"; Layout.fillWidth: true; label: "Bar presentation"; value: String(page.controller.setting("barPresentation","active")); options: [{value:"icon",label:"Icon only"},{value:"active",label:"Active count"},{value:"active-total",label:"Active / total"},{value:"health",label:"Health indicator"},{value:"category-active",label:"Category active counts"},{value:"category-active-total",label:"Category active / total"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({barPresentation:next}) } }
           P2PSettingToggle { controller: page.controller; settingKey: "hideZeroCount"; label: "Hide zero count"; fallback: false; description: "Show only the icon when no services are active." }
           ColumnLayout {
+            id: categoryIconSettings
             Layout.fillWidth: true
             visible: String(page.controller.setting("barPresentation", "active")).indexOf("category-") === 0
             spacing: Style.spacing.xs
             Text { text: "Category icons"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
             Repeater {
-              model: page.controller.categorySummaries()
+              model: categoryIconSettings.visible ? page.controller.categorySummaries() : null
               delegate: RowLayout {
                 id: categoryIconRow
                 required property var modelData

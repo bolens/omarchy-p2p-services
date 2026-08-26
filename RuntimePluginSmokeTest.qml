@@ -218,6 +218,13 @@ ShellRoot {
       root.stage = 8
       } else if (root.stage === 8) {
       if (widget.catalogLoading || widget.catalogErrorText !== "" || widget.visibleErrorText === "Service catalog refresh failed") throw new Error("successful catalog retry did not clear its failure")
+      if (widget.tooltip().indexOf("Middle: settings") < 0 || widget.tooltip().indexOf("Right: full refresh") < 0) throw new Error("bar tooltip omitted mouse actions")
+      widget.handleBarPress(Qt.MiddleButton)
+      if (!widget.opened || !widget.showingWidgetSettings || widget.editingServiceId !== "") throw new Error("middle-click settings action failed")
+      widget.handleBarPress(Qt.RightButton)
+      if (widget.lastScanKind !== "Full shared reconciliation") throw new Error("right-click full refresh action failed")
+      widget.handleBarPress(Qt.LeftButton)
+      if (widget.opened) throw new Error("left-click panel toggle failed")
       console.log("P2P_QML_PLUGIN_SMOKE_OK")
       Qt.quit()
       }

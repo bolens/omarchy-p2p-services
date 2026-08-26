@@ -12,6 +12,7 @@ QtObject {
 
   function requestUninstall(entry) {
     if (!entry) return false
+    cancelRestore()
     uninstallTarget = entry
     uninstallOpen = true
     return true
@@ -26,6 +27,7 @@ QtObject {
   }
   function requestRestore(entry, backupName) {
     if (!entry || !backupName) return false
+    cancelUninstall()
     restoreTarget = entry
     restoreBackupName = String(backupName)
     restoreOpen = true

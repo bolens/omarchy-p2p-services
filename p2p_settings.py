@@ -18,7 +18,7 @@ BOOLEAN_KEYS = {key: PLUGIN_DEFAULTS[key] for key in (
   "refreshOnOpen", "refreshAfterSettings", "refreshAfterActions",
   "notifyUnexpectedStops", "notifyRecovery", "notifyUnhealthy",
   "notifyRestartEvents", "barDimWhenIdle",
-  "showGroupIcons",
+  "showGroupIcons", "enableEventJournal",
 )}
 INTEGER_KEYS = {
   "refreshSeconds": (2, 60), "backgroundRefreshSeconds": (15, 300),
@@ -29,6 +29,7 @@ INTEGER_KEYS = {
   "trafficMinimumBytesPerSecond": (0, 10485760), "barFontSize": (8, 28),
   "barHorizontalMargin": (0, 24), "barVerticalPadding": (0, 16),
   "barFixedWidth": (0, 240),
+  "eventJournalLimit": (5, 100),
 }
 INTEGER_KEYS = {key: (bounds[0], bounds[1], PLUGIN_DEFAULTS[key]) for key, bounds in INTEGER_KEYS.items()}
 STRING_KEYS = {key: PLUGIN_DEFAULTS[key] for key in ("widgetIcon", "consoleHost", "defaultSavedView")}

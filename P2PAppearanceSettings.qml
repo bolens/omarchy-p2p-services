@@ -11,6 +11,7 @@ ColumnLayout {
   visible: controller.settingsPage === "appearance"
   Layout.fillWidth: true
   spacing: Style.spacing.md
+  function sectionY(_section) { return -1 }
   function saveWidgetIcon(value) {
     var icon = String(value || "").trim()
     page.controller.persistKeepingOpen({widgetIcon: icon || "󰒍"})

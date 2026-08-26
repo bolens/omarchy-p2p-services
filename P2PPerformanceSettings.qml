@@ -11,6 +11,7 @@ ColumnLayout {
   visible: controller.settingsPage === "performance"
   Layout.fillWidth: true
   spacing: Style.spacing.md
+  function sectionY(section) { return section === "diagnostics" ? diagnosticsHeading.y : section === "refresh" ? refreshHeading.y : -1 }
           P2PSectionHeading { title: "Performance"; description: "Balance visible freshness against background process and container-runtime queries." }
           Rectangle {
             Layout.fillWidth: true
@@ -27,7 +28,7 @@ ColumnLayout {
           Text { Layout.fillWidth: true; text: page.controller.refreshHealthText(); textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
             }
           }
-          P2PSectionHeading { title: "Refresh cadence"; description: "Set periodic polling and full reconciliation intervals." }
+          P2PSectionHeading { id: refreshHeading; title: "Refresh cadence"; description: "Set periodic polling and full reconciliation intervals." }
           SettingsSurface {
           P2PSettingsGrid {
             id: refreshCadenceGrid
@@ -51,8 +52,23 @@ ColumnLayout {
             IntegerSetting { controller: page.controller; settingKey: "trafficMinimumBytesPerSecond"; label: "Minimum visible traffic, B/s"; minimum: 0; maximum: 10485760; fallback: 1024 }
           }
           }
-          P2PSectionHeading { title: "Monitor diagnostics"; description: "Live health from the shared background watcher." }
+          P2PSectionHeading { id: diagnosticsHeading; title: "Monitor diagnostics"; description: "Live health from the shared background watcher." }
           SettingsSurface {
           Text { Layout.fillWidth: true; text: page.controller.monitoringTelemetryText(); textFormat: Text.PlainText; color: page.controller.p2pService && Model.monitoringHealthSeverity(page.controller.p2pService.watcherHealth, page.controller.p2pService.settingsWatcherHealth, page.controller.p2pService.settingsWatcherCode) === "neutral" ? Color.muted : Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          RowLayout {
+            Layout.fillWidth: true
+            Button { objectName: "copySupportReportButton"; text: "Copy support report"; tooltipText: "Copy a whole-plugin report with privacy filtering forced on"; onClicked: page.controller.copySupportReport() }
+            Button { visible: page.controller.setting("enableEventJournal", false) === true; text: "Clear event journal"; onClicked: page.controller.clearEventJournal() }
+            Item { Layout.fillWidth: true }
+          }
+          ColumnLayout {
+            visible: page.controller.setting("enableEventJournal", false) === true
+            Layout.fillWidth: true
+            Repeater {
+              model: Model.eventJournalRows(page.controller.eventJournal, page.controller.setting("eventJournalLimit", 25))
+              Text { required property var modelData; Layout.fillWidth: true; text: new Date(modelData.at * 1000).toLocaleString(Qt.locale(), Locale.ShortFormat) + "  ·  " + modelData.kind.replace(/-/g, " ") + (modelData.count > 1 ? " ×" + modelData.count : ""); textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+            }
+            Text { visible: page.controller.eventJournal.length === 0; text: "No recorded events."; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          }
           }
 }

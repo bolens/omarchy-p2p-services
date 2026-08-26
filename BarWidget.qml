@@ -20,6 +20,7 @@ Panel {
   property var collapsedServiceGroups: ({})
   property var notificationLastAt: ({})
   property var controlledUntil: ({})
+  readonly property var eventJournal: journal.events
   property bool initialViewApplied: false
   property bool statusLoading: true
   property int barLoadingFrameIndex: 0
@@ -52,6 +53,7 @@ Panel {
   property string selectedServiceId: ""
   property string editingServiceId: ""
   property string settingsPage: "general"
+  property string settingsSection: ""
   property bool showingWidgetSettings: false
   property bool availablePackagesExpanded: false
   readonly property bool settingsTransferRunning: settingsTransferController.running
@@ -277,9 +279,24 @@ Panel {
   }
   function showSettingsPage(page) {
     settingsPage = page
+    settingsSection = ""
     if (page === "discovery") settingsTransferController.refreshUndoAvailability()
     popupScroll.contentY = 0
     if (page === "packages") refreshCatalog()
+  }
+  function showSettingsSection(page, section) {
+    settingsPage = page
+    settingsSection = section
+    editingServiceId = ""
+    showingWidgetSettings = true
+    if (page === "discovery") settingsTransferController.refreshUndoAvailability()
+    if (page === "packages") refreshCatalog()
+    Qt.callLater(scrollToSettingsSection)
+  }
+  function scrollToSettingsSection() {
+    if (!settingsSection || !settingsPageLoader.item || typeof settingsPageLoader.item.sectionY !== "function") return
+    var target = settingsPageLoader.y + Number(settingsPageLoader.item.sectionY(settingsSection) || 0)
+    popupScroll.contentY = Math.max(0, Math.min(popupScroll.contentHeight - popupScroll.height, target - Style.spacing.md))
   }
   function settingsPageDescription() {
     if (settingsPage === "appearance") return "BAR, PANEL, AND SERVICE CARDS"
@@ -309,9 +326,10 @@ Panel {
         String(setting("loadingIndicatorStyle", "spinner")),
         String(setting("loadingIndicatorGlyph", ">")), barLoadingFrameIndex)
     }
-    return Model.barPresentationText(services, String(setting("barPresentation", "active")),
+    var presentation = Model.barPresentationText(services, String(setting("barPresentation", "active")),
       String(setting("widgetIcon", "󰒍")), setting("categoryIcons", {}) || {},
       setting("hideZeroCount", false) === true, serviceIndexes)
+    return presentation + (consecutiveRefreshFailures > 0 ? " ~" : "")
   }
   function barRotation() {
     var rotation = String(setting("barTextRotation", "normal"))
@@ -646,15 +664,17 @@ Panel {
   function handleServiceTransitions(previous, next) {
     if (!previous.length) return
     var changes = Model.serviceTransitions(previous, next, Number(setting("restartWarningThreshold", 3)) || 3)
+    var eligible = []
     for (var index = 0; index < changes.length; index++) {
       var change = changes[index], entry = next.find(function(item) { return item.id === change.id })
       var now = Date.now()
       if (!transitionNotificationEligible(change, entry, now) || !transitionNotificationAllowed(change.id, change.kind)) continue
-      if (change.kind === "stopped") notify("P2P service stopped", labelFor(entry) + " stopped unexpectedly")
-      else if (change.kind === "recovered") notify("P2P service recovered", labelFor(entry) + " is healthy again")
-      else if (change.kind === "unhealthy") notify("P2P service needs attention", labelFor(entry) + " became unhealthy")
-      else if (change.kind === "restarts") notify("P2P restart threshold", labelFor(entry) + " has restarted " + change.count + " times")
+      eligible.push(Object.assign({}, change, {label:labelFor(entry)}))
     }
+    Model.transitionNotifications(eligible).forEach(function(message) {
+      notify(message.title, message.body)
+      if (setting("enableEventJournal", false) === true) journal.record(message.kind, message.count)
+    })
   }
   function recordRefreshFailure(detail) {
     var failure = Model.refreshFailureState(consecutiveRefreshFailures, detail)
@@ -673,6 +693,17 @@ Panel {
   function notify(title, body) {
     Quickshell.execDetached(["omarchy", "notification", "send", "--app-name", "P2P Services", "--urgency", "normal", String(title), String(body)])
   }
+  function copySupportReport() {
+    var telemetry = p2pService && typeof p2pService.monitoringTelemetry === "function" ? p2pService.monitoringTelemetry() : {}
+    var monitoring = {
+      watcherHealth:String(telemetry.watcherHealth || "unavailable"), watcherCode:String(telemetry.watcherCode || "unavailable"),
+      settingsWatcherHealth:String(telemetry.settingsWatcherHealth || "unavailable"), settingsWatcherCode:String(telemetry.settingsWatcherCode || "unavailable"),
+      lastRefreshAgeSeconds:Number(telemetry.lastRefreshAgeSeconds) || 0, consecutiveRefreshFailures:consecutiveRefreshFailures
+    }
+    Quickshell.execDetached([helper, "copy-support-report", JSON.stringify(monitoring)])
+    notify("P2P support report", "Copied a privacy-filtered plugin report to the clipboard")
+  }
+  function clearEventJournal() { journal.clear() }
   function actionResult(exitCode, detail, serviceName, requestedAction) {
     var name = serviceName || pendingServiceName || pendingService || "Service"
     var action = requestedAction || pendingAction || "update"
@@ -685,6 +716,7 @@ Panel {
   }
   function tooltip() {
     var status = services.length ? activeCount + "/" + services.length + " active\nPrivacy filter: " + (privacyFilter ? "on" : "off") : "No supported services detected"
+    if (consecutiveRefreshFailures > 0) status += "\nRefresh degraded: showing last successful data"
     return "P2P Services · " + status + "\nMiddle: settings · Right: full refresh"
   }
   function handleBarPress(mouseButton) {
@@ -728,7 +760,7 @@ Panel {
     tooltipText: root.tooltip()
     active: root.opened
     useActiveColor: root.activeCount > 0
-    activeColor: root.errorCount > 0
+    activeColor: root.errorCount > 0 || root.consecutiveRefreshFailures > 0
       ? root.themeColor(String(root.setting("errorColorRole", "urgent")), Color.urgent)
       : root.themeColor(String(root.setting("barActiveColorRole", "accent")), Color.accent)
     dimmed: root.setting("barDimWhenIdle", false) === true && root.activeCount === 0 && !root.opened
@@ -772,6 +804,7 @@ Panel {
       }
       onTextKey: function(text) {
         if ((text === "r" || text === "R") && !serviceSearch.activeFocus) root.refresh(false, true, true)
+        else if (text === "/" && !root.showingWidgetSettings) serviceSearch.forceActiveFocus()
         else if ((text === "s" || text === "S") && !serviceSearch.activeFocus) { root.editingServiceId = ""; root.showingWidgetSettings = true }
         else if (root.showingWidgetSettings && "1234".indexOf(text) >= 0) root.showSettingsPage(["general", "performance", "discovery", "packages"][Number(text) - 1])
       }
@@ -847,6 +880,8 @@ Panel {
           message: root.visibleErrorText
           icon: "󰅙"
           tone: Color.urgent
+          actionText: "Diagnostics"
+          onActionRequested: root.showSettingsSection("performance", "diagnostics")
         }
 
         P2PLoadingIndicator {
@@ -871,6 +906,8 @@ Panel {
             : "No supported P2P services detected."
           icon: root.services.length ? "󰍉" : "󰒍"
           tone: Color.muted
+          actionText: root.services.length === 0 ? "Configure discovery" : ""
+          onActionRequested: root.showSettingsSection("discovery", "custom-services")
         }
 
         P2PServiceList { id: serviceList; controller: root; Layout.fillWidth: true }
@@ -899,7 +936,7 @@ Panel {
           Layout.fillWidth: true
           source: root.settingsSurfaceSource
           sourceComponent: String(root.settingsSurfaceSource) === "" ? defaultSettingsSurface : null
-          onLoaded: { root.settingsErrorText = ""; root.finishSettingsLoading() }
+          onLoaded: { root.settingsErrorText = ""; root.finishSettingsLoading(); Qt.callLater(root.scrollToSettingsSection) }
           onStatusChanged: if (status === Loader.Error) {
             settingsLoadingState.cancel()
             root.settingsErrorText = "Unable to load P2P settings interface"
@@ -935,6 +972,7 @@ Panel {
     onTriggered: root.barLoadingFrameIndex += 1
   }
   P2POrganizationState { id: organizationState; onStabilityStopRequested: sortStabilityTimer.stop() }
+  P2PEventJournal { id: journal; helper: root.helper; onFailed: root.errorText = "Unable to update the local event journal" }
   P2PDeferredRefresh { id: deferredRefresh; onApplyRequested: function(services, fullScan) { root.applyStatusRefresh(services, fullScan) } }
   P2PServiceConfirmationController {
     id: confirmationState
@@ -1059,6 +1097,7 @@ Panel {
     id: actionRunner
     onActionFinished: function(entry, action, exitCode, detail) {
       if (entry && root.shouldNotifyService(entry.id, exitCode)) root.actionResult(exitCode, detail, root.labelFor(entry), action)
+      if (root.setting("enableEventJournal", false) === true) journal.record(exitCode === 0 ? "action-success" : "action-failure", 1)
       root.pendingService = ""
       root.pendingServiceName = ""
       root.pendingAction = ""
@@ -1092,5 +1131,5 @@ Panel {
   onP2pServiceChanged: Qt.callLater(syncService)
   onStatusLoadingChanged: if (statusLoading) barLoadingFrameIndex = 0
   onShowingWidgetSettingsChanged: startSettingsLoading()
-  Component.onCompleted: { settingsStore.load(root.settings); Qt.callLater(syncService); root.refresh(false, true) }
+  Component.onCompleted: { settingsStore.load(root.settings); journal.load(); Qt.callLater(syncService); root.refresh(false, true) }
 }

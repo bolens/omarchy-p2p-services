@@ -12,6 +12,7 @@ ColumnLayout {
   visible: controller.settingsPage === "packages"
   Layout.fillWidth: true
   spacing: Style.spacing.md
+  function sectionY(_section) { return -1 }
   P2PLoadingIndicator {
     objectName: "catalogLoadingIndicator"
     running: page.controller.setting("showLoadingIndicators", true) === true && page.controller.catalogLoading

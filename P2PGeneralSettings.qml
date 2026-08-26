@@ -11,7 +11,8 @@ ColumnLayout {
   visible: controller.settingsPage === "general"
   Layout.fillWidth: true
   spacing: Style.spacing.md
-          P2PSectionHeading { visible: page.controller.settingsPage === "general"; title: "Startup and behavior"; description: "Choose what the widget shows first and how common actions behave." }
+  function sectionY(section) { return section === "notifications" ? notificationsHeading.y : section === "behavior" ? behaviorHeading.y : -1 }
+          P2PSectionHeading { id: behaviorHeading; visible: page.controller.settingsPage === "general"; title: "Startup and behavior"; description: "Choose what the widget shows first and how common actions behave." }
           SettingsSurface {
           visible: page.controller.settingsPage === "general"
           Toggle { objectName: "privacyFilterToggle"; Layout.fillWidth: true; label: "Privacy filter"; description: "Redact endpoints, process IDs, paths, and console URLs before they reach the widget."; checked: page.controller.privacyFilter; foreground: Color.popups.text; accent: checked ? Color.bar.active : Color.urgent; fontFamily: Style.font.family; onClicked: page.controller.togglePrivacyFilter() }
@@ -41,16 +42,18 @@ ColumnLayout {
           }
           }
 
-          P2PSectionHeading { visible: page.controller.settingsPage === "general"; title: "Notifications"; description: "Choose which requested actions and automatic state changes should notify you." }
+          P2PSectionHeading { id: notificationsHeading; visible: page.controller.settingsPage === "general"; title: "Notifications"; description: "Choose which requested actions and automatic state changes should notify you." }
           SettingsSurface {
           visible: page.controller.settingsPage === "general"
           P2PSettingToggle { controller: page.controller; settingKey: "notifyUnexpectedStops"; label: "Unexpected stops"; fallback: false }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyRecovery"; label: "Service recovery"; fallback: false }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyUnhealthy"; label: "Unhealthy services"; fallback: true }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyRestartEvents"; label: "Restart threshold"; fallback: true }
+          P2PSettingToggle { controller: page.controller; settingKey: "enableEventJournal"; label: "Local event journal"; fallback: false; description: "Keep a bounded, privacy-filtered history of service changes and action outcomes." }
           P2PSettingsGrid {
             IntegerSetting { controller: page.controller; settingKey: "notificationCooldownSeconds"; label: "Notification cooldown, seconds"; minimum: 0; maximum: 300; fallback: 30 }
             IntegerSetting { controller: page.controller; settingKey: "restartWarningThreshold"; label: "Restart warning threshold"; minimum: 1; maximum: 100; fallback: 3 }
+            IntegerSetting { controller: page.controller; settingKey: "eventJournalLimit"; label: "Visible journal entries"; minimum: 5; maximum: 100; fallback: 25 }
           }
           }
 }

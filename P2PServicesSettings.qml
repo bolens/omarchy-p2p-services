@@ -11,6 +11,7 @@ ColumnLayout {
   visible: controller.settingsPage === "services"
   Layout.fillWidth: true
   spacing: Style.spacing.md
+  function sectionY(_section) { return -1 }
           P2PSectionHeading { visible: page.controller.settingsPage === "services"; title: "Ordering and grouping"; description: "Choose how services are ranked, pinned, grouped, and stabilized." }
           SettingsSurface {
           visible: page.controller.settingsPage === "services"

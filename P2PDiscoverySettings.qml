@@ -11,7 +11,8 @@ ColumnLayout {
   visible: controller.settingsPage === "discovery"
   Layout.fillWidth: true
   spacing: Style.spacing.md
-          P2PSectionHeading { title: "Console routing"; description: "Fallback routing for published container consoles." }
+  function sectionY(section) { return section === "custom-services" ? customHeading.y : section === "routing" ? routingHeading.y : -1 }
+          P2PSectionHeading { id: routingHeading; title: "Console routing"; description: "Fallback routing for published container consoles." }
           SettingsSurface {
           Text { text: "Fallback console host · blank uses 127.0.0.1"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
@@ -30,7 +31,7 @@ ColumnLayout {
           }
           }
 
-          P2PSectionHeading { title: "Custom services"; description: "Add validated, observation-only process or systemd services." }
+          P2PSectionHeading { id: customHeading; title: "Custom services"; description: "Add validated, observation-only process or systemd services." }
           SettingsSurface {
           Text { Layout.fillWidth: true; text: "JSON array; IDs begin custom-. Executable, process, and unit fields support detection but never control actions."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {

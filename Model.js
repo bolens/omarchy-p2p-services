@@ -28,6 +28,7 @@ function settingsDefaults() {
     refreshOnOpen:true, refreshAfterSettings:true, refreshAfterActions:true,
     staleWarningSeconds:60, notifyUnexpectedStops:false,
     notifyRecovery:false, notifyUnhealthy:true, notifyRestartEvents:true,
+    enableEventJournal:false, eventJournalLimit:25,
     notificationCooldownSeconds:30, restartWarningThreshold:3,
     trafficSmoothingSeconds:3, trafficMinimumBytesPerSecond:1024,
     favoriteServices:[], serviceNotificationPolicies:{}, eventRefresh:true,
@@ -626,6 +627,38 @@ function serviceTransitions(previous, next, restartThreshold) {
     if (restarts >= threshold && restarts > (Number(old.restartCount) || 0)) changes.push({id:entry.id,kind:"restarts",count:restarts})
   }
   return changes
+}
+
+function transitionNotifications(changes) {
+  var groups = {}, order = ["stopped", "unhealthy", "recovered", "restarts"]
+  ;(changes || []).forEach(function(change) {
+    if (!change || order.indexOf(change.kind) < 0) return
+    if (!groups[change.kind]) groups[change.kind] = []
+    groups[change.kind].push(change)
+  })
+  var copy = {
+    stopped:["P2P services stopped", "stopped unexpectedly"],
+    unhealthy:["P2P services need attention", "became unhealthy"],
+    recovered:["P2P services recovered", "are healthy again"],
+    restarts:["P2P restart thresholds", "crossed the restart threshold"]
+  }
+  return order.filter(function(kind) { return groups[kind] && groups[kind].length }).map(function(kind) {
+    var entries = groups[kind], labels = entries.map(function(entry) { return String(entry.label || entry.id || "Service") })
+    if (entries.length === 1) {
+      var entry = entries[0], suffix = copy[kind][1]
+      if (kind === "recovered") suffix = "is healthy again"
+      if (kind === "restarts") suffix = "has restarted " + (Number(entry.count) || 0) + " times"
+      return {kind:kind,count:1,title:copy[kind][0].replace("services", "service").replace("thresholds", "threshold"),body:labels[0] + " " + suffix}
+    }
+    return {kind:kind,count:entries.length,title:copy[kind][0],body:labels.slice(0, 3).join(", ") + (labels.length > 3 ? " and " + (labels.length - 3) + " more" : "") + " · " + copy[kind][1]}
+  })
+}
+
+function eventJournalRows(events, limit) {
+  var maximum = Math.max(1, Math.min(100, Number(limit) || 25))
+  return (Array.isArray(events) ? events : []).filter(function(event) {
+    return event && typeof event.kind === "string" && typeof event.at === "number"
+  }).slice(-maximum).reverse()
 }
 
 function ensureVisibleContentY(currentY, viewportHeight, itemTop, itemHeight, contentHeight) {

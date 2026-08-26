@@ -9,6 +9,7 @@ from p2p_catalog import (
   AUR_INSTALL_IDS, AUR_SIGNING_KEYS, DOCKER_ALIASES, PACKAGE_HINTS, SERVICES,
 )
 from p2p_inspection import ServiceInspector
+from p2p_event_store import EventStore
 from p2p_packages import install_command, uninstall_command
 from p2p_registry import normalize_custom_services, validate_registry
 from p2p_runtime import RuntimeProbe
@@ -17,6 +18,7 @@ from p2p_settings_store import SettingsStore
 from p2p_settings_watch import watch_settings
 from p2p_secure_files import atomic_private_write, ensure_private_directory, read_or_create_secret, read_private_text
 from p2p_snapshot import SnapshotContext
+from p2p_support import support_report, support_report_text
 from p2p_validation import safe_http_url
 
 HOME = pathlib.Path.home()
@@ -31,6 +33,7 @@ DATA_HOME = xdg_directory("XDG_DATA_HOME", HOME/".local/share")
 STATE_ROOT = STATE_HOME/"omarchy/p2p-services"
 SETTINGS_FILE = STATE_ROOT/"settings.json"
 SETTINGS = SettingsStore(STATE_ROOT, SETTINGS_FILE, sanitize_settings)
+EVENTS = EventStore(STATE_ROOT)
 STATUS_CACHE_ROOT = xdg_directory("XDG_RUNTIME_DIR", "/run/user/"+str(os.getuid()))/"omarchy-p2p-services"
 BACKUPS = ConfigBackupStore(HOME, restore_plan, DATA_HOME)
 GPG = "/usr/bin/gpg"
@@ -426,6 +429,27 @@ def main():
     return
   if sys.argv[1]=="settings-can-undo" and len(sys.argv)==2:
     raise SystemExit(0 if SETTINGS.can_undo() else 1)
+  if sys.argv[1]=="events-list" and len(sys.argv)==2:
+    print(json.dumps(EVENTS.load(),separators=(",",":"))); return
+  if sys.argv[1]=="events-add" and len(sys.argv)==4:
+    try: print(json.dumps(EVENTS.append(sys.argv[2],sys.argv[3]),separators=(",",":")))
+    except (OSError,ValueError,TypeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="events-clear" and len(sys.argv)==2:
+    try: EVENTS.clear()
+    except OSError as error: print(str(error),file=sys.stderr); raise SystemExit(1)
+    return
+  if sys.argv[1]=="copy-support-report" and len(sys.argv) in (2,3):
+    clipboard=shutil.which("wl-copy")
+    if not clipboard: raise SystemExit("wl-copy is unavailable")
+    settings=SETTINGS.load()
+    snapshot={"services":status_snapshot(True,"",False,False,all_services(settings)),
+              "diagnostics":list(SNAPSHOT.diagnostics),"durationMs":0}
+    try: monitoring=json.loads(sys.argv[2]) if len(sys.argv)==3 and len(sys.argv[2]) <= 4096 else {}
+    except (ValueError,TypeError): monitoring={}
+    manifest=json.loads((pathlib.Path(__file__).parent/"manifest.json").read_text())
+    subprocess.run([os.path.realpath(clipboard)],input=support_report_text(support_report(manifest,settings,snapshot,monitoring)),text=True,check=True)
+    return
   if sys.argv[1]=="settings-reconcile" and len(sys.argv)==3:
     try:
       shell=json.loads(sys.argv[2]); durable=SETTINGS.load(); merged=reconcile_settings(shell,durable)

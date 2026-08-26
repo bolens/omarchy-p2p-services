@@ -35,7 +35,10 @@ class RuntimeProbeTests(unittest.TestCase):
     with mock.patch("p2p_runtime.os.getuid", return_value=1000):
       self.assertEqual(self.probe.pids_for(["daemon"], current_user_only=True), [42])
     self.assertEqual(self.probe.pids_for(["daemon"]), [42, 43])
-    self.assertEqual(self.probe.pid_uptime(42), 123)
+    with mock.patch.object(self.probe, "process_rows", wraps=self.probe.process_rows) as rows:
+      self.assertEqual(self.probe.pid_uptime(42), 123)
+      self.assertEqual(self.probe.pid_uptime(42), 123)
+    rows.assert_called_once_with()
     self.assertEqual(sum(args[0] == "/usr/bin/ps" for args, _ in self.calls), 1)
 
   def test_systemd_queries_batch_unique_declared_units_by_scope(self):
@@ -66,6 +69,7 @@ class RuntimeProbeTests(unittest.TestCase):
 
   def test_service_container_matches_are_indexed_once_per_snapshot(self):
     service = {"id":"daemon"}
+    self.probe.services = lambda: [service]
     items = [{"Name":"/daemon","Config":{"Labels":{},"Image":"daemon"}}]
     with mock.patch.object(self.probe, "containers", return_value=items) as containers, \
          mock.patch.object(self.probe, "container_matches_service", wraps=self.probe.container_matches_service) as match:
@@ -74,6 +78,21 @@ class RuntimeProbeTests(unittest.TestCase):
     self.assertIs(first, second)
     containers.assert_called_once_with()
     match.assert_called_once()
+
+  def test_all_service_container_matches_share_one_inverted_index(self):
+    daemon = {"id":"daemon", "units":[]}
+    peer = {"id":"peer", "units":[]}
+    self.probe.services = lambda: [daemon, peer]
+    self.probe.aliases["peer"] = ["peer"]
+    items = [
+      {"Name":"/daemon","Config":{"Labels":{},"Image":"daemon"}},
+      {"Name":"/peer","Config":{"Labels":{},"Image":"peer"}},
+    ]
+    with mock.patch.object(self.probe, "containers", return_value=items) as containers:
+      self.assertEqual(self.probe.docker_matches(daemon), [items[0]])
+      self.assertEqual(self.probe.docker_matches(peer), [items[1]])
+      self.assertEqual(self.probe.docker_matches(daemon), [items[0]])
+    containers.assert_called_once_with()
 
   def test_container_discovery_uses_resolved_runtime_and_caches_inspection(self):
     calls = []

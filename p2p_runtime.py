@@ -47,7 +47,9 @@ class RuntimeProbe:
     return self.snapshot.process_matches[cache_key]
   
   def pid_uptime(self, pid):
-    return next((etimes for _uid,row_pid,etimes,_comm,_argv0 in self.process_rows() if row_pid==pid),0)
+    if self.snapshot.process_by_pid is None:
+      self.snapshot.process_by_pid={row_pid:etimes for _uid,row_pid,etimes,_comm,_argv0 in self.process_rows()}
+    return self.snapshot.process_by_pid.get(pid,0)
   
   def unit_snapshot(self, user):
     """Batch every declared unit into one user or system systemctl query."""
@@ -172,9 +174,12 @@ class RuntimeProbe:
   
   def docker_matches(self, service):
     service_id=service["id"]
-    if service_id not in self.snapshot.container_matches:
-      self.snapshot.container_matches[service_id]=[item for item in self.containers() if self.container_matches_service(service,item)]
-    return self.snapshot.container_matches[service_id]
+    if self.snapshot.container_matches is None:
+      items=self.containers()
+      self.snapshot.container_matches={}
+      for declared in self.services():
+        self.snapshot.container_matches[declared["id"]]=[item for item in items if self.container_matches_service(declared,item)]
+    return self.snapshot.container_matches.get(service_id,[])
   
   def proxy_candidates(self, items):
     candidates=[]

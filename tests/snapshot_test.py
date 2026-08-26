@@ -11,6 +11,9 @@ class SnapshotContextTests(unittest.TestCase):
     self.assertIsNone(context.packages)
     self.assertFalse(context.all_containers)
     self.assertEqual(context.process_matches, {})
+    self.assertIsNone(context.process_by_pid)
+    self.assertIsNone(context.socket_by_pid)
+    self.assertIsNone(context.container_matches)
     self.assertEqual(context.diagnostics[0]["code"],"partial_probe")
 
 

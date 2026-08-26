@@ -227,10 +227,14 @@ class DiscoveryIntegrationTests(ControlTestCase):
     try:
       def fake_run(args, timeout=2):
         calls.append(args)
-        return type("Result", (), {"returncode": 0, "stdout": 'tcp ESTAB 0 0 127.0.0.1:1 127.0.0.1:2 users:(("daemon",pid=42,fd=3))\n', "stderr": ""})()
+        return type("Result", (), {"returncode": 0, "stdout": (
+          'tcp ESTAB 0 0 127.0.0.1:1 127.0.0.1:2 users:(("daemon",pid=42,fd=3))\n'
+          'tcp LISTEN 0 0 127.0.0.1:3 0.0.0.0:* users:(("other",pid=420,fd=4))\n'
+        ), "stderr": ""})()
       CONTROL.run = fake_run
       self.assertEqual(CONTROL.sockets([42], True)[:2], (1, 0))
       self.assertEqual(CONTROL.sockets([42], False)[:2], (1, 0))
+      self.assertEqual(CONTROL.sockets([420], True)[:2], (0, 1))
       self.assertEqual(len(calls), 1)
     finally:
       CONTROL.run = original_run

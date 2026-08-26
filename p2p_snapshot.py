@@ -11,10 +11,12 @@ class SnapshotContext:
     self.packages = None
     self.containers = None
     self.container_stats = None
-    self.container_matches = {}
+    self.container_matches = None
     self.process_rows = None
     self.process_matches = {}
+    self.process_by_pid = None
     self.socket_lines = None
+    self.socket_by_pid = None
     self.unit_snapshots = {}
     self.proxy_files = {}
     self.all_containers = all_containers

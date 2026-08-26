@@ -20,6 +20,8 @@ ShellRoot {
     actions.control({id:"syncthing"}, "restart")
     actions.control(null, "stop")
     actions.control({}, "stop")
+    actions.control({id:"syncthing"}, "")
+    actions.control({id:"syncthing"}, "delete")
     if (root.requests !== 1) throw new Error("invalid service action was dispatched")
     if (actions.openConsole({hasWeb:false}, "") !== false) throw new Error("missing console was reported as opened")
     console.log("P2P_QML_SERVICE_ACTIONS_OK")

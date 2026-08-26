@@ -26,6 +26,11 @@ ShellRoot {
     onTriggered: {
       var frame = descendant(indicator, "loadingFrame"), label = descendant(indicator, "loadingLabel")
       if (!frame || !label || !indicator.animationRunning || label.text !== "LOADING TEST DATA" || frame.text === ".  ") throw new Error("animated loading presentation failed")
+      if (indicator.animationInterval !== 60) throw new Error("initial animation cadence was not exposed")
+      indicator.speed = 1
+      if (indicator.animationInterval !== 60) throw new Error("animation cadence minimum was bypassed")
+      indicator.speed = 90
+      if (indicator.animationInterval !== 90 || !indicator.animationRunning) throw new Error("live animation cadence change did not apply cleanly")
       indicator.style = "glyph"
       indicator.glyph = "#"
       if (frame.text !== "#") throw new Error("custom loading glyph failed")

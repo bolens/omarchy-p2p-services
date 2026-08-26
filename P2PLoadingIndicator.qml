@@ -17,6 +17,7 @@ Rectangle {
   property int frameIndex: 0
   readonly property var frames: Model.loadingFrames(style, glyph)
   readonly property bool animationRunning: animationTimer.running
+  readonly property int animationInterval: animationTimer.interval
 
   visible: running
   Layout.fillWidth: !compact

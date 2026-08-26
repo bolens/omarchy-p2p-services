@@ -9,10 +9,10 @@ Rectangle {
   required property var entry
   required property int serviceIndex
   property bool layoutVisible: true
-  readonly property string groupName: controller.groupLabelFor(entry)
+  property string groupName: controller.groupLabelFor(entry)
 
   objectName: "serviceGroupHeader"
-  visible: layoutVisible && controller.showGroupHeading(serviceIndex, entry)
+  visible: layoutVisible && controller.showGroupHeading(serviceIndex, groupName)
   Layout.fillWidth: true
   implicitHeight: groupRow.implicitHeight + (controller.setting("groupHeaderStyle", "surfaced") === "dense" ? Style.spacing.xs : Style.spacing.sm) * 2
   radius: Style.cornerRadius

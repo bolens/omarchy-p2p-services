@@ -277,6 +277,8 @@ assert.equal(indexes.active, 2);
 assert.equal(indexes.errors, 1);
 assert.equal(indexes.total, 3);
 assert.equal(indexes.byId.b.id, "b");
+assert.equal(indexes.groupById.b, "SYNC");
+assert.equal(indexes.groupById.c, "STORAGE");
 assert.equal(indexes.favorites.c, true);
 assert.deepEqual(indexes.groups.SYNC, {active:2,total:2});
 assert.equal(context.indexedGroupCountText(indexes, "SYNC", "active-total"), "2/2 active");

@@ -25,7 +25,7 @@ ShellRoot {
       return values[key] === undefined ? fallback : values[key]
     }
     function groupLabelFor(entry) { return String(entry.category).toUpperCase() }
-    function showGroupHeading(index, entry) { return index === 0 || groupLabelFor(visibleServices[index - 1]) !== groupLabelFor(entry) }
+    function showGroupHeading(index, groupName) { return index === 0 || groupLabelFor(visibleServices[index - 1]) !== groupName }
     function groupIcon(entry) { return entry.icon }
     function groupCountText(_label) { return "1/1 active" }
     function isGroupCollapsed(_label) { return collapsed }

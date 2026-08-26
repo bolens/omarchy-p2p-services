@@ -8,6 +8,7 @@ const bar = read("BarWidget.qml")
 const settingsPanel = read("P2PSettingsPanel.qml")
 const indicatorPill = read("P2PIndicatorPill.qml")
 const serviceCard = read("P2PServiceCard.qml")
+const serviceList = read("P2PServiceList.qml")
 const service = read("Service.qml")
 const pageNames = ["General", "Appearance", "Services", "Performance", "Discovery", "Packages"]
 
@@ -35,4 +36,6 @@ assert.match(service, /P2PProcessWatchdog\s*\{\s*id:\s*settingsWatcherHandshake/
 assert.match(service, /onTimedOut:\s*root\.handleSettingsWatcherHandshakeTimeout\(\)/)
 assert.equal((serviceCard.match(/Model\.compactIndicators\(/g) || []).length, 1)
 assert.match(serviceCard, /readonly property var compactIndicators:/)
+assert.equal((serviceList.match(/groupLabelFor\(/g) || []).length, 1)
+assert.match(serviceList, /readonly property string groupName:/)
 console.log("plugin topology contracts passed")

@@ -476,7 +476,7 @@ function groupCountText(entries, mode) {
 }
 
 function serviceIndexes(entries, favoriteIds, groupMode) {
-  var rows = entries || [], favorites = {}, byId = {}, groups = {}, active = 0, errors = 0
+  var rows = entries || [], favorites = {}, byId = {}, groupById = {}, groups = {}, active = 0, errors = 0
   ;(favoriteIds || []).forEach(function(id) { favorites[String(id)] = true })
   rows.forEach(function(entry) {
     if (!entry || !entry.id) return
@@ -484,13 +484,14 @@ function serviceIndexes(entries, favoriteIds, groupMode) {
     if (entry.active === true) active++
     if (entry.active === true && entry.hasError === true) errors++
     var label = groupLabel(entry, groupMode, favorites[entry.id] === true)
+    groupById[entry.id] = label
     if (label) {
       if (!groups[label]) groups[label] = {active:0,total:0}
       groups[label].total++
       if (entry.active === true) groups[label].active++
     }
   })
-  return {byId:byId,favorites:favorites,groups:groups,active:active,errors:errors,total:rows.length}
+  return {byId:byId,groupById:groupById,favorites:favorites,groups:groups,active:active,errors:errors,total:rows.length}
 }
 
 function indexedGroupCountText(summary, label, mode) {

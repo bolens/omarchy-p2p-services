@@ -28,6 +28,7 @@ GridLayout {
       id: serviceDelegate
       required property var modelData
       required property int index
+      readonly property string groupName: list.controller.groupLabelFor(modelData)
       Layout.fillWidth: true
       Layout.preferredWidth: list.twoColumnGrid ? Math.max(Style.space(200), (list.width - list.columnSpacing) / 2) : list.width
       implicitHeight: serviceDelegateColumn.implicitHeight
@@ -36,8 +37,8 @@ GridLayout {
         anchors.left: parent.left
         anchors.right: parent.right
         spacing: Style.spacing.xs
-        P2PGroupHeader { layoutVisible: !list.gridView; controller: list.controller; entry: serviceDelegate.modelData; serviceIndex: serviceDelegate.index }
-        P2PServiceCard { visible: !list.controller.isGroupCollapsed(list.controller.groupLabelFor(serviceDelegate.modelData)); Layout.fillWidth: true; entry: serviceDelegate.modelData; controller: list.controller }
+        P2PGroupHeader { layoutVisible: !list.gridView; controller: list.controller; entry: serviceDelegate.modelData; serviceIndex: serviceDelegate.index; groupName: serviceDelegate.groupName }
+        P2PServiceCard { visible: !list.controller.isGroupCollapsed(serviceDelegate.groupName); Layout.fillWidth: true; entry: serviceDelegate.modelData; controller: list.controller }
       }
     }
   }

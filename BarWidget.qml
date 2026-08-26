@@ -126,10 +126,12 @@ Panel {
   }
   function filteredServices() {
     var allow = Model.enabled(setting("enabledServices", []), [])
+    var allowed = {}
     var stopped = setting("serviceShowStopped", {}) || {}
     var order = Model.enabled(setting("serviceOrder", []), [])
     var sortMode = String(setting("serviceSortMode", "custom"))
     var orderRanks = {}, sourceRanks = {}, favoriteMap = serviceIndexes.favorites, labels = {}
+    for (var allowIndex = 0; allowIndex < allow.length; allowIndex++) allowed[allow[allowIndex]] = true
     for (var orderIndex = 0; orderIndex < order.length; orderIndex++) orderRanks[order[orderIndex]] = orderIndex
     for (var sourceIndex = 0; sourceIndex < services.length; sourceIndex++) {
       sourceRanks[services[sourceIndex].id] = sourceIndex
@@ -138,8 +140,8 @@ Panel {
     var result = services.filter(function(s) {
       var show = serviceFilter === "stopped" ? true : (stopped[s.id] !== undefined ? stopped[s.id] === true : showStopped)
       return (show || s.active)
-        && (allow.length === 0 || allow.indexOf(s.id) >= 0)
-        && Model.matchesSearch(s, labelFor(s), searchQuery)
+        && (allow.length === 0 || allowed[s.id] === true)
+        && Model.matchesSearch(s, labels[s.id], searchQuery)
         && Model.matchesStatus(s, serviceFilter)
         && Model.matchesBackend(s, backendFilter)
     })
@@ -165,7 +167,12 @@ Panel {
     if (organizationState.capture(visibleServices.map(function(entry) { return entry.id }), true)) sortStabilityTimer.restart()
   }
   function groupLabelFor(entry) { return Model.groupLabel(entry, String(setting("serviceGroupMode", "none")), isFavorite(entry.id)) }
-  function showGroupHeading(index, entry) { return groupLabelFor(entry) !== "" && (index === 0 || groupLabelFor(visibleServices[index - 1]) !== groupLabelFor(entry)) }
+  function showGroupHeading(index, groupName) {
+    if (groupName === "") return false
+    if (index === 0) return true
+    var previous = visibleServices[index - 1]
+    return !previous || visibleServiceIndexes.groupById[previous.id] !== groupName
+  }
   readonly property var visibleServiceIndexes: Model.serviceIndexes(visibleServices, Model.enabled(setting("favoriteServices", []), []), String(setting("serviceGroupMode", "none")))
   function groupCountText(label) { return Model.indexedGroupCountText(visibleServiceIndexes, label, String(setting("groupCountMode", "active-total"))) }
   function groupIcon(entry) { return Model.groupIcon(entry, String(setting("serviceGroupMode", "none")), isFavorite(entry.id), setting("categoryIcons", {}) || {}) }

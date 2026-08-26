@@ -10,7 +10,7 @@ ShellRoot {
     property var values: ({groupHeaderStyle:"surfaced",showGroupIcons:true,showGroupCounts:true})
     function setting(key, fallback) { return values[key] === undefined ? fallback : values[key] }
     function groupLabelFor(_entry) { return "FILE SYNC" }
-    function showGroupHeading(index, _entry) { return index === 0 }
+    function showGroupHeading(index, _groupName) { return index === 0 }
     function groupIcon(_entry) { return "S" }
     function groupCountText(_label) { return "1/2 active" }
     function isGroupCollapsed(_label) { return collapsed }

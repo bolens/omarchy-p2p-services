@@ -424,6 +424,8 @@ def main():
     try: print(json.dumps(SETTINGS.undo(),separators=(",",":")))
     except (OSError,ValueError,TypeError,RuntimeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
     return
+  if sys.argv[1]=="settings-can-undo" and len(sys.argv)==2:
+    raise SystemExit(0 if SETTINGS.can_undo() else 1)
   if sys.argv[1]=="settings-reconcile" and len(sys.argv)==3:
     try:
       shell=json.loads(sys.argv[2]); durable=SETTINGS.load(); merged=reconcile_settings(shell,durable)

@@ -79,7 +79,9 @@ Rectangle {
         Text { anchors.centerIn: parent; text: controller.iconFor(entry); textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.icon }
       }
       ColumnLayout {
-        Layout.fillWidth: true
+        objectName: "serviceIdentityBlock"
+        Layout.fillWidth: card.grid
+        Layout.maximumWidth: card.grid ? Style.space(1000) : Style.space(260)
         spacing: 1
         RowLayout {
           Layout.fillWidth: true
@@ -90,6 +92,7 @@ Rectangle {
         Text { visible: !card.compact && controller.setting("showCardSummary", true) === true; Layout.fillWidth: true; text: Model.summary(entry, controller.privacyFilter); textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
       }
       RowLayout {
+        objectName: "serviceStatusBlock"
         spacing: Style.spacing.xs
         Repeater {
           model: card.compact && !card.grid ? card.compactIndicators : []
@@ -121,6 +124,7 @@ Rectangle {
           onTriggered: card.activateIndicator(indicator)
         }
       }
+      Item { Layout.fillWidth: true }
     }
 
     RowLayout {

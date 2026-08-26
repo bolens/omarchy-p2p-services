@@ -80,6 +80,12 @@ class SettingsStore:
       self._atomic_write(self.previous_file, current)
       return restored
 
+  def can_undo(self):
+    try:
+      data=json.loads(self.previous_file.read_text())
+      return isinstance(data,dict) and bool(self.sanitize(data))
+    except (OSError,ValueError,TypeError): return False
+
   def _stamp(self, data, current):
     clean = self.sanitize(data)
     previous = self.sanitize(current or {})

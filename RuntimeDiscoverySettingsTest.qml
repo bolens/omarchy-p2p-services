@@ -9,6 +9,7 @@ ShellRoot {
     property string settingsPage: "discovery"
     property bool settingsTransferRunning: false
     property bool settingsTransferLoading: true
+    property bool settingsUndoAvailable: true
     property var patches: []
     property var calls: []
     function setting(key, fallback) {

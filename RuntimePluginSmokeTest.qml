@@ -118,6 +118,11 @@ ShellRoot {
       widget.saveConsoleUrl("syncthing", "https://sync.example.test")
       if (widget.errorText !== "") throw new Error("widget console URL acceptance failed")
       if (widget.settingsSaveStatus !== "saving") throw new Error("durable settings save status did not start")
+      widget.settingsStoreController.durableSettings = ({id:widget.moduleName,showCount:false})
+      widget.restoreFailedSettings()
+      if (widget.settings.showCount !== false || widget.settingsSaveStatus !== "failed" || root.updates < 1)
+        throw new Error("failed settings save did not restore widget and inline state")
+      widget.settingsSaveStatus = "saving"
       widget.serviceCatalog = [{id:"syncthing",installedPackages:["syncthing"]}]
       var entry = {id:"syncthing",name:"Syncthing",active:false}
       widget.requestUninstall(entry)

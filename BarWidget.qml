@@ -26,6 +26,7 @@ Panel {
   readonly property bool statusIndicatorVisible: statusLoadingState.visible
   property var helperDiagnostics: []
   readonly property var durableSettings: settingsStore.durableSettings
+  readonly property var settingsStoreController: settingsStore
   readonly property bool durableSettingsLoaded: settingsStore.loaded
   readonly property bool settingsSurfaceLoaded: settingsPageLoader.item !== null
   readonly property bool serviceLoadingVisible: serviceLoadingIndicator.visible
@@ -54,6 +55,7 @@ Panel {
   property bool showingWidgetSettings: false
   property bool availablePackagesExpanded: false
   readonly property bool settingsTransferRunning: settingsTransferController.running
+  readonly property bool settingsUndoAvailable: settingsTransferController.undoAvailable
   readonly property bool settingsTransferLoading: settingsTransferLoadingState.visible
   property string settingsTransferDisplayMode: ""
   property string settingsSaveStatus: ""
@@ -119,6 +121,14 @@ Panel {
     settingsSaveStatus = "saving"
     settingsSavedClear.stop()
     settingsStore.save(next, patch)
+  }
+  function restoreFailedSettings() {
+    var fallback = JSON.parse(JSON.stringify(durableSettings || settings || {}))
+    fallback.id = moduleName
+    settings = fallback
+    if (bar && bar.shell && typeof bar.shell.updateEntryInline === "function") bar.shell.updateEntryInline(moduleName, fallback)
+    settingsSaveStatus = "failed"
+    errorText = "Unable to save P2P widget settings; previous settings restored"
   }
   function adoptTransferredSettings(imported) {
     settingsStore.adopt(imported)
@@ -267,6 +277,7 @@ Panel {
   }
   function showSettingsPage(page) {
     settingsPage = page
+    if (page === "discovery") settingsTransferController.refreshUndoAvailability()
     popupScroll.contentY = 0
     if (page === "packages") refreshCatalog()
   }
@@ -999,7 +1010,7 @@ Panel {
       Qt.callLater(root.reloadIfSharedSettingsAdvanced)
     }
     onLoadFailed: root.errorText = "Unable to load saved P2P settings; using shell settings"
-    onSaveFailed: { root.settingsSaveStatus = ""; root.errorText = "Unable to save P2P widget settings" }
+    onSaveFailed: root.restoreFailedSettings()
   }
   P2PServiceActions {
     id: serviceActions
@@ -1021,7 +1032,7 @@ Panel {
   P2PSettingsTransferController {
     id: settingsTransferController
     helper: root.helper
-    onFailed: function(mode, _exitCode) { settingsTransferLoadingState.finish(); root.errorText = "Settings " + mode + " failed" }
+    onFailed: function(mode, _exitCode, detail) { settingsTransferLoadingState.finish(); root.errorText = "Settings " + mode + " failed" + (detail ? ": " + detail : "") }
     onSucceeded: function(mode, payload) { settingsTransferLoadingState.finish(); settingsTransferResult.apply(mode, payload) }
   }
   P2PSettingsTransferResult { id: settingsTransferResult; controller: root; moduleName: root.moduleName; onErrorRequested: function(message) { root.errorText = message } }

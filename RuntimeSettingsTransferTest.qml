@@ -6,6 +6,7 @@ ShellRoot {
   id: root
   property int stage: 0
   readonly property string fixtureHelper: PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/transfer-helper"))
+  readonly property string failingHelper: PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/transfer-failing-helper"))
 
   P2PSettingsTransferController {
     id: transfer
@@ -16,11 +17,12 @@ ShellRoot {
       if (transfer.activeMode !== "export") throw new Error("settings transfer mode was not retained for publication")
       root.stage = 1
       if (transfer.request("invalid")) throw new Error("invalid settings transfer mode started")
-      transfer.helper = "/usr/bin/false"
+      transfer.helper = root.failingHelper
       if (!transfer.request("undo")) throw new Error("failing settings transfer did not start")
     }
-    onFailed: function(mode, exitCode) {
+    onFailed: function(mode, exitCode, detail) {
       if (root.stage !== 1 || mode !== "undo" || exitCode === 0) throw new Error("settings transfer failure payload failed")
+      if (detail !== "fixture transfer failed safely") throw new Error("settings transfer stderr detail was not preserved")
       if (transfer.running) throw new Error("settings transfer remained busy after failure")
       root.stage = 2
       console.log("P2P_QML_SETTINGS_TRANSFER_OK")

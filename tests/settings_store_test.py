@@ -15,8 +15,10 @@ class SettingsStoreTests(unittest.TestCase):
     with tempfile.TemporaryDirectory() as directory:
       store = self.store(directory)
       store.save('{"showCount":true,"compactCards":false}')
+      self.assertFalse(store.can_undo())
       first_revision = store.load()["_p2pRevision"]
       merged = store.patch('{"compactCards":true}')
+      self.assertTrue(store.can_undo())
       self.assertTrue(merged["showCount"])
       self.assertTrue(merged["compactCards"])
       self.assertGreater(merged["_p2pRevision"], 0)

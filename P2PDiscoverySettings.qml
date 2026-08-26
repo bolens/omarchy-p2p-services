@@ -55,7 +55,7 @@ ColumnLayout {
             Layout.fillWidth: true
             Button { objectName: "settingsExportButton"; text: "Export settings"; enabled: !page.controller.settingsTransferRunning; onClicked: page.controller.exportSettings() }
             Button { objectName: "settingsImportButton"; text: "Import settings"; enabled: !page.controller.settingsTransferRunning; tooltipText: "Import the previously exported settings file"; onClicked: page.controller.importSettings() }
-            Button { objectName: "settingsUndoButton"; text: "Undo last change"; enabled: !page.controller.settingsTransferRunning; tooltipText: "Restore the previous durable settings snapshot"; onClicked: page.controller.undoSettings() }
+            Button { objectName: "settingsUndoButton"; text: "Undo last change"; enabled: !page.controller.settingsTransferRunning && page.controller.settingsUndoAvailable; tooltipText: enabled ? "Restore the previous durable settings snapshot" : "No previous durable settings snapshot is available"; onClicked: page.controller.undoSettings() }
             Item { Layout.fillWidth: true }
           }
           }

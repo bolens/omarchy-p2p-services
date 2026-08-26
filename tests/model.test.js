@@ -35,6 +35,9 @@ assert.equal(context.matchesStatus({active:false,hasError:false}, "stopped"), tr
 assert.equal(context.matchesStatus({active:true,hasError:true}, "issues"), true);
 assert.equal(context.matchesStatus({active:true,hasError:false}, "issues"), false);
 assert.equal(context.matchesStatus({active:false,hasError:false}, "all"), true);
+assert.equal(context.matchesBackend({backend:"docker"}, "docker"), true);
+assert.equal(context.matchesBackend({backend:"systemd"}, "docker"), false);
+assert.equal(context.matchesBackend({backend:"systemd"}, ""), true);
 assert.equal(context.safeHttpUrl("https://node.example.test:8443/ui"), "https://node.example.test:8443/ui");
 assert.equal(context.safeHttpUrl("http://user:secret\.test"), "");
 assert.equal(context.safeHttpUrl("http://ok.example\nfile:///tmp/x"), "");
@@ -130,9 +133,9 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.savedViewPatch({}))), {
   serviceGroupMode:"none",serviceGroupDirection:"automatic",favoritesFirst:true
 });
 assert.deepEqual(JSON.parse(JSON.stringify(context.savedViewSelection({
-  search:"sync",filter:"running",sortMode:"name",groupMode:"scope"
+  search:"sync",filter:"running",backend:"docker",sortMode:"name",groupMode:"scope"
 }))), {
-  search:"sync",filter:"running",patch:{serviceSortMode:"name",serviceSortDirection:"automatic",serviceGroupMode:"scope",serviceGroupDirection:"automatic",favoritesFirst:true}
+  search:"sync",filter:"running",backend:"docker",patch:{serviceSortMode:"name",serviceSortDirection:"automatic",serviceGroupMode:"scope",serviceGroupDirection:"automatic",favoritesFirst:true}
 });
 assert.deepEqual(JSON.parse(JSON.stringify(context.smoothTrafficRate({rx:100,tx:50},{rx:300,tx:0},0.25,80))), {rx:150,tx:37.5,active:true});
 assert.deepEqual(JSON.parse(JSON.stringify(context.serviceTransitions(

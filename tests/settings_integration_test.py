@@ -70,13 +70,13 @@ class SettingsIntegrationTests(ControlTestCase):
     self.assertFalse(CONTROL.sanitize_settings({"favoritesFirst": False})["favoritesFirst"])
     cleaned = CONTROL.sanitize_settings({"serviceGroupMode": "scope", "serviceGroupDirection": "descending",
       "groupCountMode": "active", "showGroupIcons": False, "runningFirst": True, "stableLiveSort": True,
-      "savedViews": [{"name":"Transfers","filter":"running","sortMode":"traffic","groupMode":"category","groupDirection":"ascending","search":"sync"}, {"name":""}, "bad"]})
+      "savedViews": [{"name":"Transfers","filter":"running","backend":"docker","sortMode":"traffic","groupMode":"category","groupDirection":"ascending","search":"sync"}, {"name":""}, "bad"]})
     self.assertEqual(cleaned["serviceGroupMode"], "scope")
     self.assertEqual(cleaned["serviceGroupDirection"], "descending")
     self.assertEqual(cleaned["groupCountMode"], "active")
     self.assertFalse(cleaned["showGroupIcons"])
     self.assertTrue(cleaned["runningFirst"])
-    self.assertEqual(cleaned["savedViews"], [{"name":"Transfers","filter":"running","sortMode":"traffic","sortDirection":"automatic","groupMode":"category","groupDirection":"ascending","favoritesFirst":True,"search":"sync"}])
+    self.assertEqual(cleaned["savedViews"], [{"name":"Transfers","filter":"running","backend":"docker","sortMode":"traffic","sortDirection":"automatic","groupMode":"category","groupDirection":"ascending","favoritesFirst":True,"search":"sync"}])
 
   def test_settings_schema_rejects_unknown_organization_values(self):
     cleaned = CONTROL.sanitize_settings({

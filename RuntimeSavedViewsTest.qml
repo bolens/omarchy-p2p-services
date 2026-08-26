@@ -4,7 +4,7 @@ import QtQuick
 ShellRoot {
   id: root
   property var selected: null
-  property var saved: [{name:"Transfers and synchronization",search:"sync",filter:"running",sortMode:"traffic",sortDirection:"descending",groupMode:"category",groupDirection:"ascending",favoritesFirst:false}]
+  property var saved: [{name:"Transfers and synchronization",search:"sync",filter:"running",backend:"docker",sortMode:"traffic",sortDirection:"descending",groupMode:"category",groupDirection:"ascending",favoritesFirst:false}]
 
   QtObject {
     id: mockController
@@ -30,7 +30,7 @@ ShellRoot {
     if (!button || button.text !== "Transfers and sy" || button.tooltipText !== "Transfers and synchronization")
       throw new Error("saved view button presentation failed")
     button.clicked()
-    if (!selected || selected.search !== "sync" || selected.filter !== "running") throw new Error("saved view filter event failed")
+    if (!selected || selected.search !== "sync" || selected.filter !== "running" || selected.backend !== "docker") throw new Error("saved view filter event failed")
     if (selected.sortMode !== "traffic" || selected.sortDirection !== "descending") throw new Error("saved view sort event failed")
     if (selected.groupMode !== "category" || selected.groupDirection !== "ascending" || selected.favoritesFirst !== false) throw new Error("saved view grouping event failed")
     selected = null

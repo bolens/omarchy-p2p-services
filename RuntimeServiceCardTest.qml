@@ -14,6 +14,7 @@ ShellRoot {
     property bool privacyFilter: true
     property string density: "comfortable"
     property string layout: "list"
+    property string backendFilter: ""
     property var events: []
     function setting(key, fallback) {
       var values = {serviceLayout:layout,cardDensity:density,showStatusRail:true,showCardSummary:true,showQuickActions:true,showTrafficStats:false,showBackendBadge:true,showFavoriteMarker:true}
@@ -35,7 +36,7 @@ ShellRoot {
     function openLogs(_entry) {}
     function copyDiagnostics(_entry) {}
     function openConsole(entry) { events = events.concat([{kind:"console",id:entry.id}]) }
-    function filterByBackend(backend) { events = events.concat([{kind:"backend",backend:backend}]) }
+    function filterByBackend(backend) { backendFilter = backendFilter === backend ? "" : backend; events = events.concat([{kind:"backend",backend:backend}]) }
   }
 
   P2PServiceCard {

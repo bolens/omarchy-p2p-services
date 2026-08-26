@@ -101,8 +101,16 @@ ShellRoot {
         throw new Error("durable settings reload was not broadcast to live instances")
       barMock.routeReloadFixture = false
       if (widget.statusLoading) throw new Error("initial service loading state did not settle")
+      widget.services = [{id:"container",name:"Container",backend:"docker",active:true,hasError:false},{id:"unit",name:"Unit",backend:"systemd",active:true,hasError:false}]
       widget.filterByBackend("docker")
-      if (widget.searchQuery !== "docker" || widget.serviceFilter !== "all") throw new Error("backend pill filter state failed")
+      if (widget.backendFilter !== "docker" || widget.searchQuery !== "" || widget.serviceFilter !== "all") throw new Error("backend pill filter state failed")
+      if (widget.visibleServices.length !== 1 || widget.visibleServices[0].id !== "container") throw new Error("structured backend filter did not constrain services")
+      widget.closeCurrentLayer()
+      if (widget.backendFilter !== "") throw new Error("escape layer did not clear backend filter")
+      widget.filterByBackend("docker")
+      widget.filterByBackend("docker")
+      if (widget.backendFilter !== "") throw new Error("backend pill filter did not toggle off")
+      widget.services = []
       if (!widget.serviceLoadingVisible) throw new Error("fast service discovery did not retain a visible loading frame")
       widget.saveConsoleUrl("syncthing", "file:///tmp/ui")
       if (widget.errorText.indexOf("http://") < 0) throw new Error("widget console URL rejection failed")

@@ -107,6 +107,11 @@ function matchesStatus(entry, filter) {
   return true
 }
 
+function matchesBackend(entry, backend) {
+  var expected = String(backend || "").trim().toLowerCase()
+  return !expected || String(entry && entry.backend || "process").toLowerCase() === expected
+}
+
 function safeHttpUrl(value) {
   var text = String(value || "").trim()
   if (!text || /[\x00-\x1f\x7f]/.test(text)) return ""
@@ -560,7 +565,7 @@ function savedViewPatch(view) {
 
 function savedViewSelection(view) {
   var selected = view || {}
-  return {search:String(selected.search || ""),filter:String(selected.filter || "all"),patch:savedViewPatch(selected)}
+  return {search:String(selected.search || ""),filter:String(selected.filter || "all"),backend:String(selected.backend || ""),patch:savedViewPatch(selected)}
 }
 
 function smoothTrafficRate(previous, current, alpha, threshold) {

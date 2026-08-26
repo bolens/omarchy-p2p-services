@@ -114,7 +114,7 @@ def sanitize_settings(data):
       if not isinstance(view, dict): continue
       name = str(view.get("name", "")).strip()[:32]
       if not name: continue
-      views.append({
+      saved_view = {
         "name": name,
         "filter": view.get("filter") if view.get("filter") in VIEW_FILTERS else "all",
         "sortMode": view.get("sortMode") if view.get("sortMode") in SORT_MODES else "custom",
@@ -123,7 +123,10 @@ def sanitize_settings(data):
         "groupDirection": view.get("groupDirection") if view.get("groupDirection") in GROUP_DIRECTIONS else "automatic",
         "favoritesFirst": view.get("favoritesFirst") if isinstance(view.get("favoritesFirst"), bool) else True,
         "search": str(view.get("search", "")).strip()[:128],
-      })
+      }
+      backend = str(view.get("backend", "")).strip().lower()[:64]
+      if backend: saved_view["backend"] = backend
+      views.append(saved_view)
     clean["savedViews"] = views
   clean["_p2pSettingsVersion"] = SETTINGS_VERSION
   clean["_p2pRevision"] = _revision(source.get("_p2pRevision"))

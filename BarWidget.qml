@@ -45,6 +45,7 @@ Panel {
   property string pendingAction: ""
   property string searchQuery: ""
   property string serviceFilter: "all"
+  property string backendFilter: ""
   property string expandedServiceId: ""
   property string contextServiceId: ""
   property string selectedServiceId: ""
@@ -137,6 +138,7 @@ Panel {
         && (allow.length === 0 || allow.indexOf(s.id) >= 0)
         && Model.matchesSearch(s, labelFor(s), searchQuery)
         && Model.matchesStatus(s, serviceFilter)
+        && Model.matchesBackend(s, backendFilter)
     })
     var sortContext = {
       mode: sortMode,
@@ -174,6 +176,7 @@ Panel {
     var selected = Model.savedViewSelection(view)
     searchQuery = selected.search
     serviceFilter = selected.filter
+    backendFilter = selected.backend
     persistKeepingOpen(selected.patch)
   }
   function saveCurrentView(name) {
@@ -181,7 +184,7 @@ Panel {
     if (!label) return
     var views = JSON.parse(JSON.stringify(setting("savedViews", []) || []))
     views = views.filter(function(view) { return view.name !== label })
-    views.unshift({name:label,filter:serviceFilter,sortMode:String(setting("serviceSortMode","custom")),sortDirection:String(setting("serviceSortDirection","automatic")),groupMode:String(setting("serviceGroupMode","none")),groupDirection:String(setting("serviceGroupDirection","automatic")),favoritesFirst:setting("favoritesFirst",true) === true,search:searchQuery})
+    views.unshift({name:label,filter:serviceFilter,backend:backendFilter,sortMode:String(setting("serviceSortMode","custom")),sortDirection:String(setting("serviceSortDirection","automatic")),groupMode:String(setting("serviceGroupMode","none")),groupDirection:String(setting("serviceGroupDirection","automatic")),favoritesFirst:setting("favoritesFirst",true) === true,search:searchQuery})
     persistKeepingOpen({savedViews:views.slice(0,12)})
   }
   function removeSavedView(name) { persistKeepingOpen({savedViews:(setting("savedViews",[]) || []).filter(function(view) { return view.name !== name })}) }
@@ -192,7 +195,7 @@ Panel {
     var savedName = String(setting("defaultSavedView", ""))
     var saved = (setting("savedViews", []) || []).find(function(view) { return view.name === savedName })
     if (saved) applyView(saved)
-    else serviceFilter = String(setting("defaultView", "all"))
+    else { serviceFilter = String(setting("defaultView", "all")); backendFilter = "" }
   }
   function service(id) { return serviceIndexes.byId[id] || null }
   function activityRank(entry) {
@@ -237,6 +240,7 @@ Panel {
   }
   function closeCurrentLayer() {
     if (searchQuery !== "") { searchQuery = ""; return }
+    if (backendFilter !== "") { backendFilter = ""; return }
     if (contextServiceId !== "") { contextServiceId = ""; return }
     if (expandedServiceId !== "") { expandedServiceId = ""; return }
     if (editingServiceId !== "") { editingServiceId = ""; return }
@@ -395,8 +399,8 @@ Panel {
   }
   function labelFor(entry) { var values = setting("serviceLabels", {}) || {}; return values[entry.id] || entry.name }
   function filterByBackend(backend) {
-    searchQuery = String(backend || "").trim()
-    serviceFilter = "all"
+    var requested = String(backend || "").trim().toLowerCase()
+    backendFilter = backendFilter === requested ? "" : requested
     selectedServiceId = ""
   }
   function iconFor(entry) { var values = setting("serviceIcons", {}) || {}; return values[entry.id] || entry.icon }
@@ -818,10 +822,17 @@ Panel {
           P2PFilterPill { controller: root; label: "Running " + root.activeCount; value: "running" }
           P2PFilterPill { controller: root; label: "Stopped " + root.stoppedCount; value: "stopped" }
           P2PFilterPill { controller: root; label: "Issues " + root.errorCount; value: "issues"; visible: root.errorCount > 0 }
+          P2PIndicatorPill {
+            objectName: "activeBackendFilterPill"
+            visible: root.backendFilter !== ""
+            indicator: ({icon:"",value:root.backendFilter.toUpperCase(),tooltip:"Clear backend filter"})
+            tone: Color.bar.active
+            onTriggered: root.filterByBackend(root.backendFilter)
+          }
           Item { Layout.fillWidth: true }
           Rectangle {
             objectName: "visibleServiceCountBadge"
-            visible: root.serviceFilter !== "all" || root.searchQuery !== ""
+            visible: root.serviceFilter !== "all" || root.searchQuery !== "" || root.backendFilter !== ""
             implicitWidth: visibleServiceCountText.implicitWidth + Style.spacing.sm * 2
             implicitHeight: visibleServiceCountText.implicitHeight + Style.space(4)
             radius: implicitHeight / 2
@@ -854,8 +865,10 @@ Panel {
           visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.visibleServices.length === 0 && root.visibleErrorText === "" && (!root.statusIndicatorVisible || root.setting("showLoadingIndicators", true) !== true)
           message: root.services.length
             ? (root.searchQuery
-                ? "No " + (root.serviceFilter === "all" ? "services" : root.serviceFilter + " services") + " match “" + root.searchQuery + "”."
-                : "No services match the “" + root.serviceFilter + "” view.")
+                ? "No " + (root.serviceFilter === "all" ? "services" : root.serviceFilter + " services") + " match “" + root.searchQuery + "”" + (root.backendFilter ? " using the " + root.backendFilter + " backend." : ".")
+                : (root.backendFilter
+                    ? "No " + (root.serviceFilter === "all" ? "services" : root.serviceFilter + " services") + " use the " + root.backendFilter + " backend."
+                    : "No services match the “" + root.serviceFilter + "” view."))
             : "No supported P2P services detected."
           icon: root.services.length ? "󰍉" : "󰒍"
           tone: Color.muted

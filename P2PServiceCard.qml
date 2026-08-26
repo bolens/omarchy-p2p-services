@@ -115,7 +115,7 @@ Rectangle {
         P2PIndicatorPill {
           objectName: "backendIndicatorPill"
           visible: !card.grid && controller.setting("showBackendBadge", false) === true
-          indicator: ({icon:"", value:String(entry.backend || "process").toUpperCase(), tooltip:"Show " + String(entry.backend || "process") + " services", action:"backend"})
+          indicator: ({icon:"", value:String(entry.backend || "process").toUpperCase(), tooltip:controller.backendFilter === String(entry.backend || "process").toLowerCase() ? "Clear backend filter" : "Show " + String(entry.backend || "process") + " services", action:"backend"})
           tone: Color.muted
           onTriggered: card.activateIndicator(indicator)
         }

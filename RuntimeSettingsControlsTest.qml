@@ -69,10 +69,12 @@ ShellRoot {
     editor.text = "99"; integerSetting.save()
     editor.text = "0"; integerSetting.save()
     editor.text = "invalid"; integerSetting.save()
-    if (mockController.patches.length !== 4) throw new Error("integer persistence event count failed")
+    editor.text = "7.8"; integerSetting.save()
+    if (mockController.patches.length !== 5) throw new Error("integer persistence event count failed")
     if (mockController.patches[1].interval !== 10) throw new Error("integer maximum clamp failed")
     if (mockController.patches[2].interval !== 2) throw new Error("integer minimum clamp failed")
     if (mockController.patches[3].interval !== 6) throw new Error("integer fallback failed")
+    if (mockController.patches[4].interval !== 8) throw new Error("fractional integer input was persisted")
     mockController.values = Object.assign({}, mockController.values, {enabled:false,interval:8})
     Qt.callLater(function() {
       if (settingToggle.checked) throw new Error("toggle ignored externally reloaded settings")

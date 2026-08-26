@@ -40,7 +40,7 @@ ColumnLayout {
     var raw = String(editor.text).trim()
     var parsed = Number(raw)
     if (raw === "" || !isFinite(parsed)) parsed = fallback
-    var value = Math.max(minimum, Math.min(maximum, parsed))
+    var value = Math.max(minimum, Math.min(maximum, Math.round(parsed)))
     var update = {}
     update[settingKey] = value
     controller.persistKeepingOpen(update)

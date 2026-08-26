@@ -68,8 +68,10 @@ SERVICE_IDS=validate_service_registry(SERVICES)
 def normalized_custom_services(raw):
   return normalize_custom_services(raw, SERVICE_IDS)
 
-def all_services():
-  return SERVICES + normalized_custom_services(SETTINGS.load().get("customServices",[]))
+def all_services(settings=None):
+  """Build one service registry from an optional command-scoped settings snapshot."""
+  durable=SETTINGS.load() if settings is None else settings
+  return SERVICES + normalized_custom_services(durable.get("customServices",[]))
 
 def run(args, timeout=2):
   try: return subprocess.run(args, text=True, capture_output=True, timeout=timeout)
@@ -80,7 +82,7 @@ def run(args, timeout=2):
     SNAPSHOT.warning("command_failed",command=os.path.basename(str(args[0])),detail=type(error).__name__)
     return None
 
-PROBE = RuntimeProbe(SNAPSHOT, lambda *args: run(*args), lambda: all_services(), PS, SYSTEMCTL, DOCKER_ALIASES)
+PROBE = RuntimeProbe(SNAPSHOT, lambda *args: run(*args), lambda: SNAPSHOT.services if SNAPSHOT.services is not None else all_services(), PS, SYSTEMCTL, DOCKER_ALIASES)
 
 def command_path(service):
   candidates=[]
@@ -378,9 +380,10 @@ def control(service, action, terminal_auth=False):
     if command: subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True); return
   raise RuntimeError("unsupported action")
 
-def status_snapshot(private=True, console_host="", traffic=True, all_containers=True):
+def status_snapshot(private=True, console_host="", traffic=True, all_containers=True, services=None):
   SNAPSHOT.all_containers=all_containers
-  selected=[service for service in all_services() if detected(service)]
+  SNAPSHOT.services=all_services() if services is None else services
+  selected=[service for service in SNAPSHOT.services if detected(service)]
   if traffic:
     matched=[item for service in selected for item in PROBE.docker_matches(service) if item.get("State",{}).get("Running")]
     unique={(item.get("_runtime"),str(item.get("Name","")).lstrip("/")):item for item in matched}
@@ -422,7 +425,7 @@ def main():
   if sys.argv[1]=="settings-import" and len(sys.argv)==2:
     target=data_home()/"omarchy/p2p-services/settings-export.json"
     try:
-      raw=read_private_text(target,SETTINGS.MAX_PAYLOAD_BYTES); SETTINGS.save(raw); print(json.dumps(SETTINGS.load(),separators=(",",":")))
+      raw=read_private_text(target,SETTINGS.MAX_PAYLOAD_BYTES); saved=SETTINGS.save(raw); print(json.dumps(saved,separators=(",",":")))
     except (OSError,ValueError,TypeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
     return
   if sys.argv[1]=="watch" and len(sys.argv)==2:
@@ -435,15 +438,18 @@ def main():
     traffic=(len(sys.argv)<5 or sys.argv[4] != "no-stats")
     all_containers=(len(sys.argv)<6 or sys.argv[5] != "running-containers")
     bypass=(len(sys.argv)>6 and sys.argv[6] == "bypass-cache")
-    cache_key=json.dumps([private,console_host,traffic,all_containers,SETTINGS.load().get("customServices",[])],sort_keys=True,separators=(",",":"))
+    settings=SETTINGS.load()
+    cache_key=json.dumps([private,console_host,traffic,all_containers,settings.get("customServices",[])],sort_keys=True,separators=(",",":"))
     def produce_status():
-      services=status_snapshot(private,console_host,traffic,all_containers)
-      return {"services":services,"diagnostics":list(SNAPSHOT.diagnostics),"durationMs":round((time.monotonic()-started)*1000)}
+      services=all_services(settings)
+      status=status_snapshot(private,console_host,traffic,all_containers,services)
+      return {"services":status,"diagnostics":list(SNAPSHOT.diagnostics),"durationMs":round((time.monotonic()-started)*1000)}
     payload=cached_status(cache_key,produce_status,STATUS_CACHE_ROOT,bypass=bypass)
     if sys.argv[1]=="list": payload=payload["services"]
     print(json.dumps(payload,separators=(",",":"))); return
   if sys.argv[1]=="catalog":
-    print(json.dumps([dict(id=s["id"],name=s["name"],icon=s["icon"],category=s["category"],detected=detected(s),packages=PACKAGE_HINTS.get(s["id"],[]),installedPackages=installed_packages(s),backups=BACKUPS.records(s["id"])) for s in all_services()],separators=(",",":"))); return
+    services=all_services(); SNAPSHOT.services=services
+    print(json.dumps([dict(id=s["id"],name=s["name"],icon=s["icon"],category=s["category"],detected=detected(s),packages=PACKAGE_HINTS.get(s["id"],[]),installedPackages=installed_packages(s),backups=BACKUPS.records(s["id"])) for s in services],separators=(",",":"))); return
   if sys.argv[1]=="install" and len(sys.argv) in (3,4):
     service=service_by_id(sys.argv[2])
     if not service: raise SystemExit("unknown service")

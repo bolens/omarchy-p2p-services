@@ -39,7 +39,39 @@ class ControlCliTests(ControlTestCase):
     self.assertEqual(errors, "")
     self.assertEqual(observed[0][0], [False, "node.home", False, False])
     self.assertTrue(observed[0][2])
-    self.assertEqual(observed[1], (False, "node.home", False, False))
+    self.assertEqual(observed[1][:4], (False, "node.home", False, False))
+    self.assertEqual(observed[1][4], CONTROL.SERVICES)
+
+  def test_status_loads_settings_once_and_reuses_its_service_registry(self):
+    durable = {"customServices": [{"id":"custom-node","name":"Node","commands":["node"]}]}
+    with mock.patch.object(CONTROL.SETTINGS, "load", return_value=durable) as load, \
+         mock.patch.object(CONTROL, "status_snapshot", return_value=[]) as snapshot, \
+         mock.patch.object(CONTROL, "cached_status", side_effect=lambda _key, producer, _root, bypass=False: producer()):
+      self.invoke("status")
+    load.assert_called_once_with()
+    registry = snapshot.call_args.args[4]
+    self.assertEqual(registry[-1]["id"], "custom-node")
+
+  def test_status_cache_hit_skips_service_registry_normalization(self):
+    cached = {"services": [{"id": "cached"}], "diagnostics": [], "durationMs": 1}
+    with mock.patch.object(CONTROL.SETTINGS, "load", return_value={"customServices": []}) as load, \
+         mock.patch.object(CONTROL, "all_services") as registry, \
+         mock.patch.object(CONTROL, "cached_status", return_value=cached):
+      output, _errors = self.invoke("status")
+    self.assertEqual(json.loads(output), cached)
+    load.assert_called_once_with()
+    registry.assert_not_called()
+
+  def test_settings_import_prints_saved_snapshot_without_reloading(self):
+    saved = {"showCount": False, "_p2pRevision": 7}
+    with mock.patch.object(CONTROL, "data_home", return_value=pathlib.Path("/tmp")), \
+         mock.patch.object(CONTROL, "read_private_text", return_value='{"showCount":false}'), \
+         mock.patch.object(CONTROL.SETTINGS, "save", return_value=saved) as save, \
+         mock.patch.object(CONTROL.SETTINGS, "load") as load:
+      output, _errors = self.invoke("settings-import")
+    self.assertEqual(json.loads(output), saved)
+    save.assert_called_once_with('{"showCount":false}')
+    load.assert_not_called()
 
   def test_status_wraps_services_with_diagnostics_and_duration(self):
     CONTROL.SNAPSHOT.warning("probe_failed", command="docker")

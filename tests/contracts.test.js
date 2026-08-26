@@ -7,6 +7,7 @@ const manifest = JSON.parse(read("manifest.json"))
 const bar = read("BarWidget.qml")
 const settingsPanel = read("P2PSettingsPanel.qml")
 const indicatorPill = read("P2PIndicatorPill.qml")
+const serviceCard = read("P2PServiceCard.qml")
 const service = read("Service.qml")
 const pageNames = ["General", "Appearance", "Services", "Performance", "Discovery", "Packages"]
 
@@ -32,4 +33,6 @@ assert.match(indicatorPill, /property bool interactive:\s*indicator\.enabled\s*!
 assert.match(indicatorPill, /MouseArea\s*\{[\s\S]*enabled:\s*pill\.interactive/)
 assert.match(service, /P2PProcessWatchdog\s*\{\s*id:\s*settingsWatcherHandshake/)
 assert.match(service, /onTimedOut:\s*root\.handleSettingsWatcherHandshakeTimeout\(\)/)
+assert.equal((serviceCard.match(/Model\.compactIndicators\(/g) || []).length, 1)
+assert.match(serviceCard, /readonly property var compactIndicators:/)
 console.log("plugin topology contracts passed")

@@ -20,6 +20,7 @@ Rectangle {
   readonly property bool grid: controller.setting("serviceLayout", "list") === "grid"
   readonly property bool compact: density !== "comfortable" || grid
   readonly property bool minimal: density === "minimal"
+  readonly property var compactIndicators: compact ? Model.compactIndicators(entry) : []
   function activateIndicator(indicator) {
     if (indicator.action === "console") controller.openConsole(entry)
     else if (indicator.action === "config") controller.act(entry, "config")
@@ -91,7 +92,7 @@ Rectangle {
       RowLayout {
         spacing: Style.spacing.xs
         Repeater {
-          model: card.compact && !card.grid ? Model.compactIndicators(card.entry) : []
+          model: card.compact && !card.grid ? card.compactIndicators : []
           delegate: P2PIndicatorPill {
             objectName: "compactIndicatorPill"
             required property var modelData
@@ -130,7 +131,7 @@ Rectangle {
       Layout.leftMargin: leadingInset
       spacing: Style.spacing.xs
       Repeater {
-        model: card.grid ? Model.compactIndicators(card.entry) : []
+        model: card.grid ? card.compactIndicators : []
         delegate: P2PIndicatorPill {
           objectName: "gridIndicatorPill"
           required property var modelData

@@ -7,6 +7,7 @@ class SnapshotContext:
     self.reset()
 
   def reset(self, *, all_containers=True):
+    self.services = None
     self.packages = None
     self.containers = None
     self.container_stats = None

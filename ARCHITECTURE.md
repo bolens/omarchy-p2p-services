@@ -26,6 +26,9 @@
   Python defaults are read from `manifest.json`.
 - `p2p_validation.py` is the shared security boundary for user-controlled HTTP
   URLs and console hosts. `p2p_metrics.py` owns pure container-counter parsing.
+- `p2p_support.py` projects whole-plugin diagnostics into aggregate-only reports.
+  `p2p_event_store.py` persists a bounded journal whose schema cannot carry
+  service names or arbitrary detail.
 - `tests/` contains JavaScript, Python, and Quickshell runtime validation.
 - `.github/` contains contribution forms and CI/release automation.
 
@@ -76,6 +79,8 @@ points and sibling imports relative to the installed plugin directory.
   crossing remain in `p2p-control` so pure planners are independently testable.
 - Private mode removes endpoints, process IDs, paths, and console URLs before
   data reaches the UI.
+- Support reports force the private projection; event journal records accept
+  only allowlisted kinds, bounded counts, and timestamps.
 - Service, package, unit, executable, and privileged actions are allowlisted.
 - Service categories flow from the canonical registry through status projection
   into search, grouping, and category bar segments; the UI does not maintain a

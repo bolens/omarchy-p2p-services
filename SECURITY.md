@@ -20,6 +20,8 @@ endpoints, usernames, paths, and unrelated personal information.
   helpers are not run wholesale as root.
 - Custom-service definitions are validated, cannot contain shell commands, and are observation-only at both UI and CLI mutation boundaries.
 - Imported settings are untrusted and sanitized before use.
+- Whole-plugin support reports are aggregate-only and always privacy filtered.
+- The optional event journal cannot persist arbitrary detail or service identity.
 - Predictable exports, credentials, caches, and backup roots reject symlink traversal; private files use no-follow or atomic replacement.
 - Process termination revalidates UID and executable identity and uses Linux pidfds when available.
 

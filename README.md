@@ -148,6 +148,20 @@ These defaults keep
 visible status responsive while reducing background process, systemd, and
 container-runtime queries.
 
+When a refresh fails, the last successful service snapshot stays visible and
+the bar gains a `~` marker with an urgent tone until a scan succeeds. Press `/`
+in the main panel to focus service search immediately.
+
+Transition notifications from the same refresh are grouped by outcome instead
+of producing a burst of one notification per service. An optional bounded event
+journal records only event kinds, counts, and timestamps in private local
+storage. It never persists service names or runtime identifiers.
+
+The Performance settings page can copy a whole-plugin support report. That
+report always forces privacy filtering and contains aggregate service states,
+backend/category counts, safe settings, and diagnostic codes rather than paths,
+endpoints, process IDs, URLs, or custom service names.
+
 Optional event-assisted refresh listens for systemd and container changes in the
 shared service, debounces bursts, and keeps periodic polling as a
 fallback. Results are still deferred while scrolling. Full or manual refreshes

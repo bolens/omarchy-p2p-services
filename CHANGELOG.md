@@ -42,6 +42,12 @@ All notable changes to P2P Services are documented here. This project follows
   so sort, grouping, favorite, label, and custom-order changes are visible at once.
 - Ordering now has an explicit event revision, making accepted organization
   selections recompute the visible model before persistence or refresh results.
+- Aggregated simultaneous service notifications and added an opt-in,
+  identity-free local event journal.
+- Added aggregate-only privacy-filtered support reports and contextual links to
+  the relevant settings sections.
+- Kept last-good data visible with a degraded bar marker and added `/` as the
+  service-search shortcut.
 
 ## [0.1.0] - 2026-08-25
 

@@ -44,6 +44,8 @@ policy, global reset preservation, real saved-view button interaction, and
 settings-transfer concurrency/failure cleanup and service-action command
 dispatch/serialization, result messaging, and custom-service JSON validation.
 They also cover refresh merge/failure/health/cooldown policy, deferred refreshes,
+notification aggregation, the privacy-safe support-report projection, bounded
+event-journal storage and its live QML command queue, contextual settings links,
 watcher parsing/backoff/staleness and real debounce behavior, confirmation
 cleanup, catalog serialization, transfer-result application, console URL
 validation, and a real `Service.qml` plus `BarWidget.qml` plugin-load smoke test.

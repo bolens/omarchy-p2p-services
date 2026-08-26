@@ -180,8 +180,10 @@ do-not-disturb and shell notification policy are respected.
 
 Run `tests/run_all.sh` for Python behavior/security tests, JavaScript model and
 architecture contracts, Python compilation, QML lint/format checks, and manifest
-validation. Run `tests/run_qml_runtime.sh` from a graphical session for the real
-Quickshell JavaScript-engine check.
+validation. It automatically includes the real Quickshell runtime harnesses when
+a Wayland session is available. Set `P2P_RUNTIME_TESTS=always` to require them,
+`P2P_RUNTIME_TESTS=never` to skip them explicitly, or use `--portable` for the
+language and contract checks used by headless CI.
 
 The console editor accepts a validated `http://` or `https://` URL. Row and settings-page
 console buttons always open that saved URL, falling back to the backend default

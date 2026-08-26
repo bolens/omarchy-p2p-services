@@ -13,10 +13,16 @@ checks; QML lint and formatting checks; and `omarchy plugin validate`.
 It also enforces security boundaries, release metadata, local documentation
 links, preview presence, and GitHub issue-form structure.
 
+When a usable Wayland session is present, the same command also runs the live
+Quickshell harnesses. Set `P2P_RUNTIME_TESTS=always` to make their absence a
+failure, `P2P_RUNTIME_TESTS=never` to skip them explicitly, or pass `--portable`
+for the language and contract checks used in headless CI.
+
 Integration coverage is grouped by discovery, control, backups, and
 settings/cache. Static QML ownership contracts live in `contracts.test.js`.
 
-Run the Qt 6 Quickshell runtime harnesses from a graphical Omarchy session:
+The Qt 6 Quickshell runtime harnesses can also be run directly from a graphical
+Omarchy session:
 
 ```sh
 tests/run_qml_runtime.sh
@@ -41,8 +47,8 @@ They also cover refresh merge/failure/health/cooldown policy, deferred refreshes
 watcher parsing/backoff/staleness and real debounce behavior, confirmation
 cleanup, catalog serialization, transfer-result application, console URL
 validation, and a real `Service.qml` plus `BarWidget.qml` plugin-load smoke test.
-They
-intentionally remain separate from the headless suite.
+Headless validation reports their explicit skip instead of silently implying
+that runtime behavior was exercised.
 
 ## Clean archive validation
 
@@ -68,7 +74,7 @@ scripts/capture-screenshots --monitor DP-1 --workspace 10
 ```
 
 The script snapshots the existing configuration, forces `privacyFilter: true`
-in both durable and shell settings, restarts and verifies the private state,
+in both durable and shell settings, reconciles and verifies the private state,
 captures tightly cropped images, strips PNG metadata, and restores the exact
 prior settings and workspace. It refuses to capture if either privacy check
 fails. Review every image before committing it as an additional safeguard.

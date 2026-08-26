@@ -92,9 +92,11 @@ ShellRoot {
       if (!widget.durableSettingsLoaded || !Array.isArray(widget.services) || widget.barText() === "") throw new Error("plugin initial load failed")
       if (widget.serviceFiltersExpanded) throw new Error("service filters were not hidden by default")
       if (widget.serviceFiltersRowVisible) throw new Error("hidden service filters retained layout visibility")
+      var collapsedFilterWidth = widget.desiredPanelWidth
+      var collapsedFilterGutter = widget.scrollbarGutter
       widget.serviceFiltersExpanded = true
       if (!widget.serviceFiltersExpanded) throw new Error("service filter disclosure did not expand")
-      if (widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.configuredPanelWidth) throw new Error("expanded service filters retained narrow intrinsic panel width")
+      if (Math.abs(widget.desiredPanelWidth - collapsedFilterWidth) > Math.max(collapsedFilterGutter, widget.scrollbarGutter) + 0.01) throw new Error("expanded service filters changed the panel by more than its scrollbar gutter: " + collapsedFilterWidth + " -> " + widget.desiredPanelWidth + ", gutters " + collapsedFilterGutter + "/" + widget.scrollbarGutter)
       widget.serviceFiltersExpanded = false
       barMock.routeToFocusedFixture = true
       if (widget.openSettings("packages") !== "ok" || focusedWidgetFixture.requestedPage !== "packages" || widget.showingWidgetSettings)

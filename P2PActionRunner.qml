@@ -14,7 +14,8 @@ QtObject {
 
   function request(entry, action, command) {
     var selectedAction = String(action || "").trim()
-    if (busy || !entry || !entry.id || selectedAction === "" || !Array.isArray(command) || command.length === 0) return false
+    if (busy || !entry || !entry.id || selectedAction === "" || !Array.isArray(command) || command.length === 0
+        || String(command[0] || "").trim() === "") return false
     busy = true
     timedOut = false
     activeEntry = entry

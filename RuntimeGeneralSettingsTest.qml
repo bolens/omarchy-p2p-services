@@ -19,7 +19,7 @@ ShellRoot {
     function togglePrivacyFilter() { privacyToggles += 1; privacyFilter = !privacyFilter }
   }
 
-  P2PGeneralSettings { id: page; controller: mockController }
+  P2PGeneralSettings { id: page; width: 600; controller: mockController }
 
   function descendant(item, name) {
     if (!item) return null
@@ -37,7 +37,11 @@ ShellRoot {
     var stopped = descendant(page, "showStoppedToggle")
     var defaultView = descendant(page, "defaultViewDropdown")
     var savedView = descendant(page, "defaultSavedViewEditor")
-    if (!privacy || !stopped || !defaultView || !savedView) throw new Error("general settings controls are not addressable")
+    var behaviorGrid = descendant(page, "behaviorToggleGrid")
+    var notificationGrid = descendant(page, "notificationToggleGrid")
+    var defaultGrid = descendant(page, "defaultViewGrid")
+    if (!privacy || !stopped || !defaultView || !savedView || !behaviorGrid || !notificationGrid || !defaultGrid) throw new Error("general settings controls are not addressable")
+    if (!behaviorGrid.twoColumns || !notificationGrid.twoColumns || !defaultGrid.twoColumns) throw new Error("wide general settings did not use paired fields")
     privacy.clicked(); stopped.clicked(); defaultView.changed("issues")
     savedView.text = "  Evening  "; savedView.accepted()
     if (mockController.privacyToggles !== 1 || mockController.privacyFilter !== false) throw new Error("privacy toggle dispatch failed")

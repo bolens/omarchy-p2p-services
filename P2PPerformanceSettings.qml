@@ -39,11 +39,15 @@ ColumnLayout {
           }
           P2PSectionHeading { title: "Refresh triggers"; description: "Control event-driven and immediate refresh behavior." }
           SettingsSurface {
+          P2PSettingsGrid {
+          id: refreshTriggerGrid
+          objectName: "refreshTriggerGrid"
           P2PSettingToggle { controller: page.controller; settingKey: "eventRefresh"; label: "Event-assisted refresh"; fallback: true; description: "React to systemd and container events while retaining periodic polling as a fallback." }
           P2PSettingToggle { controller: page.controller; settingKey: "refreshOnOpen"; label: "Refresh when opened"; fallback: true }
           P2PSettingToggle { controller: page.controller; settingKey: "refreshAfterSettings"; label: "Refresh after settings changes"; fallback: true }
           P2PSettingToggle { controller: page.controller; settingKey: "refreshAfterActions"; label: "Refresh after service actions"; fallback: true }
-          IntegerSetting { controller: page.controller; settingKey: "staleWarningSeconds"; label: "Stale warning threshold, seconds"; minimum: 15; maximum: 600; fallback: 60 }
+          IntegerSetting { Layout.columnSpan: refreshTriggerGrid.twoColumns ? 2 : 1; controller: page.controller; settingKey: "staleWarningSeconds"; label: "Stale warning threshold, seconds"; minimum: 15; maximum: 600; fallback: 60 }
+          }
           }
           P2PSectionHeading { title: "Traffic sampling"; description: "Smooth container counters and ignore insignificant transfer activity." }
           SettingsSurface {

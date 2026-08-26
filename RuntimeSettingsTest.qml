@@ -26,6 +26,7 @@ ShellRoot {
 
   P2PServicesSettings {
     id: settingsPage
+    width: 600
     controller: mockController
   }
 
@@ -47,6 +48,10 @@ ShellRoot {
   }
 
   Component.onCompleted: Qt.callLater(function() {
+    for (var gridName of ["serviceSortGrid", "servicePriorityGrid", "serviceGroupingGrid", "groupDisplayGrid"]) {
+      var grid = descendant(settingsPage, gridName)
+      if (!grid || !grid.twoColumns) throw new Error("wide services settings grid missing: " + gridName)
+    }
     select("serviceSortModeDropdown", "name")
     select("serviceSortDirectionDropdown", "descending")
     select("serviceGroupModeDropdown", "scope")

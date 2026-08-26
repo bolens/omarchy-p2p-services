@@ -16,6 +16,8 @@ ColumnLayout {
           SettingsSurface {
           visible: page.controller.settingsPage === "services"
           P2PSettingToggle { controller: page.controller; settingKey: "persistCollapsedGroups"; label: "Remember collapsed groups"; fallback: true }
+          P2PSettingsGrid {
+          objectName: "serviceSortGrid"
           Dropdown {
             objectName: "serviceSortModeDropdown"
             Layout.fillWidth: true
@@ -36,9 +38,15 @@ ColumnLayout {
             accent: Color.bar.active
             onChanged: function(next) { page.controller.persistKeepingOpen({serviceSortDirection: next}) }
           }
+          }
+          P2PSettingsGrid {
+          objectName: "servicePriorityGrid"
           P2PSettingToggle { controller: page.controller; settingKey: "favoritesFirst"; label: "Favorites first"; fallback: true; description: "Keep favorite services pinned above the selected sort order." }
           P2PSettingToggle { controller: page.controller; settingKey: "runningFirst"; label: "Running services first"; fallback: false; description: "Keep running services above stopped services independently of sorting." }
           P2PSettingToggle { controller: page.controller; settingKey: "stableLiveSort"; label: "Stabilize live sorting"; fallback: true; description: "Hold card positions briefly after refreshes and during scrolling or actions." }
+          }
+          P2PSettingsGrid {
+          objectName: "serviceGroupingGrid"
           Dropdown {
             objectName: "serviceGroupModeDropdown"
             Layout.fillWidth: true
@@ -58,6 +66,9 @@ ColumnLayout {
             foreground: Color.popups.text; accent: Color.bar.active
             onChanged: function(next) { page.controller.persistKeepingOpen({serviceGroupDirection: next}) }
           }
+          }
+          P2PSettingsGrid {
+          objectName: "groupDisplayGrid"
           P2PSettingToggle { visible: page.controller.setting("serviceGroupMode", "none") !== "none"; controller: page.controller; settingKey: "showGroupIcons"; label: "Group icons"; fallback: true }
           P2PSettingToggle { visible: page.controller.setting("serviceGroupMode", "none") !== "none"; controller: page.controller; settingKey: "showGroupCounts"; label: "Group counts"; fallback: true }
           Dropdown {
@@ -69,6 +80,7 @@ ColumnLayout {
             options: [{value:"active-total",label:"Active / total"},{value:"active",label:"Active only"},{value:"total",label:"Total only"}]
             foreground: Color.popups.text; accent: Color.bar.active
             onChanged: function(next) { page.controller.persistKeepingOpen({groupCountMode: next}) }
+          }
           }
           Text { visible: page.controller.setting("serviceSortMode", "custom") === "traffic" && page.controller.setting("showTrafficStats", true) !== true; Layout.fillWidth: true; text: "Transfer-rate sorting needs Live transfer speeds enabled."; textFormat: Text.PlainText; color: Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           }

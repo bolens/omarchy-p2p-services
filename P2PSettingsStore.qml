@@ -13,10 +13,12 @@ QtObject {
   property var activeSaveFallback: ({})
   property bool loaded: false
   property bool busy: false
+  property bool loadBusy: false
   property bool loadTimedOut: false
   property bool saveTimedOut: false
   property int timeoutMilliseconds: 15000
   readonly property bool running: busy
+  readonly property bool loading: loadBusy
 
   signal reconciled(var settings)
   signal loadFailed()
@@ -25,11 +27,14 @@ QtObject {
   signal updated(var settings)
 
   function load(shellSettings) {
+    if (loading || String(helper || "").trim() === "") return false
+    loadBusy = true
     loadTimedOut = false
     loadFallback = JSON.parse(JSON.stringify(shellSettings || {}))
     loadProc.command = [helper, "settings-reconcile", JSON.stringify(shellSettings || {})]
     loadProc.running = true
     loadWatchdog.start()
+    return true
   }
 
   function save(next, patch) {
@@ -64,6 +69,7 @@ QtObject {
     stdout: StdioCollector { id: loadOutput; waitForEnd: true }
     onExited: function(exitCode) {
         loadWatchdog.stop()
+        store.loadBusy = false
         var stored = null
         if (exitCode === 0 && !store.loadTimedOut) {
         try {

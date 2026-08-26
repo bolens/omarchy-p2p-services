@@ -61,5 +61,9 @@ ShellRoot {
     onTriggered: { throw new Error("settings store I/O test timed out at stage " + root.stage) }
   }
 
-  Component.onCompleted: store.load({serviceSortMode:"custom"})
+  Component.onCompleted: {
+    if (!store.load({serviceSortMode:"custom"})) throw new Error("settings reconciliation did not report its start")
+    if (store.load({serviceSortMode:"superseded"})) throw new Error("duplicate settings reconciliation was accepted")
+    if (!store.loading) throw new Error("active settings reconciliation was not observable")
+  }
 }

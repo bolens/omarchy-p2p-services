@@ -62,6 +62,9 @@ ShellRoot {
     if (!mockController.availablePackagesExpanded || !mockController.installedPackagesExpanded) throw new Error("package expansion actions failed")
     if (mockController.events.length !== 2 || mockController.events[0].kind !== "install" || mockController.events[0].id !== "headscale" || mockController.events[1].action !== "stop") throw new Error("package install/stop dispatch failed")
     if (!stop.visible || !stop.enabled || uninstall.enabled) throw new Error("running package action state failed")
+    mockController.pendingService = "syncthing"
+    if (stop.enabled || uninstall.enabled) throw new Error("pending package operation left maintenance actions enabled")
+    mockController.pendingService = ""
     mockController.runtimeActive = false
     Qt.callLater(function() {
       if (stop.visible || !uninstall.enabled) throw new Error("stopped package action state failed")
@@ -73,10 +76,16 @@ ShellRoot {
       mockController.catalogLoading = true
       mockController.settingsPage = "general"
       if (page.visible || !loading.running) throw new Error("catalog loading state was not preserved while navigating away")
+      if (descendant(page, "installPackageButton-headscale") || descendant(page, "uninstallPackageButton-syncthing"))
+        throw new Error("package delegates remained instantiated while settings page was hidden")
       mockController.settingsPage = "packages"
-      if (!loading.running) throw new Error("catalog loading state was lost after navigation back")
-      console.log("P2P_QML_PACKAGES_SETTINGS_OK")
-      Qt.quit()
+      Qt.callLater(function() {
+        if (!loading.running) throw new Error("catalog loading state was lost after navigation back")
+        if (!descendant(page, "installPackageButton-headscale") || !descendant(page, "uninstallPackageButton-syncthing"))
+          throw new Error("package delegates did not return after navigating back")
+        console.log("P2P_QML_PACKAGES_SETTINGS_OK")
+        Qt.quit()
+      })
     })
   })
 }

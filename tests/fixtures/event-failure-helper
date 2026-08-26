@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+case ${1:-} in
+  events-list) exit 2 ;;
+  events-clear) ;;
+  *) exit 2 ;;
+esac

@@ -91,6 +91,7 @@ run_harness RuntimeMinimumLoadingStateTest.qml P2P_QML_MINIMUM_LOADING_STATE_OK
 run_harness RuntimeProcessTimeoutTest.qml P2P_QML_PROCESS_TIMEOUT_OK
 run_harness RuntimeProcessWatchdogTest.qml P2P_QML_PROCESS_WATCHDOG_OK
 run_harness RuntimeEventJournalTest.qml P2P_QML_EVENT_JOURNAL_OK
+run_harness RuntimeEventJournalFailureTest.qml P2P_QML_EVENT_JOURNAL_FAILURE_OK
 
 if (( ${#requested_harnesses[@]} > 0 && selected_harnesses != ${#requested_harnesses[@]} )); then
   printf 'Unknown QML runtime harness: %s\n' "${requested_harnesses[*]}" >&2

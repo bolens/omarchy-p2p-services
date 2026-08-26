@@ -1,5 +1,6 @@
 import os
 import pathlib
+import re
 import subprocess
 import tempfile
 import textwrap
@@ -7,6 +8,16 @@ import unittest
 
 
 class QmlRuntimeRunnerTests(unittest.TestCase):
+  def test_every_runtime_harness_is_registered(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    harnesses = {path.name for path in plugin_root.glob("Runtime*Test.qml")}
+    registered = set(re.findall(
+      r"^run_harness (Runtime\S+Test\.qml) ",
+      (plugin_root / "tests/run_qml_runtime.sh").read_text(),
+      re.MULTILINE,
+    ))
+    self.assertEqual(registered, harnesses)
+
   def test_requested_harnesses_run_without_the_full_matrix(self):
     plugin_root = pathlib.Path(__file__).resolve().parents[1]
     with tempfile.TemporaryDirectory() as directory:

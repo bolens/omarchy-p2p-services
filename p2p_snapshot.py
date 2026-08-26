@@ -13,6 +13,7 @@ class SnapshotContext:
     self.container_stats = None
     self.container_matches = {}
     self.process_rows = None
+    self.process_matches = {}
     self.socket_lines = None
     self.unit_snapshots = {}
     self.proxy_files = {}

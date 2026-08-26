@@ -10,6 +10,7 @@ class SnapshotContextTests(unittest.TestCase):
     context.reset(all_containers=False)
     self.assertIsNone(context.packages)
     self.assertFalse(context.all_containers)
+    self.assertEqual(context.process_matches, {})
     self.assertEqual(context.diagnostics[0]["code"],"partial_probe")
 
 

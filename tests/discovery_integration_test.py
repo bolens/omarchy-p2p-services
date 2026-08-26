@@ -173,9 +173,11 @@ class DiscoveryIntegrationTests(ControlTestCase):
         calls.append(args)
         return type("Result", (), {"returncode": 0, "stdout": "1000 42 123 daemon /usr/bin/daemon --flag\n", "stderr": ""})()
       CONTROL.run = fake_run
-      self.assertEqual(CONTROL.PROBE.pids_for(["daemon"]), [42])
-      self.assertEqual(CONTROL.PROBE.pids_for(["daemon"]), [42])
-      self.assertEqual(CONTROL.PROBE.pid_uptime(42), 123)
+      with mock.patch.object(CONTROL.PROBE, "process_rows", wraps=CONTROL.PROBE.process_rows) as rows:
+        self.assertEqual(CONTROL.PROBE.pids_for(["daemon"]), [42])
+        self.assertEqual(CONTROL.PROBE.pids_for(["daemon"]), [42])
+        self.assertEqual(CONTROL.PROBE.pid_uptime(42), 123)
+      self.assertEqual(rows.call_count, 2)
       self.assertEqual(len(calls), 1)
     finally:
       CONTROL.run = original_run

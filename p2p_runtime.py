@@ -37,10 +37,14 @@ class RuntimeProbe:
   
   def pids_for(self, names, current_user_only=False):
     """Match names from the shared process snapshot; optionally restrict mutation targets."""
-    wanted=set(names); found=[]
+    wanted=set(names)
+    cache_key=(tuple(sorted(wanted)),current_user_only)
+    if cache_key in self.snapshot.process_matches: return self.snapshot.process_matches[cache_key]
+    found=[]
     for uid,pid,_etimes,comm,argv0 in self.process_rows():
       if (comm in wanted or argv0 in wanted) and (not current_user_only or uid==os.getuid()): found.append(pid)
-    return sorted(set(found))
+    self.snapshot.process_matches[cache_key]=sorted(set(found))
+    return self.snapshot.process_matches[cache_key]
   
   def pid_uptime(self, pid):
     return next((etimes for _uid,row_pid,etimes,_comm,_argv0 in self.process_rows() if row_pid==pid),0)

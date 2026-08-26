@@ -56,7 +56,8 @@ class QmlRuntimeRunnerTests(unittest.TestCase):
       quickshell = root / "quickshell"
       quickshell.write_text(textwrap.dedent("""\
         #!/usr/bin/env bash
-        file=${@: -1}
+        file=
+        for argument do file=$argument; done
         name=${file##*/}
         printf '%s\n' "$name" >> "$QML_FAKE_TRACE"
         case "$name" in

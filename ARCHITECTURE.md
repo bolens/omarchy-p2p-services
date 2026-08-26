@@ -100,6 +100,8 @@ without any supported P2P software installed.
 - Reuse snapshot indexes for processes, sockets, units, packages, and containers.
 - Deduplicate equivalent multi-monitor refresh requests while preserving forced and full-scan upgrades.
 - Prefer event-driven refreshes with bounded polling as recovery, not repeated unbounded subprocesses.
+- Do not launch a persistent Podman event stream; Podman changes are detected by
+  bounded status reconciliation because its idle event command actively polls.
 - Derive catalog, grouping, count, and bar projections once per reactive snapshot.
 - Run loading-animation and retry timers only while their corresponding state is active.
 - Bound command output, cache entries, retries, payloads, rendered rows, and filesystem reads.

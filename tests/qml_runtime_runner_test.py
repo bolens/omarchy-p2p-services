@@ -202,6 +202,131 @@ class QmlRuntimeRunnerTests(unittest.TestCase):
       self.assertEqual(result.returncode, 1)
       self.assertIn("did not emit P2P_QML_HEADER_OK", result.stderr)
 
+  def test_success_marker_does_not_mask_process_start_failure(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        printf '%s\n' P2P_QML_HEADER_OK
+        printf '%s\n' 'WARN: Process failed to start, likely because the binary could not be found.'
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("runtime failure warning", result.stderr)
+
+  def test_success_marker_does_not_mask_premature_engine_quit(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        printf '%s\n' P2P_QML_HEADER_OK
+        printf '%s\n' 'WARN: Signal QQmlEngine::quit() emitted, but no receivers connected to handle it.'
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("runtime failure warning", result.stderr)
+
+  def test_success_marker_does_not_mask_incompatible_assignment(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        printf '%s\n' P2P_QML_HEADER_OK
+        printf '%s\n' 'WARN scene: @Header.qml[4:2]: Unable to assign null to QColor'
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("runtime exception or binding loop", result.stderr)
+
+  def test_success_marker_does_not_mask_recursive_layout(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        printf '%s\n' P2P_QML_HEADER_OK
+        printf '%s\n' 'WARN scene: Qt Quick Layouts: Detected recursive rearrange. Aborting after two iterations.'
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("runtime exception or binding loop", result.stderr)
+
+  def test_success_marker_does_not_mask_polish_loop(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        printf '%s\n' P2P_QML_HEADER_OK
+        printf '%s\n' 'WARN qt.quick: possible QQuickItem::polish() loop'
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("runtime exception or binding loop", result.stderr)
+
 
 if __name__ == "__main__":
   unittest.main()

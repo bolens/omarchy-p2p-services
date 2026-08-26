@@ -42,8 +42,16 @@ run_harness() {
     printf 'QML runtime harness %s did not emit %s\n%s\n' "$file" "$marker" "$output" >&2
     return 1
   fi
-  if grep -Eq 'WARN scene: .*(Error:|Maximum call stack size exceeded|Binding loop detected|(Unable|Cannot) assign \[undefined\])' <<<"$output"; then
+  if grep -Eq 'WARN scene: .*(Error:|Maximum call stack size exceeded|Binding loop detected|Detected recursive rearrange|(Unable|Cannot)( to)? assign)' <<<"$output"; then
     printf 'QML runtime harness %s emitted a runtime exception or binding loop\n%s\n' "$file" "$output" >&2
+    return 1
+  fi
+  if grep -Eq 'WARN .*possible QQuickItem::polish\(\) loop' <<<"$output"; then
+    printf 'QML runtime harness %s emitted a runtime exception or binding loop\n%s\n' "$file" "$output" >&2
+    return 1
+  fi
+  if grep -Eq 'WARN: (Process failed to start|Signal QQmlEngine::quit\(\) emitted, but no receivers)' <<<"$output"; then
+    printf 'QML runtime harness %s emitted a runtime failure warning\n%s\n' "$file" "$output" >&2
     return 1
   fi
 }

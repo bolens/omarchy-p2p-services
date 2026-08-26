@@ -17,6 +17,8 @@ ShellRoot {
     property color barForeground: "#ffffff"
     property color foreground: "#ffffff"
     property color urgent: "#ff5555"
+    property string fontFamily: "monospace"
+    property bool foregroundAnimationEnabled: false
     property bool vertical: false
     property int barSize: 40
     property string position: "top"

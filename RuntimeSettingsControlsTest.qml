@@ -60,7 +60,12 @@ ShellRoot {
       throw new Error("toggle persistence failed")
 
     var editor = descendant(integerSetting, "integerSettingEditor")
-    if (!editor) throw new Error("integer editor is not addressable")
+    var saveButton = descendant(integerSetting, "integerSettingSaveButton")
+    if (!editor || !saveButton) throw new Error("integer editor is not addressable")
+    editor.text = "invalid"
+    if (saveButton.enabled) throw new Error("invalid integer input left the save action enabled")
+    editor.text = "7"
+    if (!saveButton.enabled) throw new Error("valid integer input did not enable the save action")
     editor.text = "99"; integerSetting.save()
     editor.text = "0"; integerSetting.save()
     editor.text = "invalid"; integerSetting.save()
@@ -68,7 +73,12 @@ ShellRoot {
     if (mockController.patches[1].interval !== 10) throw new Error("integer maximum clamp failed")
     if (mockController.patches[2].interval !== 2) throw new Error("integer minimum clamp failed")
     if (mockController.patches[3].interval !== 6) throw new Error("integer fallback failed")
-    console.log("P2P_QML_SETTINGS_CONTROLS_OK")
-    Qt.quit()
+    mockController.values = Object.assign({}, mockController.values, {enabled:false,interval:8})
+    Qt.callLater(function() {
+      if (settingToggle.checked) throw new Error("toggle ignored externally reloaded settings")
+      if (editor.text !== "8") throw new Error("edited integer control ignored externally reloaded settings")
+      console.log("P2P_QML_SETTINGS_CONTROLS_OK")
+      Qt.quit()
+    })
   })
 }

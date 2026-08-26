@@ -33,7 +33,7 @@ ColumnLayout {
       validator: IntValidator { bottom: field.minimum; top: field.maximum }
       onAccepted: field.save()
     }
-    Button { text: "Save"; enabled: editor.acceptableInput; onClicked: field.save() }
+    Button { objectName: "integerSettingSaveButton"; text: "Save"; enabled: editor.acceptableInput; onClicked: field.save() }
   }
 
   function save() {
@@ -44,5 +44,6 @@ ColumnLayout {
     var update = {}
     update[settingKey] = value
     controller.persistKeepingOpen(update)
+    editor.text = Qt.binding(function() { return String(field.controller.setting(field.settingKey, field.fallback)) })
   }
 }

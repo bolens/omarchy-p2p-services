@@ -15,6 +15,7 @@ ShellRoot {
     property string density: "comfortable"
     property string layout: "list"
     property string backendFilter: ""
+    property string displayLabel: "Home Sync"
     property var events: []
     function setting(key, fallback) {
       var values = {serviceLayout:layout,cardDensity:density,showStatusRail:true,showCardSummary:true,showQuickActions:true,showTrafficStats:false,showBackendBadge:true,showFavoriteMarker:true}
@@ -22,7 +23,7 @@ ShellRoot {
     }
     function serviceColor(_entry) { return "#55aaff" }
     function iconFor(_entry) { return "S" }
-    function labelFor(_entry) { return "Home Sync" }
+    function labelFor(_entry) { return displayLabel }
     function isFavorite(_id) { return false }
     function themeColor(_role, fallback) { return fallback }
     function trafficRate(_id, _field) { return false }
@@ -165,8 +166,13 @@ ShellRoot {
             minimalStatus.activate()
             if (mockController.events.length !== beforeMinimalStatus + 1 || mockController.events[beforeMinimalStatus].kind !== "details") throw new Error("minimal status pill did not open details")
             mockController.layout = "list"
-            console.log("P2P_QML_SERVICE_CARD_OK")
-            Qt.quit()
+            mockController.displayLabel = "A deliberately long service title that must remain available in the tooltip"
+            card.width = 180
+            Qt.callLater(function() {
+              if (!serviceName.truncated || serviceName.fullLabel !== mockController.displayLabel) throw new Error("truncated service name lost its full tooltip title")
+              console.log("P2P_QML_SERVICE_CARD_OK")
+              Qt.quit()
+            })
           })
           })
           })

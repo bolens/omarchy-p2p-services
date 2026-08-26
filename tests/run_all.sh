@@ -19,6 +19,8 @@ node tests/release.test.js
 node tests/documentation.test.js
 node tests/site.test.js
 node tests/validation.test.js
+node tests/capture_transaction.test.js
+node tests/capture_recovery.test.js
 ruby scripts/validate-issue-forms.rb
 "$python_bin" -m py_compile p2p-control p2p_*.py scripts/update-screenshot-metadata
 

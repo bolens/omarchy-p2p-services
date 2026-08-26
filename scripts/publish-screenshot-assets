@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+[[ $# -ge 2 && -d $1 ]] || { printf 'Usage: publish-screenshot-assets STAGE FILE...\n' >&2; exit 2; }
+stage=$1; shift
+backup=$(mktemp -d "${TMPDIR:-/tmp}/p2p-screenshot-publish.XXXXXX"); complete=false
+rollback() {
+  local status=$? relative
+  if [[ $complete == false ]]; then
+    for relative in "$@"; do [[ -f $backup/$relative ]] && install -m "$(stat -c '%a' "$backup/$relative")" "$backup/$relative" "$relative"; done
+    ((status == 0)) || printf 'Rolled back incomplete screenshot publication.\n' >&2
+  fi
+  rm -rf -- "$backup"; return "$status"
+}
+trap 'rollback "$@"' EXIT INT TERM
+for relative in "$@"; do
+  [[ -f $relative && -f $stage/$relative ]] || { printf 'Missing screenshot publication file: %s\n' "$relative" >&2; exit 1; }
+  mkdir -p "$backup/$(dirname "$relative")"; cp -- "$relative" "$backup/$relative"
+done
+for relative in "$@"; do
+  install -m "$(stat -c '%a' "$relative")" "$stage/$relative" "$relative"
+  [[ ${P2P_CAPTURE_FAIL_AT:-} != "published:$relative" ]] || { printf 'Injected capture failure.\n' >&2; exit 1; }
+done
+complete=true

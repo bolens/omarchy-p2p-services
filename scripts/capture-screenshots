@@ -5,13 +5,15 @@ trap 'printf "Capture failed at line %s.\n" "$LINENO" >&2' ERR
 plugin_id="io.github.bolens.p2p-services"
 monitor=""
 capture_workspace=""
+verify_only=false
+report_file=""
 panel_width=600
 side_padding=16
 panel_height=600
 
 usage() {
   cat <<'EOF'
-Usage: scripts/capture-screenshots [--monitor NAME] [--workspace ID]
+Usage: scripts/capture-screenshots [--monitor NAME] [--workspace ID] [--verify] [--report FILE]
 
 Capture privacy-filtered live plugin examples on an empty workspace. The
 workflow forces and verifies privacy filtering before capture, strips image
@@ -23,6 +25,8 @@ while (($#)); do
   case "$1" in
     --monitor) monitor=${2:-}; shift 2 ;;
     --workspace) capture_workspace=${2:-}; shift 2 ;;
+    --verify) verify_only=true; shift ;;
+    --report) report_file=${2:-}; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
@@ -34,6 +38,7 @@ done
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$repo_root"
+runtime_fingerprint=$(scripts/capture-plugin-fingerprint "$repo_root")
 lock_file="${XDG_RUNTIME_DIR:-/tmp}/p2p-services-screenshots-${UID}.lock"
 exec 9>"$lock_file"
 flock -n 9 || { printf 'Another P2P screenshot capture is running.\n' >&2; exit 1; }
@@ -253,20 +258,33 @@ close_panel
 grim -o "$monitor" "$capture_dir/bar-full.png"
 magick "$capture_dir/bar-full.png" -crop "${widget_width}x50+${widget_x}+0" +repage "$capture_dir/bar.png"
 
+stage="$capture_dir/stage"
+mkdir -p "$stage/docs"
+assets=()
 for image in panel details compact grid general appearance services performance discovery packages bar; do
   colors=$(magick "$capture_dir/$image.png" -format '%k' info:)
   if [[ ! $colors =~ ^[0-9]+$ ]] || ((colors < 8)); then
     printf 'Capture has too little content: %s\n' "$image" >&2
     exit 1
   fi
-  magick "$capture_dir/$image.png" -strip -define png:compression-level=9 "docs/$image.png"
-  pngquant --force --quality=82-95 --speed 1 --strip --output "docs/$image.png" "docs/$image.png"
+  magick "$capture_dir/$image.png" -strip -define png:compression-level=9 "$stage/docs/$image.png"
+  pngquant --force --quality=82-95 --speed 1 --strip --output "$stage/docs/$image.png" "$stage/docs/$image.png"
+  assets+=("docs/$image.png")
 done
-[[ $(sha256sum docs/panel.png docs/compact.png docs/grid.png docs/general.png docs/appearance.png docs/services.png docs/performance.png docs/discovery.png docs/packages.png | cut -d' ' -f1 | sort -u | wc -l) == 9 ]] || { printf 'Panel, layout, and settings captures are not distinct.\n' >&2; exit 1; }
-install -m 0644 docs/panel.png docs/preview.png
-install -m 0644 docs/panel.png preview.png
-scripts/update-screenshot-metadata docs/index.html docs README.md
+[[ $(sha256sum "$stage"/docs/{panel,compact,grid,general,appearance,services,performance,discovery,packages}.png | cut -d' ' -f1 | sort -u | wc -l) == 9 ]] || { printf 'Panel, layout, and settings captures are not distinct.\n' >&2; exit 1; }
+install -m 0644 "$stage/docs/panel.png" "$stage/docs/preview.png"
+install -m 0644 "$stage/docs/panel.png" "$stage/preview.png"
+assets+=(docs/preview.png preview.png)
+[[ $(scripts/capture-plugin-fingerprint "$repo_root") == "$runtime_fingerprint" ]] || { printf 'Plugin runtime files changed during capture.\n' >&2; exit 1; }
+if [[ $verify_only == false ]]; then
+  scripts/publish-screenshot-assets "$stage" "${assets[@]}"
+  scripts/update-screenshot-metadata docs/index.html docs README.md
+fi
 
 restore_desktop
 trap - EXIT INT TERM
+if [[ -n $report_file ]]; then
+  mkdir -p "$(dirname "$report_file")"
+  printf '{"verified":true,"published":%s,"privacyFilter":true,"shellPid":%s,"monitor":"%s","workspace":%s}\n' "$([[ $verify_only == false ]] && printf true || printf false)" "$shell_pid" "$monitor" "$capture_workspace" >"$report_file"
+fi
 printf 'Updated privacy-filtered screenshots from %s workspace %s; restored workspace %s.\n' "$monitor" "$capture_workspace" "$original_workspace"

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+[[ $# == 8 ]] || { printf 'Usage: verify-capture-postconditions SNAPSHOT SETTINGS DURABLE PREVIOUS MONITOR WORKSPACE INITIAL_PID CURRENT_PID\n' >&2; exit 2; }
+snapshot=$1 settings=$2 durable=$3 previous=$4 monitor=$5 workspace=$6 initial=$7 current=$8
+qs_command=${P2P_QS_COMMAND:-qs}; hyprctl_command=${P2P_HYPRCTL_COMMAND:-hyprctl}; plugin_id=io.github.bolens.p2p-services
+cmp -s "$snapshot/shell.json" "$settings" || { printf 'Shell settings changed during capture.\n' >&2; exit 1; }
+for pair in "settings.json:$durable" "settings.previous.json:$previous"; do
+  saved=${pair%%:*}; live=${pair#*:}; [[ -f $snapshot/$saved ]] && cmp -s "$snapshot/$saved" "$live" || [[ ! -f $snapshot/$saved && ! -f $live ]] || { printf 'P2P durable settings changed during capture.\n' >&2; exit 1; }
+done
+state=$($hyprctl_command monitors -j | jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | "\(.focused) \(.activeWorkspace.id)"')
+[[ $state == "true $workspace" ]] || { printf 'Original workspace was not restored.\n' >&2; exit 1; }
+[[ $current == "$initial" ]] || { printf 'Shell PID changed during capture.\n' >&2; exit 1; }
+[[ $($qs_command ipc --pid "$current" call "$plugin_id" privacyEnabled 2>/dev/null || true) == true ]] || { printf 'Privacy filter is not enabled after capture.\n' >&2; exit 1; }

@@ -30,13 +30,12 @@ QtObject {
       watchdog.stop()
       var effectiveExitCode = controller.timedOut ? -2 : exitCode
       var entries = effectiveExitCode === 0 ? Model.parseCatalog(String(output.text || "").trim()) : null
+      var rerun = controller.pending
+      controller.pending = false
       controller.busy = false
       if (effectiveExitCode !== 0 || !entries) controller.failed(effectiveExitCode === 0 ? -1 : effectiveExitCode)
       else controller.updated(entries)
-      if (controller.pending) {
-        controller.pending = false
-        Qt.callLater(function() { controller.request() })
-      }
+      if (rerun) Qt.callLater(function() { if (!controller.busy) controller.request() })
     }
   }
   property P2PProcessWatchdog watchdog: P2PProcessWatchdog {

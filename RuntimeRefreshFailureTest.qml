@@ -27,6 +27,9 @@ ShellRoot {
   }
 
   Component.onCompleted: {
+    if (refreshController.request([], false, false)) throw new Error("empty refresh command was accepted")
+    if (refreshController.request("/usr/bin/false", false, false)) throw new Error("non-array refresh command was accepted")
+    if (refreshController.running || refreshController.queuedRequest) throw new Error("invalid refresh command changed controller state")
     if (!refreshController.request(["/usr/bin/false"], true, false)) throw new Error("failing refresh did not start")
   }
 }

@@ -63,16 +63,25 @@ ColumnLayout {
   Repeater {
     id: listRows
     model: !list.gridView && list.controller.editingServiceId === "" && !list.controller.showingWidgetSettings ? list.controller.visibleServices : null
-    delegate: ColumnLayout {
+    delegate: Item {
       id: listDelegate
       required property var modelData
       required property int index
       readonly property string groupName: list.controller.groupLabelFor(modelData)
+      readonly property bool groupHeadingVisible: list.controller.showGroupHeading(index, groupName)
+      readonly property bool groupCollapsed: list.controller.isGroupCollapsed(groupName)
       readonly property real contentWidthHint: serviceCard.contentWidthHint
+      visible: groupHeadingVisible || !groupCollapsed
       Layout.fillWidth: true
-      spacing: Style.spacing.xs
-      P2PGroupHeader { layoutVisible: true; controller: list.controller; entry: listDelegate.modelData; serviceIndex: listDelegate.index; groupName: listDelegate.groupName }
-      P2PServiceCard { id: serviceCard; visible: !list.controller.isGroupCollapsed(listDelegate.groupName); Layout.fillWidth: true; entry: listDelegate.modelData; controller: list.controller }
+      implicitHeight: groupCollapsed ? (groupHeadingVisible ? groupHeader.implicitHeight : 0) : listDelegateColumn.implicitHeight
+      ColumnLayout {
+        id: listDelegateColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        spacing: Style.spacing.xs
+        P2PGroupHeader { id: groupHeader; layoutVisible: true; controller: list.controller; entry: listDelegate.modelData; serviceIndex: listDelegate.index; groupName: listDelegate.groupName }
+        P2PServiceCard { id: serviceCard; visible: !listDelegate.groupCollapsed; Layout.fillWidth: true; entry: listDelegate.modelData; controller: list.controller }
+      }
     }
   }
 

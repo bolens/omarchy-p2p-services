@@ -8,7 +8,7 @@ ShellRoot {
     id: mockController
     property string editingServiceId: ""
     property bool showingWidgetSettings: false
-    property bool collapsed: false
+    property var collapsedGroups: ({})
     property string selectedServiceId: ""
     property string pendingService: ""
     property string expandedServiceId: ""
@@ -29,8 +29,8 @@ ShellRoot {
     function showGroupHeading(index, groupName) { return index === 0 || groupLabelFor(visibleServices[index - 1]) !== groupName }
     function groupIcon(entry) { return entry.icon }
     function groupCountText(_label) { return "1/1 active" }
-    function isGroupCollapsed(_label) { return collapsed }
-    function toggleGroup(_label) { collapsed = !collapsed }
+    function isGroupCollapsed(label) { return collapsedGroups[label] === true }
+    function toggleGroup(label) { var next = Object.assign({}, collapsedGroups); next[label] = next[label] !== true; collapsedGroups = next }
     function serviceColor(_entry) { return "#55aaff" }
     function iconFor(entry) { return entry.icon }
     function labelFor(entry) { return entry.name }
@@ -106,9 +106,16 @@ ShellRoot {
       serviceList.width = 400
       if (!serviceList.twoColumnGrid || serviceList.columns !== 2) throw new Error("viable minimal grid collapsed to a list")
       mockController.serviceLayout = "list"
-    mockController.collapsed = true
+    mockController.collapsedGroups = ({"OVERLAY NETWORK":true})
     Qt.callLater(function() {
-      if (syncCard.visible) throw new Error("collapsed service group still showed its card")
+      var collapsedTail = serviceList.itemForId("tailscale")
+      var collapsedNebula = serviceList.itemForId("nebula")
+      var visibleSync = serviceList.itemForId("syncthing")
+      if (!collapsedTail || !collapsedTail.visible || !collapsedNebula || collapsedNebula.visible || !visibleSync || !cardIn(visibleSync).visible)
+        throw new Error("collapsed list group retained hidden service row spacing")
+      var collapsedHeader = namedIn(collapsedTail, "serviceGroupHeader")
+      if (!collapsedHeader || !collapsedHeader.visible || collapsedTail.implicitHeight !== collapsedHeader.implicitHeight)
+        throw new Error("collapsed list group did not reduce to its header footprint: delegate=" + collapsedTail.implicitHeight + " header=" + (collapsedHeader ? collapsedHeader.implicitHeight : -1))
       mockController.showingWidgetSettings = true
       Qt.callLater(function() {
         if (serviceList.itemAt(0) !== null || serviceList.itemForId("syncthing") !== null)

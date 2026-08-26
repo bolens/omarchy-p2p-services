@@ -1,6 +1,7 @@
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 from p2p_settings import SETTINGS_VERSION, sanitize_settings
 from p2p_settings_store import SettingsStore
@@ -46,6 +47,8 @@ class SettingsStoreTests(unittest.TestCase):
         store.save("[]")
       with self.assertRaisesRegex(ValueError, "too large"):
         store.save('{"value":"' + ("x" * 140000) + '"}')
+      with self.assertRaisesRegex(ValueError, "too large"):
+        store.save('{"value":"' + ("é" * 70000) + '"}')
 
   def test_missing_or_corrupt_settings_load_as_empty(self):
     with tempfile.TemporaryDirectory() as directory:
@@ -68,6 +71,21 @@ class SettingsStoreTests(unittest.TestCase):
       self.assertTrue(store.last_recovery)
       self.assertEqual(pathlib.Path(store.last_recovery).read_text(), "not json")
       self.assertTrue(store.load()["showCount"])
+
+  def test_corrupt_recovery_never_overwrites_an_existing_quarantine(self):
+    with tempfile.TemporaryDirectory() as directory:
+      store = self.store(directory)
+      store.state_root.mkdir(parents=True)
+      store.previous_file.write_text('{"showCount":true}')
+      store.settings_file.write_text("new corruption")
+      existing = store.settings_file.with_name("settings.corrupt-1234.json")
+      existing.write_text("older corruption")
+      with mock.patch("p2p_settings_store.time.time", return_value=1.234):
+        recovered = store.load()
+      self.assertTrue(recovered["showCount"])
+      self.assertEqual(existing.read_text(), "older corruption")
+      self.assertNotEqual(pathlib.Path(store.last_recovery), existing)
+      self.assertEqual(pathlib.Path(store.last_recovery).read_text(), "new corruption")
 
   def test_undo_without_snapshot_preserves_current_settings(self):
     with tempfile.TemporaryDirectory() as directory:

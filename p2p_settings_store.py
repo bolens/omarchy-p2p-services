@@ -4,6 +4,7 @@ import fcntl
 import json
 import os
 import time
+import uuid
 
 
 class SettingsStore:
@@ -38,7 +39,7 @@ class SettingsStore:
       previous = json.loads(self.previous_file.read_text())
       if not isinstance(previous, dict): return {}
       recovered = self.sanitize(previous)
-      stamp = str(int(time.time() * 1000))
+      stamp = str(int(time.time() * 1000)) + "-" + uuid.uuid4().hex
       corrupt = self.settings_file.with_name("settings.corrupt-" + stamp + ".json")
       try: os.replace(self.settings_file, corrupt)
       except OSError: return recovered

@@ -6,6 +6,9 @@ case "$1" in
   status)
     printf '%s' '{"services":[],"diagnostics":[],"durationMs":1}'
     ;;
+  events-list)
+    printf '%s' '[]'
+    ;;
   catalog)
     sleep 0.4
     printf '%s' '[]'

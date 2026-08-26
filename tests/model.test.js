@@ -298,4 +298,13 @@ assert.equal(indexes.groupById.c, "STORAGE");
 assert.equal(indexes.favorites.c, true);
 assert.deepEqual(indexes.groups.SYNC, {active:2,total:2});
 assert.equal(context.indexedGroupCountText(indexes, "SYNC", "active-total"), "2/2 active");
+assert.deepEqual(JSON.parse(JSON.stringify(context.transitionNotifications([
+  {id:"a",label:"Alpha",kind:"unhealthy"},{id:"b",label:"Beta",kind:"unhealthy"},{id:"c",label:"Gamma",kind:"recovered"}
+]))), [
+  {kind:"unhealthy",count:2,title:"P2P services need attention",body:"Alpha, Beta · became unhealthy"},
+  {kind:"recovered",count:1,title:"P2P service recovered",body:"Gamma is healthy again"}
+]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.eventJournalRows([
+  {kind:"old",at:1},{kind:"new",at:2},{kind:"bad"}
+], 1))), [{kind:"new",at:2}]);
 console.log("ok");

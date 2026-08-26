@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+case ${1:-} in
+  events-list) printf '%s' '[{"kind":"unhealthy","count":2,"at":1}]' ;;
+  events-add) printf '%s' '[{"kind":"unhealthy","count":2,"at":1},{"kind":"action-success","count":1,"at":2}]' ;;
+  events-clear) ;;
+  *) exit 2 ;;
+esac

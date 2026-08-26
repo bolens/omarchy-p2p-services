@@ -44,6 +44,8 @@ ShellRoot {
     var primaryGrid = descendant(filterBar, "primaryFilterGrid")
     if (!backend || !count || !primary || !layout || !density || !primaryGrid || count.text !== "3 SHOWN") throw new Error("filter controls are not addressable")
     if (filterBar.primaryFilterCount !== 4 || !filterBar.primaryFiltersWide || primary.width <= primary.minimumPillWidth) throw new Error("wide primary filters did not fill their row evenly")
+    primary.clicked()
+    if (mockController.serviceFilter !== "all") throw new Error("primary service filter action failed")
     layout.clicked()
     density.clicked()
     density.clicked()

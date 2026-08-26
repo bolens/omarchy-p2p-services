@@ -29,7 +29,7 @@ Rectangle {
     anchors.centerIn: parent
     spacing: Style.space(3)
     Text { text: pill.indicator.icon; textFormat: Text.PlainText; color: pill.tone; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-    Text { objectName: "indicatorPillCount"; visible: text !== ""; text: String(pill.indicator.value || ""); textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.mono || Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold }
+    Text { objectName: "indicatorPillCount"; visible: text !== ""; text: pill.indicator.value === undefined || pill.indicator.value === null ? "" : String(pill.indicator.value); textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.mono || Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold }
   }
 
   MouseArea {

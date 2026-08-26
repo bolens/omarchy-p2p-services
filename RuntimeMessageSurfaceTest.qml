@@ -32,7 +32,19 @@ ShellRoot {
     if (action.accent.toString() !== surface.tone.toString()) throw new Error("diagnostics action did not inherit the message tone")
     action.clicked()
     if (root.actions !== 1) throw new Error("diagnostics action event failed")
-    console.log("P2P_QML_MESSAGE_SURFACE_OK")
-    Qt.quit()
+    var wideHeight = surface.implicitHeight
+    surface.actionText = ""
+    surface.width = 180
+    surface.message = "Service refresh failed because the helper returned an unexpectedly long diagnostic message"
+    Qt.callLater(function() {
+      if (action.visible) throw new Error("empty message action retained button space")
+      if (surface.implicitHeight <= wideHeight) throw new Error("narrow diagnostic message did not grow to preserve wrapped text: " + wideHeight + " -> " + surface.implicitHeight)
+      surface.actionText = "Retry"
+      Qt.callLater(function() {
+        if (!action.visible || action.text !== "Retry") throw new Error("message action did not return after its label changed")
+        console.log("P2P_QML_MESSAGE_SURFACE_OK")
+        Qt.quit()
+      })
+    })
   })
 }

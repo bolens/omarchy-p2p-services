@@ -8,6 +8,14 @@ import unittest
 
 
 class QmlRuntimeRunnerTests(unittest.TestCase):
+  def runtime_entries(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    return plugin_root, re.findall(
+      r"^run_harness (Runtime\S+Test\.qml) (P2P_QML_\S+)",
+      (plugin_root / "tests/run_qml_runtime.sh").read_text(),
+      re.MULTILINE,
+    )
+
   def test_every_runtime_harness_is_registered(self):
     plugin_root = pathlib.Path(__file__).resolve().parents[1]
     harnesses = {path.name for path in plugin_root.glob("Runtime*Test.qml")}
@@ -17,6 +25,25 @@ class QmlRuntimeRunnerTests(unittest.TestCase):
       re.MULTILINE,
     ))
     self.assertEqual(registered, harnesses)
+
+  def test_runtime_harnesses_are_registered_once(self):
+    _, entries = self.runtime_entries()
+    harnesses = [harness for harness, _ in entries]
+    self.assertEqual(len(harnesses), len(set(harnesses)))
+
+  def test_runtime_success_markers_are_unique(self):
+    _, entries = self.runtime_entries()
+    markers = [marker for _, marker in entries]
+    self.assertEqual(len(markers), len(set(markers)))
+
+  def test_registered_marker_is_emitted_by_its_harness(self):
+    plugin_root, entries = self.runtime_entries()
+    mismatches = [
+      f"{harness}: {marker}"
+      for harness, marker in entries
+      if not re.search(rf"(?<![A-Z0-9_]){re.escape(marker)}(?![A-Z0-9_])", (plugin_root / harness).read_text())
+    ]
+    self.assertEqual(mismatches, [])
 
   def test_requested_harnesses_run_without_the_full_matrix(self):
     plugin_root = pathlib.Path(__file__).resolve().parents[1]

@@ -1,0 +1,7 @@
+#!/usr/bin/sh
+sleep 0.3
+case "$1" in
+  settings-reconcile) printf '%s' '{"serviceSortMode":"late"}' ;;
+  settings-save|settings-patch) printf '%s' "$2" ;;
+  *) exit 2 ;;
+esac

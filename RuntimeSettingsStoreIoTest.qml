@@ -65,5 +65,8 @@ ShellRoot {
     if (!store.load({serviceSortMode:"custom"})) throw new Error("settings reconciliation did not report its start")
     if (store.load({serviceSortMode:"superseded"})) throw new Error("duplicate settings reconciliation was accepted")
     if (!store.loading) throw new Error("active settings reconciliation was not observable")
+    if (store.save({serviceSortMode:"racing"}, {serviceSortMode:"racing"}) !== false)
+      throw new Error("settings save overlapped active reconciliation")
+    if (store.durableSettings.serviceSortMode === "racing") throw new Error("rejected overlapping save changed durable state")
   }
 }

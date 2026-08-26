@@ -27,7 +27,7 @@ QtObject {
   signal updated(var settings)
 
   function load(shellSettings) {
-    if (loading || String(helper || "").trim() === "") return false
+    if (loading || busy || String(helper || "").trim() === "") return false
     loadBusy = true
     loadTimedOut = false
     loadFallback = JSON.parse(JSON.stringify(shellSettings || {}))
@@ -38,6 +38,7 @@ QtObject {
   }
 
   function save(next, patch) {
+    if (loading || String(helper || "").trim() === "") return false
     var previous = JSON.parse(JSON.stringify(durableSettings || {}))
     durableSettings = JSON.parse(JSON.stringify(next || {}))
     if (busy) {
@@ -48,9 +49,10 @@ QtObject {
         for (var key in patch) merged[key] = patch[key]
         queuedPatch = merged
       } else queuedPatch = null
-      return
+      return true
     }
     startSave(durableSettings, patch, previous)
+    return true
   }
 
   function startSave(next, patch, fallback) {
@@ -111,6 +113,7 @@ QtObject {
       }
       if (failed) {
         store.durableSettings = JSON.parse(JSON.stringify(store.activeSaveFallback || {}))
+        if (!store.queuedSettings) store.busy = false
         store.saveFailed()
       }
       if (store.queuedSettings) {

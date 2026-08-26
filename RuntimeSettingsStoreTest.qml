@@ -31,7 +31,13 @@ ShellRoot {
     if (!store.loaded || store.durableSettings.sortMode !== "name")
       throw new Error("settings adoption was not isolated")
 
+    store.helper = "   "
+    if (store.save({sortMode:"invalid"}, {sortMode:"invalid"}) !== false) throw new Error("blank settings helper save was accepted")
+    if (store.running || store.durableSettings.sortMode !== "name") throw new Error("blank settings helper changed durable state")
+    store.helper = "/usr/bin/true"
     store.save({sortMode:"name",showIcons:true}, {sortMode:"name"})
+    if (store.load({sortMode:"racing"})) throw new Error("settings reconciliation overlapped active save")
+    if (store.loading) throw new Error("rejected overlapping reconciliation changed load state")
     store.save({sortMode:"activity",showIcons:true}, {sortMode:"activity"})
     store.save({sortMode:"activity",showIcons:false}, {showIcons:false})
     if (!store.queuedSettings)

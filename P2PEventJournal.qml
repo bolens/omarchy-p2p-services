@@ -9,7 +9,12 @@ QtObject {
   property var queue: []
   signal failed()
 
-  function load() { enqueue([helper, "events-list"]) }
+  function load() {
+    if ((busy && process.command && process.command[1] === "events-list")
+        || queue.some(function(command) { return command[1] === "events-list" })) return false
+    enqueue([helper, "events-list"])
+    return true
+  }
   function record(kind, count) { enqueue([helper, "events-add", String(kind), String(Math.max(1, Number(count) || 1))]) }
   function clear() { enqueue([helper, "events-clear"]) }
   function enqueue(command) {

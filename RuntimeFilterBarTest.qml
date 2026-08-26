@@ -43,7 +43,7 @@ ShellRoot {
     var density = descendant(filterBar, "cardDensityToggle")
     var primaryGrid = descendant(filterBar, "primaryFilterGrid")
     if (!backend || !count || !primary || !layout || !density || !primaryGrid || count.text !== "3 SHOWN") throw new Error("filter controls are not addressable")
-    if (filterBar.primaryFilterCount !== 4 || !filterBar.primaryFiltersWide || primary.width <= primary.minimumPillWidth) throw new Error("wide primary filters did not fill their row evenly")
+    if (filterBar.primaryFilterCount !== 4 || !filterBar.primaryFiltersWide || primaryGrid.columns !== 4 || primary.width <= primary.minimumPillWidth) throw new Error("wide primary filters did not fill their row evenly")
     primary.clicked()
     if (mockController.serviceFilter !== "all") throw new Error("primary service filter action failed")
     layout.clicked()
@@ -58,12 +58,20 @@ ShellRoot {
     if (mockController.values.cardDensity !== "comfortable") throw new Error("density toggle did not cycle all modes")
     backend.activate()
     if (mockController.backendActivations !== 1 || mockController.backendFilter !== "") throw new Error("backend filter pill did not remain actionable")
+    if (backend.visible || count.parent.visible) throw new Error("cleared filters retained active filter indicators")
+    mockController.searchQuery = "sync"
+    if (!count.parent.visible || count.text !== "3 SHOWN") throw new Error("search filter did not reveal the result count")
+    mockController.searchQuery = ""
+    mockController.errorCount = 0
+    Qt.callLater(function() {
+      if (filterBar.primaryFilterCount !== 3 || primaryGrid.columns !== 3) throw new Error("cleared issue count did not reclaim its wide-grid column")
     mockController.backendFilter = "docker"
     filterBar.width = 150
     Qt.callLater(function() {
       if (filterBar.primaryFiltersWide || primaryGrid.columns !== 2) throw new Error("narrow primary filters did not switch to two columns")
       console.log("P2P_QML_FILTER_BAR_OK")
       Qt.quit()
+    })
     })
   })
 }

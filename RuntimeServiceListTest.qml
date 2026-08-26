@@ -98,6 +98,16 @@ ShellRoot {
         throw new Error("grid did not expose a content-driven two-column width")
       if (!namedIn(syncCard, "comfortableMetadata").visible || namedIn(syncCard, "gridStatusPill").visible)
         throw new Error("comfortable grid did not preserve glanceable metadata")
+      mockController.collapsedGroups = ({"OVERLAY NETWORK":true})
+      Qt.callLater(function() {
+      if (serviceList.gridSectionCount !== 2 || serviceList.itemForId("tailscale") !== null || serviceList.itemForId("nebula") !== null || !serviceList.itemForId("syncthing"))
+        throw new Error("collapsed grid group did not retain its section while removing service cards")
+      if (!namedIn(serviceList, "gridGroupHeader").visible)
+        throw new Error("collapsed grid group removed its actionable heading")
+      mockController.collapsedGroups = ({})
+      Qt.callLater(function() {
+      if (!serviceList.itemForId("tailscale") || !serviceList.itemForId("nebula"))
+        throw new Error("expanded grid group did not restore service cards")
       serviceList.width = 320
       if (serviceList.twoColumnGrid || serviceList.columns !== 1) throw new Error("narrow grid did not collapse to one column")
       serviceList.width = 600
@@ -122,6 +132,8 @@ ShellRoot {
           throw new Error("service list remained populated behind settings")
         console.log("P2P_QML_SERVICE_LIST_OK")
         Qt.quit()
+      })
+      })
       })
       })
     })

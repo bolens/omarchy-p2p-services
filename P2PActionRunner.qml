@@ -30,7 +30,7 @@ QtObject {
       watchdog.stop()
       var entry = runner.activeEntry
       var action = runner.activeAction
-      var detail = String(errorOutput.text || "")
+      var detail = String(errorOutput.text || "").trim().slice(0, 512)
       runner.activeEntry = null
       runner.activeAction = ""
       runner.busy = false

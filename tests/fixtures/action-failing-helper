@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+for _index in {1..700}; do printf x >&2; done
+printf '\n' >&2
+exit 2

@@ -15,13 +15,14 @@ ShellRoot {
     property string contextServiceId: ""
     property bool privacyFilter: true
     property string serviceLayout: "list"
+    property string cardDensity: "comfortable"
     property var visibleServices: [
       {id:"syncthing",name:"Syncthing",category:"File sync",icon:"S",active:true,hasError:false,backend:"systemd",unit:"syncthing.service",unitScope:"user",configExists:false,hasWeb:false,processCount:1,containerCount:0,pids:[],endpoints:[],restartCount:0,lastTransition:"",failureReason:"",uptime:60,connections:1,listeners:1},
       {id:"tailscale",name:"Tailscale",category:"Overlay network",icon:"T",active:false,hasError:false,backend:"systemd",unit:"tailscaled.service",unitScope:"system",configExists:false,hasWeb:false,processCount:0,containerCount:0,pids:[],endpoints:[],restartCount:0,lastTransition:"",failureReason:"",uptime:0,connections:0,listeners:0},
       {id:"nebula",name:"Nebula",category:"Overlay network",icon:"N",active:false,hasError:false,backend:"systemd",unit:"nebula.service",unitScope:"system",configExists:false,hasWeb:false,processCount:0,containerCount:0,pids:[],endpoints:[],restartCount:0,lastTransition:"",failureReason:"",uptime:0,connections:0,listeners:0}
     ]
     function setting(key, fallback) {
-      var values = {serviceLayout:serviceLayout,serviceGroupMode:"category",groupHeaderStyle:"plain",showGroupIcons:true,showGroupCounts:true,cardDensity:"comfortable",showStatusRail:true,showCardSummary:true,showQuickActions:true,showTrafficStats:false,showBackendBadge:false,showFavoriteMarker:true}
+      var values = {serviceLayout:serviceLayout,serviceGroupMode:"category",groupHeaderStyle:"plain",showGroupIcons:true,showGroupCounts:true,cardDensity:cardDensity,showStatusRail:true,showCardSummary:true,showQuickActions:true,showTrafficStats:false,showBackendBadge:false,showFavoriteMarker:true}
       return values[key] === undefined ? fallback : values[key]
     }
     function groupLabelFor(entry) { return String(entry.category).toUpperCase() }
@@ -36,6 +37,7 @@ ShellRoot {
     function isFavorite(_id) { return false }
     function themeColor(_role, fallback) { return fallback }
     function trafficRate(_id, _field) { return false }
+    function serviceActionLabel(_id) { return "" }
     function hasConsole(_entry) { return false }
     function act(_entry, _action) {}
     function toggleServiceDetails(_id) {}
@@ -86,12 +88,23 @@ ShellRoot {
       throw new Error("list did not expose an intrinsic content width")
     mockController.serviceLayout = "grid"
     Qt.callLater(function() {
-      if (!serviceList.gridView || !serviceList.twoColumnGrid || serviceList.columns !== 2 || syncCard.compact || !syncCard.grid || namedIn(sync, "serviceGroupHeader").visible) throw new Error("responsive comfortable grid layout failed")
-      if (!namedIn(syncCard, "comfortableMetadata").visible || namedIn(syncCard, "gridMetadataRow").visible)
+      sync = serviceList.itemForId("syncthing")
+      syncCard = cardIn(sync)
+      if (!serviceList.gridView || !serviceList.twoColumnGrid || serviceList.columns !== 2 || !syncCard || syncCard.compact || !syncCard.grid) throw new Error("responsive comfortable grid layout failed")
+      var gridHeader = namedIn(serviceList, "gridGroupHeader")
+      if (serviceList.gridSectionCount !== 2 || !gridHeader || !gridHeader.visible)
+        throw new Error("grid did not split grouped services into headed sections")
+      if (serviceList.contentWidthHint <= syncCard.contentWidthHint || serviceList.contentWidthHint >= serviceList.width)
+        throw new Error("grid did not expose a content-driven two-column width")
+      if (!namedIn(syncCard, "comfortableMetadata").visible || namedIn(syncCard, "gridStatusPill").visible)
         throw new Error("comfortable grid did not preserve glanceable metadata")
-      serviceList.width = 400
+      serviceList.width = 320
       if (serviceList.twoColumnGrid || serviceList.columns !== 1) throw new Error("narrow grid did not collapse to one column")
       serviceList.width = 600
+      mockController.cardDensity = "minimal"
+      Qt.callLater(function() {
+      serviceList.width = 400
+      if (!serviceList.twoColumnGrid || serviceList.columns !== 2) throw new Error("viable minimal grid collapsed to a list")
       mockController.serviceLayout = "list"
     mockController.collapsed = true
     Qt.callLater(function() {
@@ -102,6 +115,7 @@ ShellRoot {
           throw new Error("service list remained populated behind settings")
         console.log("P2P_QML_SERVICE_LIST_OK")
         Qt.quit()
+      })
       })
     })
     })

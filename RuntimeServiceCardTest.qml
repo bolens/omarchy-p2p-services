@@ -146,19 +146,20 @@ ShellRoot {
           mockController.layout = "grid"
           Qt.callLater(function() {
             var statusPill = descendant(card, "gridStatusPill")
-            var gridMetadata = descendant(card, "gridMetadataRow")
-            if (!statusPill || !gridMetadata.visible || !card.compact || !card.iconActions) throw new Error("compact grid treatment missing")
+            if (!statusPill || !statusPill.visible || !card.compact || !card.iconActions || statusBlock.implicitWidth <= statusPill.implicitWidth)
+              throw new Error("compact grid did not fill its header with metrics and status")
             var beforeStatusEvents = mockController.events.length
             statusPill.activate()
             if (mockController.events.length !== beforeStatusEvents + 1 || mockController.events[beforeStatusEvents].kind !== "details") throw new Error("grid status pill did not dispatch details")
           mockController.density = "comfortable"
           Qt.callLater(function() {
-            if (card.compact || !card.iconActions || gridMetadata.visible || !comfortableMetadata.visible || primary.text !== "")
-              throw new Error("comfortable grid was forced into compact presentation")
+            if (card.compact || card.iconActions || statusPill.visible || !comfortableMetadata.visible || primary.text !== "Stop")
+              throw new Error("comfortable grid did not match comfortable list semantics")
           mockController.density = "minimal"
           Qt.callLater(function() {
             var minimalStatus = descendant(card, "minimalStatusPill"), statusDot = descendant(card, "serviceStatusDot")
-            if (status.visible || quickActions.visible || gridMetadata.visible || comfortableMetadata.visible || !minimalStatus || !minimalStatus.visible || statusDot.visible || card.cardPadding >= 8) throw new Error("minimal grid retained verbose surfaces")
+            var backendPill = descendant(card, "backendIndicatorPill")
+            if (status.visible || quickActions.visible || statusPill.visible || comfortableMetadata.visible || !minimalStatus || !minimalStatus.visible || statusDot.visible || !backendPill.visible || card.cardPadding >= 8) throw new Error("minimal grid did not match minimal list semantics")
             var beforeMinimalStatus = mockController.events.length
             minimalStatus.activate()
             if (mockController.events.length !== beforeMinimalStatus + 1 || mockController.events[beforeMinimalStatus].kind !== "details") throw new Error("minimal status pill did not open details")

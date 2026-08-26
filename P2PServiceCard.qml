@@ -21,7 +21,7 @@ Rectangle {
   readonly property bool compact: density !== "comfortable"
   readonly property bool minimal: density === "minimal"
   readonly property bool minimalList: minimal && !grid
-  readonly property bool iconActions: compact || grid
+  readonly property bool iconActions: compact
   readonly property real cardPadding: minimal ? Style.spacing.xs : (compact ? Style.spacing.sm : Style.spacing.md)
   readonly property var compactIndicators: compact ? Model.compactIndicators(entry) : []
   readonly property var comfortableIndicators: !compact ? Model.comfortableIndicators(entry, controller.privacyFilter) : []
@@ -29,7 +29,10 @@ Rectangle {
   readonly property real headerWidthHint: serviceIcon.implicitWidth
     + identityWidthHint
     + serviceStatusBlock.implicitWidth + serviceHeaderRow.spacing * 2 + Style.spacing.lg
-  readonly property real contentWidthHint: Math.max(headerWidthHint, serviceQuickActions.implicitWidth) + cardPadding * 2
+  readonly property real contentWidthHint: Math.max(
+    headerWidthHint,
+    serviceQuickActions.visible ? serviceQuickActions.implicitWidth : 0
+  ) + cardPadding * 2
   function activateIndicator(indicator) {
     if (indicator.action === "console") controller.openConsole(entry)
     else if (indicator.action === "config") controller.act(entry, "config")
@@ -121,7 +124,7 @@ Rectangle {
         objectName: "serviceStatusBlock"
         spacing: Style.spacing.xs
         Repeater {
-          model: card.compact && !card.grid ? card.compactIndicators : []
+          model: card.compact && (!card.grid || card.density === "compact") ? card.compactIndicators : []
           delegate: P2PIndicatorPill {
             objectName: "compactIndicatorPill"
             required property var modelData
@@ -138,6 +141,13 @@ Rectangle {
           horizontalPadding: Style.spacing.sm
           onTriggered: card.activateIndicator(indicator)
         }
+        P2PIndicatorPill {
+          objectName: "gridStatusPill"
+          visible: card.grid && card.density === "compact"
+          indicator: ({icon:"", value:entry.active ? (entry.hasError ? "ISSUE" : "RUNNING") : "STOPPED", tooltip:"Show service details", action:"details"})
+          tone: controller.serviceColor(entry)
+          onTriggered: card.activateIndicator(indicator)
+        }
         Text { objectName: "serviceStatusDot"; visible: !card.minimal && (!card.grid || card.density === "comfortable"); text: "●"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption }
         P2PLoadingIndicator {
           objectName: "serviceActionLoadingIndicator"
@@ -152,7 +162,7 @@ Rectangle {
         Text { objectName: "serviceStatusText"; visible: controller.pendingService !== entry.id && !card.minimal && (!card.grid || card.density === "comfortable"); text: entry.active ? (entry.hasError ? "NEEDS ATTENTION" : "RUNNING") : "STOPPED"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold; font.letterSpacing: 0.8 }
         P2PIndicatorPill {
           objectName: "backendIndicatorPill"
-          visible: !card.grid && controller.setting("showBackendBadge", false) === true
+          visible: controller.setting("showBackendBadge", false) === true
           indicator: ({icon:"", value:String(entry.backend || "process").toUpperCase(), tooltip:controller.backendFilter === String(entry.backend || "process").toLowerCase() ? "Clear backend filter" : "Show " + String(entry.backend || "process") + " services", action:"backend"})
           tone: Color.muted
           onTriggered: card.activateIndicator(indicator)
@@ -176,33 +186,6 @@ Rectangle {
           horizontalPadding: Style.spacing.md
           onTriggered: card.activateIndicator(indicator)
         }
-      }
-    }
-
-    RowLayout {
-      objectName: "gridMetadataRow"
-      property int leadingInset: Style.spacing.xs
-      visible: card.grid && card.density === "compact"
-      Layout.fillWidth: true
-      Layout.leftMargin: leadingInset
-      spacing: Style.spacing.xs
-      Repeater {
-        model: card.grid && card.density === "compact" ? card.compactIndicators : []
-        delegate: P2PIndicatorPill {
-          objectName: "gridIndicatorPill"
-          required property var modelData
-          indicator: modelData
-          tone: card.controller.serviceColor(card.entry)
-          horizontalPadding: Style.spacing.md
-          onTriggered: card.activateIndicator(indicator)
-        }
-      }
-      Item { Layout.fillWidth: true }
-      P2PIndicatorPill {
-        objectName: "gridStatusPill"
-        indicator: ({icon:"", value:entry.active ? (entry.hasError ? "ISSUE" : "RUNNING") : "STOPPED", tooltip:"Show service details", action:"details"})
-        tone: controller.serviceColor(entry)
-        onTriggered: card.activateIndicator(indicator)
       }
     }
 

@@ -125,6 +125,12 @@ ShellRoot {
       if (widget.visibleServices.length !== 1 || widget.visibleServices[0].id !== "container") throw new Error("structured backend filter did not constrain services")
       widget.closeCurrentLayer()
       if (widget.backendFilter !== "") throw new Error("escape layer did not clear backend filter")
+      if (widget.openMainView() !== "ok" || !widget.opened) throw new Error("main panel did not open for escape-layer test")
+      widget.serviceFiltersExpanded = true
+      widget.contextServiceId = "container"
+      widget.closeCurrentLayer()
+      if (widget.serviceFiltersExpanded || widget.contextServiceId !== "container" || !widget.opened) throw new Error("escape layer did not collapse service filters before lower layers")
+      widget.contextServiceId = ""
       widget.filterByBackend("docker")
       widget.filterByBackend("docker")
       if (widget.backendFilter !== "") throw new Error("backend pill filter did not toggle off")

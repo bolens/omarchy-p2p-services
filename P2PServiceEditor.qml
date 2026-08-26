@@ -112,8 +112,8 @@ import "Model.js" as Model
 
           RowLayout {
             Layout.fillWidth: true
-            Button { text: "Move up"; onClicked: editor.controller.moveService(editor.controller.editingServiceId, -1) }
-            Button { text: "Move down"; onClicked: editor.controller.moveService(editor.controller.editingServiceId, 1) }
+            Button { objectName: "serviceMoveUpButton"; text: "Move up"; onClicked: editor.controller.moveService(editor.controller.editingServiceId, -1) }
+            Button { objectName: "serviceMoveDownButton"; text: "Move down"; onClicked: editor.controller.moveService(editor.controller.editingServiceId, 1) }
             Button { objectName: "serviceConfigButton"; text: "Config"; visible: editor.current && editor.current.configExists && editor.current.controllable !== false; onClicked: editor.controller.act(editor.current, "config") }
             Item { Layout.fillWidth: true }
           }
@@ -152,15 +152,16 @@ import "Model.js" as Model
                 required property var modelData
                 Layout.fillWidth: true
                 Text { Layout.fillWidth: true; text: modelData.timestamp; textFormat: Text.PlainText; color: Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-                Button { text: "Restore"; onClicked: editor.controller.requestRestore(editor.current, modelData.name) }
+                Button { objectName: "serviceRestoreButton"; text: "Restore"; onClicked: editor.controller.requestRestore(editor.current, modelData.name) }
               }
             }
           }
           RowLayout {
             Layout.fillWidth: true
-            Button { text: "Reset service settings"; onClicked: editor.controller.resetService(editor.controller.editingServiceId) }
+            Button { objectName: "serviceResetButton"; text: "Reset service settings"; onClicked: editor.controller.resetService(editor.controller.editingServiceId) }
             Item { Layout.fillWidth: true }
             Button {
+              objectName: "serviceUninstallButton"
               text: "Uninstall"
               visible: editor.controller.canUninstall(editor.current)
               enabled: editor.current && !editor.current.active

@@ -270,6 +270,7 @@ Panel {
   function closeCurrentLayer() {
     if (searchQuery !== "") { searchQuery = ""; return }
     if (backendFilter !== "") { backendFilter = ""; return }
+    if (serviceFiltersExpanded) { serviceFiltersExpanded = false; return }
     if (contextServiceId !== "") { contextServiceId = ""; return }
     if (expandedServiceId !== "") { expandedServiceId = ""; return }
     if (editingServiceId !== "") { editingServiceId = ""; return }

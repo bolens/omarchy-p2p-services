@@ -13,7 +13,7 @@ ShellRoot {
     helper: root.fixtureHelper
     onUpdated: function(entries) {
       if (root.stage !== 0 || entries.length !== 2 || entries[0].id !== "syncthing") throw new Error("catalog update payload failed")
-      if (catalog.running) throw new Error("catalog controller remained busy before update")
+      if (catalog.running || catalog.pending) throw new Error("catalog controller published an update before clearing active queue state")
       root.stage = 1
       catalog.helper = root.malformedHelper
       if (!catalog.request()) throw new Error("malformed catalog request did not start")
@@ -25,7 +25,7 @@ ShellRoot {
         catalog.helper = "/usr/bin/false"
         if (!catalog.request()) throw new Error("failing catalog request did not start")
       } else if (root.stage === 2) {
-        if (exitCode === 0 || catalog.running) throw new Error("catalog failure cleanup failed")
+        if (exitCode === 0 || catalog.running || catalog.pending) throw new Error("catalog failure cleanup retained busy or pending work")
         root.stage = 3
         console.log("P2P_QML_CATALOG_CONTROLLER_OK")
         Qt.quit()

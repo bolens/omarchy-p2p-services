@@ -3,15 +3,24 @@ import qs.Commons
 import qs.Ui
 
 Dropdown {
+  id: roleSetting
   required property var controller
   required property string settingKey
   required property string label
   required property string fallback
+  readonly property var allowedRoles: ["bar-active","urgent","accent","foreground","muted"]
+  function normalizedRole(role) {
+    var candidate = String(role)
+    return allowedRoles.indexOf(candidate) >= 0 ? candidate : fallback
+  }
   objectName: "themeRole-" + settingKey
   Layout.fillWidth: true
-  value: String(controller.setting(settingKey, fallback))
+  value: normalizedRole(controller.setting(settingKey, fallback))
   options: [{value:"bar-active",label:"Bar active"},{value:"urgent",label:"Urgent"},{value:"accent",label:"Accent"},{value:"foreground",label:"Foreground"},{value:"muted",label:"Muted"}]
   foreground: Color.popups.text
   accent: Color.bar.active
-  onChanged: function(next) { var update = {}; update[settingKey] = next; controller.persistKeepingOpen(update) }
+  onChanged: function(next) {
+    if (allowedRoles.indexOf(String(next)) < 0) return
+    var update = {}; update[settingKey] = next; controller.persistKeepingOpen(update)
+  }
 }

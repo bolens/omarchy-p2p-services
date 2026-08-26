@@ -101,7 +101,7 @@ ShellRoot {
           return null
         }
         disabledConfigPill = findDisabledConfigPill(card)
-        if (!disabledConfigPill || disabledConfigPill.enabled || disabledConfigPill.Accessible.name.indexOf("Observation only") < 0)
+        if (!disabledConfigPill || !disabledConfigPill.enabled || disabledConfigPill.interactive || disabledConfigPill.Accessible.name.indexOf("Observation only") < 0)
           throw new Error("observation-only config pill did not explain its disabled state")
         var beforeDisabledActivation = mockController.events.length
         disabledConfigPill.activate()

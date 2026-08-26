@@ -17,7 +17,7 @@ ShellRoot {
   property int stopEvents: 0
   P2POrganizationState { id: organization; onStabilityStopRequested: root.stopEvents++ }
 
-  Component.onCompleted: {
+  Component.onCompleted: Qt.callLater(function() {
     if (ordered[0].id !== "z") throw new Error("initial custom order failed")
     var captured = ["z","a"]
     if (!organization.capture(captured, true)) throw new Error("organization capture failed")
@@ -36,5 +36,5 @@ ShellRoot {
       console.log("P2P_QML_ORGANIZATION_OK")
       Qt.quit()
     })
-  }
+  })
 }

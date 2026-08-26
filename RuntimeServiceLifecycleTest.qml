@@ -6,7 +6,7 @@ ShellRoot {
 
   Service { id: service }
 
-  Component.onCompleted: {
+  Component.onCompleted: Qt.callLater(function() {
     service.configure(["not", "settings"])
     if (Array.isArray(service.settings) || Object.keys(service.settings).length !== 0)
       throw new Error("service accepted a non-object settings payload")
@@ -46,5 +46,5 @@ ShellRoot {
         || telemetry.settingsWatcherLastEventAgeSeconds !== 1) throw new Error("settings watcher telemetry failed")
     console.log("P2P_QML_SERVICE_LIFECYCLE_OK")
     Qt.quit()
-  }
+  })
 }

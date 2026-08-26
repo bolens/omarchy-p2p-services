@@ -11,7 +11,7 @@ ShellRoot {
     onRestoreConfirmed: function(entry, backupName) { root.events = root.events.concat([{kind:"restore",id:entry.id,backup:backupName}]) }
   }
 
-  Component.onCompleted: {
+  Component.onCompleted: Qt.callLater(function() {
     if (confirmations.requestUninstall(null)) throw new Error("invalid uninstall confirmation opened")
     if (!confirmations.requestUninstall({id:"syncthing"}) || !confirmations.uninstallOpen) throw new Error("uninstall confirmation did not open")
     confirmations.cancelUninstall()
@@ -35,5 +35,5 @@ ShellRoot {
       throw new Error("confirmation close cleanup failed")
     console.log("P2P_QML_CONFIRMATION_OK")
     Qt.quit()
-  }
+  })
 }

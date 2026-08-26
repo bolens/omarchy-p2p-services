@@ -10,7 +10,7 @@ ShellRoot {
     onApplyRequested: function(services, fullScan) { root.applied = root.applied.concat([{services:services,fullScan:fullScan}]) }
   }
 
-  Component.onCompleted: {
+  Component.onCompleted: Qt.callLater(function() {
     deferred.receive([{id:"first"}], false, true)
     deferred.receive([{id:"latest"}], true, true)
     if (!deferred.pending || root.applied.length !== 0) throw new Error("moving refresh was not deferred")
@@ -25,5 +25,5 @@ ShellRoot {
       throw new Error("newer immediate refresh did not supersede deferred state")
     console.log("P2P_QML_DEFERRED_REFRESH_OK")
     Qt.quit()
-  }
+  })
 }

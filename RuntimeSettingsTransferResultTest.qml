@@ -20,7 +20,7 @@ ShellRoot {
     onErrorRequested: function(message) { root.error = message }
   }
 
-  Component.onCompleted: {
+  Component.onCompleted: Qt.callLater(function() {
     if (!result.apply("import", '{"id":"another-plugin","popupWidth":700}')) throw new Error("valid import was rejected")
     if (root.events[0].kind !== "import" || root.events[0].settings.id !== "p2p-services" || root.events[0].settings.popupWidth !== 700 || root.events[1].kind !== "notify")
       throw new Error("import result application failed")
@@ -32,5 +32,5 @@ ShellRoot {
       throw new Error("export result notification failed")
     console.log("P2P_QML_SETTINGS_TRANSFER_RESULT_OK")
     Qt.quit()
-  }
+  })
 }

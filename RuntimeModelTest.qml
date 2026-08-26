@@ -3,7 +3,7 @@ import QtQuick
 import "Model.js" as Model
 
 ShellRoot {
-  Component.onCompleted: {
+  Component.onCompleted: Qt.callLater(function() {
     var service = {id:"syncthing",name:"Syncthing",category:"File sync",icon:"S",backend:"docker",unit:"syncthing.service",active:true,hasError:false}
     if (!Model.matchesSearch(service, "Home Sync", "docker")) throw new Error("backend search failed")
     if (!Model.matchesSearch(service, "Home Sync", "home")) throw new Error("label search failed")
@@ -43,5 +43,5 @@ ShellRoot {
         || Model.monitoringHealthSeverity("healthy", "starting", "restarting") !== "urgent") throw new Error("monitoring severity policy failed")
     console.log("P2P_QML_RUNTIME_OK")
     Qt.quit()
-  }
+  })
 }

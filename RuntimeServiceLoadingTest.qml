@@ -18,11 +18,16 @@ ShellRoot {
     property color barForeground: "#ffffff"
     property color foreground: "#ffffff"
     property color urgent: "#ff5555"
+    property string fontFamily: "monospace"
+    property bool foregroundAnimationEnabled: false
+    property bool activePopout: false
     property bool vertical: false
     property int barSize: 40
     property string position: "top"
     property var screen: null
     function switchPanelFrom(_owner, _direction) { return false }
+    function requestPopout(_key) { activePopout = true }
+    function releasePopout(_key) { activePopout = false }
   }
   BarWidget {
     id: widget
@@ -31,10 +36,12 @@ ShellRoot {
     settings: ({eventRefresh:false,refreshOnOpen:false,refreshAfterSettings:false,showTrafficStats:false,showLoadingIndicators:true})
   }
 
+  Component.onCompleted: Qt.callLater(function() { widget.open() })
+
   Timer {
     interval: 100
     running: true
-    onTriggered: if (!widget.statusLoading || !widget.serviceLoadingVisible) throw new Error("delayed discovery did not render loading state")
+    onTriggered: if (!widget.statusLoading || !widget.statusIndicatorVisible) throw new Error("delayed discovery did not retain its minimum loading state")
   }
   Timer {
     interval: 550

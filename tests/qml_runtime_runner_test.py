@@ -99,6 +99,81 @@ class QmlRuntimeRunnerTests(unittest.TestCase):
       self.assertEqual(result.returncode, 1)
       self.assertIn("runtime exception or binding loop", result.stderr)
 
+  def test_success_marker_does_not_mask_generic_qml_error(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        printf '%s\n' P2P_QML_HEADER_OK
+        printf '%s\n' 'WARN scene: @Header.qml[12:4]: Error: component callback failed'
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("runtime exception or binding loop", result.stderr)
+
+  def test_success_marker_does_not_mask_harness_timeout(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        printf '%s\n' P2P_QML_HEADER_OK
+        sleep 0.2
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {
+        "OMARCHY_SHELL_ROOT": str(shell_root),
+        "QUICKSHELL_BIN": str(quickshell),
+        "QML_RUNTIME_LIMIT": "0.05",
+      }
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("timed out", result.stderr)
+
+  def test_success_marker_must_be_a_complete_log_token(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text("#!/usr/bin/env bash\nprintf '%s\\n' NOT_P2P_QML_HEADER_OK_SUFFIX\n")
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("did not emit P2P_QML_HEADER_OK", result.stderr)
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -17,7 +17,7 @@ ln -s -- "$shell_root/Commons" "$runtime_dir/Commons"
 ln -s -- "$shell_root/Ui" "$runtime_dir/Ui"
 
 run_harness() {
-  local file=$1 marker=$2 limit=${3:-4} output status
+  local file=$1 marker=$2 limit=${3:-${QML_RUNTIME_LIMIT:-4}} output status
   if (( ${#requested_harnesses[@]} > 0 )); then
     local requested selected=false
     for requested in "${requested_harnesses[@]}"; do
@@ -30,15 +30,19 @@ run_harness() {
   output="$(timeout "$limit" "$quickshell_bin" --no-color --path "$runtime_dir/$file" 2>&1)"
   status=$?
   set -e
-  if [[ $status -ne 0 && $status -ne 124 ]]; then
+  if [[ $status -eq 124 ]]; then
+    printf 'QML runtime harness %s timed out after %s seconds\n%s\n' "$file" "$limit" "$output" >&2
+    return 1
+  fi
+  if [[ $status -ne 0 ]]; then
     printf '%s\n' "$output" >&2
     exit "$status"
   fi
-  if ! grep -q "$marker" <<<"$output"; then
+  if ! grep -Eq "(^|[[:space:]])${marker}([[:space:]]|$)" <<<"$output"; then
     printf 'QML runtime harness %s did not emit %s\n%s\n' "$file" "$marker" "$output" >&2
     return 1
   fi
-  if grep -Eq 'WARN scene: .*(TypeError|ReferenceError|RangeError|Maximum call stack size exceeded|Binding loop detected|(Unable|Cannot) assign \[undefined\])' <<<"$output"; then
+  if grep -Eq 'WARN scene: .*(Error:|Maximum call stack size exceeded|Binding loop detected|(Unable|Cannot) assign \[undefined\])' <<<"$output"; then
     printf 'QML runtime harness %s emitted a runtime exception or binding loop\n%s\n' "$file" "$output" >&2
     return 1
   fi

@@ -16,7 +16,7 @@ ShellRoot {
     }
   }
 
-  Component.onCompleted: {
+  Component.onCompleted: Qt.callLater(function() {
     actions.control({id:"syncthing"}, "restart")
     actions.control(null, "stop")
     actions.control({}, "stop")
@@ -26,5 +26,5 @@ ShellRoot {
     if (actions.openConsole({hasWeb:false}, "") !== false) throw new Error("missing console was reported as opened")
     console.log("P2P_QML_SERVICE_ACTIONS_OK")
     Qt.quit()
-  }
+  })
 }

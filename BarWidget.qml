@@ -108,6 +108,9 @@ Panel {
     return "Watcher " + data.watcherHealth + " (" + data.watcherCode + ")"
       + " · heartbeat " + (data.watcherHeartbeatAgeSeconds < 0 ? "waiting" : data.watcherHeartbeatAgeSeconds + "s ago")
       + " · retry " + data.watcherRetryMilliseconds + " ms"
+      + "\nSettings sync " + data.settingsWatcherHealth + " (" + data.settingsWatcherCode + ")"
+      + " · event " + (data.settingsWatcherLastEventAgeSeconds < 0 ? "waiting" : data.settingsWatcherLastEventAgeSeconds + "s ago")
+      + " · retry " + data.settingsWatcherRetryMilliseconds + " ms"
       + "\nLast shared scan " + (data.lastRefreshAgeSeconds < 0 ? "waiting" : data.lastRefreshAgeSeconds + "s ago")
       + " · " + data.lastDurationMs + " ms · " + data.diagnostics + " warning" + (data.diagnostics === 1 ? "" : "s")
   }

@@ -21,6 +21,11 @@ Item {
   property bool watcherPollingOnly: false
   property int watcherRetryMilliseconds: 1000
   property int durableSettingsRevision: -1
+  property string settingsWatcherHealth: "starting"
+  property string settingsWatcherCode: "waiting"
+  property double settingsWatcherLastEventAt: 0
+  property int settingsWatcherLastExitCode: -1
+  property int settingsWatcherRetryMilliseconds: 1000
   property string helper: PathUtils.localFilePath(Qt.resolvedUrl("p2p-control"))
 
   function configure(next) {
@@ -41,6 +46,30 @@ Item {
       fullContainers, bypassCache)
   }
 
+  function handleSettingsWatcherLine(line, now) {
+    try {
+      var event = JSON.parse(line)
+      var revision = Number(event.revision)
+      if (event.type !== "settings-changed" || !isFinite(revision) || revision < 0) return false
+      settingsWatcherHealth = "healthy"
+      settingsWatcherCode = "ok"
+      settingsWatcherLastEventAt = Number(now) || Date.now()
+      settingsWatcherRetryMilliseconds = 1000
+      if (revision > durableSettingsRevision) durableSettingsRevision = revision
+      return true
+    } catch (error) { return false }
+  }
+
+  function handleSettingsWatcherExit(exitCode) {
+    var state = Model.watcherExitState(true, settingsWatcherRetryMilliseconds)
+    settingsWatcherHealth = state.health
+    settingsWatcherCode = state.code
+    settingsWatcherLastExitCode = Number(exitCode)
+    settingsWatcherRetry.interval = state.delay
+    settingsWatcherRetryMilliseconds = state.nextRetryMilliseconds
+    settingsWatcherRetry.restart()
+  }
+
   function monitoringTelemetry() {
     var now = Date.now()
     return {
@@ -49,6 +78,12 @@ Item {
       watcherRunning: watcherProc.running,
       watcherHeartbeatAgeSeconds: watcherLastHeartbeatAt > 0 ? Math.max(0, Math.round((now - watcherLastHeartbeatAt) / 1000)) : -1,
       watcherRetryMilliseconds: watcherRetryMilliseconds,
+      settingsWatcherHealth: settingsWatcherHealth,
+      settingsWatcherCode: settingsWatcherCode,
+      settingsWatcherRunning: settingsWatcherProc.running,
+      settingsWatcherLastEventAgeSeconds: settingsWatcherLastEventAt > 0 ? Math.max(0, Math.round((now - settingsWatcherLastEventAt) / 1000)) : -1,
+      settingsWatcherLastExitCode: settingsWatcherLastExitCode,
+      settingsWatcherRetryMilliseconds: settingsWatcherRetryMilliseconds,
       lastRefreshAgeSeconds: lastRefreshAt > 0 ? Math.max(0, Math.round((now - lastRefreshAt) / 1000)) : -1,
       lastDurationMs: lastDurationMs,
       diagnostics: diagnostics.length
@@ -78,17 +113,19 @@ Item {
     command: [root.helper, "settings-watch"]
     running: true
     stdout: SplitParser {
-      onRead: function(line) {
-        try {
-          var event = JSON.parse(line)
-          if (event.type === "settings-changed" && Number(event.revision) > root.durableSettingsRevision)
-            root.durableSettingsRevision = Number(event.revision)
-        } catch (error) {}
-      }
+      onRead: function(line) { root.handleSettingsWatcherLine(line, Date.now()) }
     }
-    onExited: settingsWatcherRetry.restart()
+    onExited: function(exitCode) { root.handleSettingsWatcherExit(exitCode) }
   }
-  Timer { id: settingsWatcherRetry; interval: 1000; onTriggered: settingsWatcherProc.running = true }
+  Timer {
+    id: settingsWatcherRetry
+    interval: 1000
+    onTriggered: {
+      root.settingsWatcherHealth = "starting"
+      root.settingsWatcherCode = "restarting"
+      settingsWatcherProc.running = true
+    }
+  }
   Process {
     id: watcherProc
     command: [root.helper, "watch"]

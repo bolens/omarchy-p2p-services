@@ -110,7 +110,7 @@ QtObject {
       if (store.queuedSettings) {
         var next = store.queuedSettings
         var patch = store.queuedPatch
-        var fallback = store.queuedFallback
+        var fallback = failed ? store.activeSaveFallback : store.queuedFallback
         store.queuedSettings = null
         store.queuedPatch = null
         store.queuedFallback = null

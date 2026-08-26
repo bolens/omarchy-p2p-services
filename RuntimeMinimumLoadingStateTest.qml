@@ -15,7 +15,24 @@ ShellRoot {
     }
   }
   Timer {
+    interval: 80
+    running: true
+    onTriggered: {
+      state.start()
+      if (!state.visible || state.settled || state.minimumElapsed) throw new Error("restarted loading state did not reset its minimum window")
+    }
+  }
+  Timer {
     interval: 160
+    running: true
+    onTriggered: {
+      if (!state.visible || state.settled || state.minimumElapsed) throw new Error("loading restart retained the original deadline")
+      state.finish()
+      if (!state.visible || !state.settled) throw new Error("restarted loading state did not retain its remaining minimum window")
+    }
+  }
+  Timer {
+    interval: 240
     running: true
     onTriggered: {
       if (state.visible || !state.minimumElapsed) throw new Error("minimum loading state did not settle")

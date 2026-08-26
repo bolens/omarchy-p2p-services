@@ -12,9 +12,10 @@ QtObject {
   signal succeeded(string mode, string payload)
   signal failed(string mode, int exitCode, string detail)
 
+  function hasHelper() { return String(helper || "").trim() !== "" }
   function request(mode) {
     var selected = String(mode || "")
-    if (busy || ["export", "import", "undo"].indexOf(selected) < 0) return false
+    if (busy || !hasHelper() || ["export", "import", "undo"].indexOf(selected) < 0) return false
     busy = true
     activeMode = selected
     process.mode = selected
@@ -23,7 +24,7 @@ QtObject {
     return true
   }
   function refreshUndoAvailability() {
-    if (busy) return false
+    if (busy || !hasHelper()) return false
     busy = true; activeMode = "check"; process.mode = "check"
     process.command = [helper, "settings-can-undo"]; process.running = true
     return true

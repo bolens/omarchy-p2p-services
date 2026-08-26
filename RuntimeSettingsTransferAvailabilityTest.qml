@@ -34,6 +34,10 @@ ShellRoot {
   Timer { interval: 3000; running: true; onTriggered: { throw new Error("settings transfer availability test timed out at stage " + root.stage) } }
 
   Component.onCompleted: {
+    transfer.helper = "   "
+    if (transfer.request("export") || transfer.refreshUndoAvailability()) throw new Error("blank transfer helper was accepted")
+    if (transfer.running || transfer.activeMode !== "") throw new Error("blank transfer helper changed controller state")
+    transfer.helper = root.fixtureHelper
     if (!transfer.refreshUndoAvailability()) throw new Error("undo availability probe did not start")
     if (transfer.request("export") || transfer.refreshUndoAvailability()) throw new Error("undo availability probe accepted concurrent work")
   }

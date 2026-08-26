@@ -25,11 +25,16 @@ ShellRoot {
     property color barForeground: "#ffffff"
     property color foreground: "#ffffff"
     property color urgent: "#ff5555"
+    property string fontFamily: "monospace"
+    property bool foregroundAnimationEnabled: false
+    property bool activePopout: false
     property bool vertical: false
     property int barSize: 40
     property string position: "top"
     property var screen: null
     function switchPanelFrom(_owner, _direction) { return false }
+    function requestPopout(_key) { activePopout = true }
+    function releasePopout(_key) { activePopout = false }
     function findPanelWidget(_id) { return routeToFocusedFixture ? focusedWidgetFixture : widget }
     function moduleWidgets(_id) { return routeReloadFixture ? [reloadWidgetFixture] : [widget] }
   }
@@ -148,9 +153,11 @@ ShellRoot {
       widget.settingsSaveStatus = "saving"
       widget.serviceCatalog = [{id:"syncthing",installedPackages:["syncthing"]}]
       var entry = {id:"syncthing",name:"Syncthing",active:false}
+      if (widget.openMainView() !== "ok" || !widget.opened) throw new Error("main panel did not open for confirmation lifecycle test")
       widget.requestUninstall(entry)
       if (!widget.uninstallConfirmOpen || widget.uninstallTarget.id !== "syncthing") throw new Error("widget uninstall confirmation wiring failed")
-      widget.cancelUninstall()
+      widget.closeFocused()
+      if (widget.uninstallConfirmOpen || widget.uninstallTarget) throw new Error("panel close retained uninstall confirmation")
       widget.requestRestore(entry, "backup-1")
       if (!widget.restoreConfirmOpen || widget.restoreBackupName !== "backup-1") throw new Error("widget restore confirmation wiring failed")
       widget.cancelRestore()

@@ -90,7 +90,7 @@ Rectangle {
         implicitHeight: Style.space(card.minimal ? 26 : (card.compact ? 30 : 36))
         radius: Style.cornerRadius
         color: Util.alpha(controller.serviceColor(entry), 0.13)
-        Text { anchors.centerIn: parent; text: controller.iconFor(entry); textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.icon }
+        Text { anchors.centerIn: parent; text: String(controller.iconFor(entry) || ""); textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.icon }
       }
       ColumnLayout {
         objectName: "serviceIdentityBlock"
@@ -209,7 +209,7 @@ Rectangle {
       Button { objectName: "serviceDetailsButton"; text: card.iconActions ? "" : (controller.expandedServiceId === entry.id ? "Hide details" : "Details"); iconText: card.iconActions ? (controller.expandedServiceId === entry.id ? "󰁈" : "󰁅") : ""; tooltipText: card.iconActions ? (controller.expandedServiceId === entry.id ? "Hide details" : "Show details") : ""; horizontalPadding: card.iconActions ? Style.spacing.controlGap : Style.spacing.controlPaddingX; active: controller.expandedServiceId === entry.id; selected: active; onClicked: controller.toggleServiceDetails(entry.id) }
       Item { Layout.fillWidth: true }
       Button { iconText: "󰖟"; tooltipText: "Open web console"; visible: controller.hasConsole(entry); horizontalPadding: Style.spacing.controlGap; onClicked: controller.openConsole(entry) }
-      Button { iconText: "󰒓"; tooltipText: "Open configuration"; visible: entry.configExists && entry.controllable !== false; horizontalPadding: Style.spacing.controlGap; onClicked: controller.act(entry, "config") }
+      Button { iconText: "󰒓"; tooltipText: "Open configuration"; visible: entry.configExists === true && entry.controllable !== false; horizontalPadding: Style.spacing.controlGap; onClicked: controller.act(entry, "config") }
       Button { objectName: "serviceCustomizeButton"; iconText: "󰏫"; tooltipText: "Customize service"; horizontalPadding: Style.spacing.controlGap; onClicked: controller.editService(entry.id) }
     }
     Rectangle {
@@ -280,7 +280,7 @@ Rectangle {
         font.pixelSize: Style.font.caption
         }
         Text {
-        visible: entry.restartCount > 0 || entry.lastTransition || entry.failureReason
+        visible: Number(entry.restartCount) > 0 || String(entry.lastTransition || "") !== "" || String(entry.failureReason || "") !== ""
         Layout.fillWidth: true
         text: (entry.restartCount > 0 ? "Restarts: " + entry.restartCount : "No recorded restarts")
           + (entry.lastTransition ? " · changed " + entry.lastTransition : "")

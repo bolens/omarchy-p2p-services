@@ -28,6 +28,10 @@ run_harness() {
     printf 'QML runtime harness %s did not emit %s\n%s\n' "$file" "$marker" "$output" >&2
     return 1
   fi
+  if grep -Eq 'WARN scene: .*(TypeError|ReferenceError|RangeError|Maximum call stack size exceeded|Binding loop detected|(Unable|Cannot) assign \[undefined\])' <<<"$output"; then
+    printf 'QML runtime harness %s emitted a runtime exception or binding loop\n%s\n' "$file" "$output" >&2
+    return 1
+  fi
 }
 
 run_harness RuntimeModelTest.qml P2P_QML_RUNTIME_OK

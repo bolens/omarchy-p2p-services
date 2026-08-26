@@ -16,6 +16,7 @@ ColumnLayout {
   P2PLoadingIndicator {
     objectName: "catalogLoadingIndicator"
     running: page.controller.setting("showLoadingIndicators", true) === true && page.controller.catalogLoading
+    animationEnabled: page.controller.settingsPage === "packages"
     label: "QUERYING PACKAGE CATALOG"
     style: String(page.controller.setting("loadingIndicatorStyle", "spinner"))
     glyph: String(page.controller.setting("loadingIndicatorGlyph", ">"))

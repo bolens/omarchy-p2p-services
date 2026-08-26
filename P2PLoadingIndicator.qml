@@ -12,9 +12,11 @@ Rectangle {
   property string glyph: ">"
   property int speed: 140
   property bool compact: false
+  property bool animationEnabled: true
   property color tone: Color.accent
   property int frameIndex: 0
   readonly property var frames: Model.loadingFrames(style, glyph)
+  readonly property bool animationRunning: animationTimer.running
 
   visible: running
   Layout.fillWidth: !compact
@@ -52,8 +54,10 @@ Rectangle {
   }
 
   Timer {
+    id: animationTimer
+    objectName: "loadingAnimationTimer"
     interval: Math.max(60, indicator.speed)
-    running: indicator.running && indicator.frames.length > 1
+    running: indicator.running && indicator.animationEnabled && indicator.frames.length > 1
     repeat: true
     onTriggered: indicator.frameIndex = (indicator.frameIndex + 1) % indicator.frames.length
   }

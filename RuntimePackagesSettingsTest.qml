@@ -75,16 +75,18 @@ ShellRoot {
       if (availableHeading.visible || installedHeading.visible || !emptyCatalog.visible) throw new Error("empty package catalog did not replace zero-count headings")
       mockController.catalogLoading = true
       mockController.settingsPage = "general"
-      if (page.visible || !loading.running) throw new Error("catalog loading state was not preserved while navigating away")
+      if (page.visible || !loading.running || loading.animationRunning) throw new Error("hidden catalog page did not preserve state while stopping animation")
       if (descendant(page, "installPackageButton-headscale") || descendant(page, "uninstallPackageButton-syncthing"))
         throw new Error("package delegates remained instantiated while settings page was hidden")
       mockController.settingsPage = "packages"
       Qt.callLater(function() {
-        if (!loading.running) throw new Error("catalog loading state was lost after navigation back")
+      Qt.callLater(function() {
+        if (!loading.running || !loading.animationRunning) throw new Error("catalog loading state or animation was not restored after navigation back")
         if (!descendant(page, "installPackageButton-headscale") || !descendant(page, "uninstallPackageButton-syncthing"))
           throw new Error("package delegates did not return after navigating back")
         console.log("P2P_QML_PACKAGES_SETTINGS_OK")
         Qt.quit()
+      })
       })
     })
   })

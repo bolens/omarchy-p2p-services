@@ -24,6 +24,7 @@ ColumnLayout {
     P2PLoadingIndicator {
       objectName: "settingsSaveLoadingIndicator"
       running: navigation.controller.settingsSaveStatus === "saving"
+      animationEnabled: navigation.visible && navigation.controller.opened !== false
       compact: true
       label: "SAVING"
       style: String(navigation.controller.setting("loadingIndicatorStyle", "spinner"))

@@ -926,6 +926,7 @@ Panel {
           id: serviceLoadingIndicator
           objectName: "serviceLoadingIndicator"
           running: root.setting("showLoadingIndicators", true) === true && root.statusIndicatorVisible && root.services.length === 0 && root.visibleErrorText === "" && root.editingServiceId === "" && !root.showingWidgetSettings
+          animationEnabled: root.opened
           label: "DISCOVERING P2P SERVICES"
           style: String(root.setting("loadingIndicatorStyle", "spinner"))
           glyph: String(root.setting("loadingIndicatorGlyph", ">"))
@@ -984,6 +985,7 @@ Panel {
         P2PLoadingIndicator {
           objectName: "settingsLoadingIndicator"
           running: root.settingsIndicatorVisible
+          animationEnabled: root.opened
           label: "LOADING SETTINGS MODULES"
           style: String(root.setting("loadingIndicatorStyle", "spinner"))
           glyph: String(root.setting("loadingIndicatorGlyph", ">"))

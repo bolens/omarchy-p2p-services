@@ -3,7 +3,11 @@ import QtQuick
 
 ShellRoot {
   id: root
-  P2PLoadingIndicator { id: indicator; running: true; label: "LOADING TEST DATA"; style: "dots"; speed: 60 }
+  Item {
+    id: host
+    property bool presentationActive: true
+    P2PLoadingIndicator { id: indicator; running: true; animationEnabled: host.presentationActive; label: "LOADING TEST DATA"; style: "dots"; speed: 60 }
+  }
 
   function descendant(item, name) {
     if (!item) return null
@@ -21,16 +25,27 @@ ShellRoot {
     running: true
     onTriggered: {
       var frame = descendant(indicator, "loadingFrame"), label = descendant(indicator, "loadingLabel")
-      if (!frame || !label || label.text !== "LOADING TEST DATA" || frame.text === ".  ") throw new Error("animated loading presentation failed")
+      if (!frame || !label || !indicator.animationRunning || label.text !== "LOADING TEST DATA" || frame.text === ".  ") throw new Error("animated loading presentation failed")
       indicator.style = "glyph"
       indicator.glyph = "#"
       if (frame.text !== "#") throw new Error("custom loading glyph failed")
       indicator.glyph = "   "
       if (frame.text !== ">") throw new Error("blank loading glyph fallback failed")
-      indicator.running = false
-      if (indicator.visible) throw new Error("stopped loading indicator remained visible")
-      console.log("P2P_QML_LOADING_INDICATOR_OK")
-      Qt.quit()
+      indicator.style = "dots"
+      host.presentationActive = false
+      host.visible = false
+      Qt.callLater(function() {
+        if (indicator.animationRunning) throw new Error("loading animation continued inside a hidden parent")
+        host.visible = true
+        host.presentationActive = true
+        Qt.callLater(function() {
+          if (!indicator.animationRunning) throw new Error("loading animation did not resume with its parent: enabled=" + indicator.animationEnabled + " running=" + indicator.running + " frames=" + indicator.frames.length)
+          indicator.running = false
+          if (indicator.visible || indicator.animationRunning) throw new Error("stopped loading indicator retained presentation work")
+          console.log("P2P_QML_LOADING_INDICATOR_OK")
+          Qt.quit()
+        })
+      })
     }
   }
 }

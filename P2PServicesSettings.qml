@@ -15,17 +15,6 @@ ColumnLayout {
           P2PSectionHeading { visible: page.controller.settingsPage === "services"; title: "Ordering and grouping"; description: "Choose how services are ranked, pinned, grouped, and stabilized." }
           SettingsSurface {
           visible: page.controller.settingsPage === "services"
-          Dropdown {
-            objectName: "serviceLayoutDropdown"
-            Layout.fillWidth: true
-            label: "Service layout"
-            value: String(page.controller.setting("serviceLayout", "list"))
-            options: [{value:"list",label:"List"},{value:"grid",label:"Two-column grid"}]
-            foreground: Color.popups.text
-            accent: Color.bar.active
-            onChanged: function(next) { page.controller.persistKeepingOpen({serviceLayout: next}) }
-          }
-          Text { Layout.fillWidth: true; text: "Grid uses two compact card columns. Grouping still affects order while full-width group headers stay hidden."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           P2PSettingToggle { controller: page.controller; settingKey: "persistCollapsedGroups"; label: "Remember collapsed groups"; fallback: true }
           Dropdown {
             objectName: "serviceSortModeDropdown"

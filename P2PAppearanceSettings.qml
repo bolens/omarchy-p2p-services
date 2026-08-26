@@ -16,6 +16,24 @@ ColumnLayout {
     var icon = String(value || "").trim()
     page.controller.persistKeepingOpen({widgetIcon: icon || "󰒍"})
   }
+          P2PSectionHeading { visible: page.controller.settingsPage === "appearance"; title: "Service cards"; description: "Choose the main view layout and how much each card reveals." }
+          SettingsSurface {
+          visible: page.controller.settingsPage === "appearance"
+          P2PSettingsGrid {
+            Dropdown { objectName: "serviceLayoutDropdown"; Layout.fillWidth: true; label: "Layout"; value: String(page.controller.setting("serviceLayout", "list")); options: [{value:"list",label:"Single-column list"},{value:"grid",label:"Two-column grid"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({serviceLayout:next}) } }
+            Dropdown { objectName: "cardDensityDropdown"; Layout.fillWidth: true; label: "Card density"; value: String(page.controller.setting("cardDensity","comfortable")); options: [{value:"comfortable",label:"Comfortable"},{value:"compact",label:"Compact"},{value:"minimal",label:"Minimal"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({cardDensity:next}) } }
+          }
+          Text { Layout.fillWidth: true; text: page.controller.setting("cardDensity", "comfortable") === "comfortable" ? "Status, glanceable metrics, and actions." : (page.controller.setting("cardDensity", "comfortable") === "compact" ? "Condensed metrics with icon actions." : "Identity and status only."); textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          P2PSettingsGrid {
+            P2PSettingToggle { controller: page.controller; settingKey: "showStatusRail"; label: "Status rail"; fallback: true }
+            P2PSettingToggle { controller: page.controller; settingKey: "showFavoriteMarker"; label: "Favorite marker"; fallback: true }
+            P2PSettingToggle { controller: page.controller; settingKey: "showBackendBadge"; label: "Backend badge"; fallback: false }
+            P2PSettingToggle { controller: page.controller; settingKey: "showCardSummary"; label: "Card summary"; fallback: true }
+            P2PSettingToggle { controller: page.controller; settingKey: "showQuickActions"; label: "Quick actions"; fallback: true }
+            P2PSettingToggle { controller: page.controller; settingKey: "compactHeader"; label: "Compact header"; fallback: false; description: "Use a text summary instead of status chips." }
+          }
+          Dropdown { objectName: "groupHeaderStyleDropdown"; Layout.fillWidth: true; label: "Group header style"; value: String(page.controller.setting("groupHeaderStyle","surfaced")); options: [{value:"surfaced",label:"Surfaced"},{value:"dense",label:"Dense"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({groupHeaderStyle:next}) } }
+          }
           P2PSectionHeading { visible: page.controller.settingsPage === "appearance"; title: "Bar and panel"; description: "Tune the compact bar indicator and popup dimensions." }
           SettingsSurface {
           visible: page.controller.settingsPage === "appearance"
@@ -68,20 +86,6 @@ ColumnLayout {
           Dropdown { objectName: "loadingIndicatorStyleDropdown"; Layout.fillWidth: true; label: "Indicator style"; value: String(page.controller.setting("loadingIndicatorStyle", "spinner")); options: [{value:"spinner",label:"Braille spinner"},{value:"dots",label:"Terminal dots"},{value:"bar",label:"Progress sweep"},{value:"glyph",label:"Custom glyph"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({loadingIndicatorStyle:next}) } }
           TextField { objectName: "loadingIndicatorGlyphEditor"; Layout.fillWidth: true; visible: String(page.controller.setting("loadingIndicatorStyle", "spinner")) === "glyph"; text: String(page.controller.setting("loadingIndicatorGlyph", ">")); placeholderText: ">"; foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.persistKeepingOpen({loadingIndicatorGlyph:String(text || ">").slice(0, 4)}) }
           IntegerSetting { controller: page.controller; settingKey: "loadingIndicatorSpeed"; label: "Animation interval, ms"; minimum: 60; maximum: 1000; fallback: 140 }
-          }
-
-          P2PSectionHeading { visible: page.controller.settingsPage === "appearance"; title: "Header and cards"; description: "Control information density and which service-card elements remain visible." }
-          SettingsSurface {
-          visible: page.controller.settingsPage === "appearance"
-          P2PSettingToggle { controller: page.controller; settingKey: "compactHeader"; label: "Compact header"; fallback: false; description: "Use a smaller icon and a text summary instead of status chips." }
-          Dropdown { objectName: "cardDensityDropdown"; Layout.fillWidth: true; label: "Service list view"; value: String(page.controller.setting("cardDensity","comfortable")); options: [{value:"comfortable",label:"Comfortable"},{value:"compact",label:"Compact icons"},{value:"minimal",label:"Minimal indicators"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({cardDensity:next}) } }
-          Text { Layout.fillWidth: true; text: "Compact uses icon actions and tooltip indicators; minimal removes summaries and action rows."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-          P2PSettingToggle { controller: page.controller; settingKey: "showStatusRail"; label: "Status rail"; fallback: true }
-          P2PSettingToggle { controller: page.controller; settingKey: "showFavoriteMarker"; label: "Favorite marker"; fallback: true }
-          P2PSettingToggle { controller: page.controller; settingKey: "showBackendBadge"; label: "Backend badge"; fallback: false }
-          P2PSettingToggle { controller: page.controller; settingKey: "showCardSummary"; label: "Card summary"; fallback: true }
-          P2PSettingToggle { controller: page.controller; settingKey: "showQuickActions"; label: "Quick actions"; fallback: true }
-          Dropdown { objectName: "groupHeaderStyleDropdown"; Layout.fillWidth: true; label: "Group header style"; value: String(page.controller.setting("groupHeaderStyle","surfaced")); options: [{value:"surfaced",label:"Surfaced"},{value:"dense",label:"Dense"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({groupHeaderStyle:next}) } }
           }
 
           P2PSectionHeading { visible: page.controller.settingsPage === "appearance"; title: "Theme roles"; description: "Map service states and activity to colors from the active Omarchy theme." }

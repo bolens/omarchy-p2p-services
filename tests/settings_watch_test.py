@@ -4,6 +4,8 @@ import tempfile
 import unittest
 
 from p2p_settings_watch import SettingsChangeTracker
+from p2p_settings import sanitize_settings
+from p2p_settings_store import SettingsStore
 
 
 class SettingsChangeTrackerTests(unittest.TestCase):
@@ -30,6 +32,20 @@ class SettingsChangeTrackerTests(unittest.TestCase):
       replacement.write_text(json.dumps({"_p2pRevision":4, "showCount":False}))
       replacement.replace(settings)
       self.assertIsNone(tracker.poll())
+
+  def test_save_and_undo_are_visible_to_revision_tracker(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      settings = root / "settings.json"
+      store = SettingsStore(root, settings, sanitize_settings)
+      tracker = SettingsChangeTracker(settings)
+      first = store.save('{"showCount":true,"_p2pRevision":8}')
+      self.assertEqual(tracker.poll(), first["_p2pRevision"])
+      second = store.save('{"showCount":false,"_p2pRevision":1}')
+      self.assertEqual(tracker.poll(), second["_p2pRevision"])
+      restored = store.undo()
+      self.assertTrue(restored["showCount"])
+      self.assertEqual(tracker.poll(), restored["_p2pRevision"])
 
 
 if __name__ == "__main__": unittest.main()

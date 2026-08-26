@@ -413,7 +413,7 @@ def main():
     try:
       shell=json.loads(sys.argv[2]); durable=SETTINGS.load(); merged=reconcile_settings(shell,durable)
       if SETTINGS.last_recovery: print("Recovered settings; quarantined corrupt data at "+SETTINGS.last_recovery,file=sys.stderr)
-      if merged != durable: SETTINGS.save(json.dumps(merged))
+      if merged != durable: merged=SETTINGS.save(json.dumps(merged))
       print(json.dumps(merged,separators=(",",":")))
     except (OSError,ValueError,TypeError) as error: print(str(error),file=sys.stderr); raise SystemExit(1)
     return

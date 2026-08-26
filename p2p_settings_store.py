@@ -51,17 +51,18 @@ class SettingsStore:
   def save(self, raw):
     data = self._decode_object(raw, "settings payload")
     with self._lock():
-      self._write(self.sanitize(data))
+      saved = self._stamp(data, self.load())
+      self._write(saved)
+      return saved
 
   def patch(self, raw):
     patch = self._decode_object(raw, "settings patch")
     with self._lock():
       current = self.load()
       current.update(patch)
-      current["_p2pRevision"] = max(int(current.get("_p2pRevision", 0)), int(patch.get("_p2pRevision", 0))) + 1
-      current["_p2pUpdatedAt"] = int(time.time() * 1000)
-      self._write(current)
-      return self.load()
+      saved = self._stamp(current, self.load())
+      self._write(saved)
+      return saved
 
   def undo(self):
     with self._lock():
@@ -74,9 +75,17 @@ class SettingsStore:
       except (OSError, ValueError, TypeError) as error:
         raise RuntimeError("invalid previous settings snapshot") from error
       current = self.load()
+      restored = self._stamp(restored, current)
       self._atomic_write(self.settings_file, restored)
       self._atomic_write(self.previous_file, current)
       return restored
+
+  def _stamp(self, data, current):
+    clean = self.sanitize(data)
+    previous = self.sanitize(current or {})
+    clean["_p2pRevision"] = max(int(clean.get("_p2pRevision", 0)), int(previous.get("_p2pRevision", 0))) + 1
+    clean["_p2pUpdatedAt"] = int(time.time() * 1000)
+    return clean
 
   def _decode_object(self, raw, label):
     if len(raw.encode("utf-8")) > self.MAX_PAYLOAD_BYTES:

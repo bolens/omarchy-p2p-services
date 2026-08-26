@@ -15,15 +15,27 @@ class SettingsStoreTests(unittest.TestCase):
     with tempfile.TemporaryDirectory() as directory:
       store = self.store(directory)
       store.save('{"showCount":true,"compactCards":false}')
+      first_revision = store.load()["_p2pRevision"]
       merged = store.patch('{"compactCards":true}')
       self.assertTrue(merged["showCount"])
       self.assertTrue(merged["compactCards"])
       self.assertGreater(merged["_p2pRevision"], 0)
+      self.assertGreater(merged["_p2pRevision"], first_revision)
       restored = store.undo()
       self.assertFalse(restored["compactCards"])
       self.assertEqual(restored["_p2pSettingsVersion"], SETTINGS_VERSION)
+      self.assertGreater(restored["_p2pRevision"], merged["_p2pRevision"])
       self.assertEqual(store.settings_file.stat().st_mode & 0o777, 0o600)
       self.assertEqual(store.lock_file.stat().st_mode & 0o777, 0o600)
+
+  def test_full_saves_advance_beyond_current_and_incoming_revisions(self):
+    with tempfile.TemporaryDirectory() as directory:
+      store = self.store(directory)
+      first = store.save('{"showCount":true,"_p2pRevision":10}')
+      self.assertEqual(first["_p2pRevision"], 11)
+      second = store.save('{"showCount":false,"_p2pRevision":2}')
+      self.assertEqual(second["_p2pRevision"], 12)
+      self.assertGreaterEqual(second["_p2pUpdatedAt"], first["_p2pUpdatedAt"])
 
   def test_rejects_non_object_and_oversized_payloads(self):
     with tempfile.TemporaryDirectory() as directory:

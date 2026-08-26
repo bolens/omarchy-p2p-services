@@ -10,19 +10,23 @@ QtObject {
   signal failed()
 
   function hasHelper() { return String(helper || "").trim() !== "" }
+  function operationPending(operation) {
+    return (busy && process.command && process.command[1] === operation)
+      || queue.some(function(command) { return command[1] === operation })
+  }
   function load() {
-    if (!hasHelper() || (busy && process.command && process.command[1] === "events-list")
-        || queue.some(function(command) { return command[1] === "events-list" })) return false
+    if (!hasHelper() || operationPending("events-list")) return false
     enqueue([helper, "events-list"])
     return true
   }
   function record(kind, count) {
-    if (!hasHelper()) return false
-    enqueue([helper, "events-add", String(kind), String(Math.max(1, Number(count) || 1))])
+    var eventKind = String(kind || "").trim()
+    if (!hasHelper() || eventKind === "") return false
+    enqueue([helper, "events-add", eventKind, String(Math.max(1, Number(count) || 1))])
     return true
   }
   function clear() {
-    if (!hasHelper()) return false
+    if (!hasHelper() || operationPending("events-clear")) return false
     enqueue([helper, "events-clear"])
     return true
   }

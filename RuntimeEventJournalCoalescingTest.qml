@@ -24,6 +24,7 @@ ShellRoot {
     if (journal.load() || journal.record("unhealthy", 1) || journal.clear()) throw new Error("blank journal helper was accepted")
     if (journal.busy || journal.queue.length !== 0) throw new Error("blank journal helper changed queue state")
     journal.helper = root.fixtureHelper
+    if (journal.record("   ", 1) || journal.busy || journal.queue.length !== 0) throw new Error("blank journal event kind was queued")
     journal.load()
     journal.load()
     journal.load()

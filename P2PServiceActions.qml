@@ -49,7 +49,7 @@ QtObject {
   }
 
   function control(entry, action) {
-    if (entry && !(entry.controllable === false && ["start","stop","restart","config"].indexOf(action) >= 0))
+    if (entry && entry.id && !(entry.controllable === false && ["start","stop","restart","config"].indexOf(action) >= 0))
       actionRequested(entry, action, [helper, "action", entry.id, action])
   }
 }

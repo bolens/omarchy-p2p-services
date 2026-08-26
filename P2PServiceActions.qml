@@ -13,8 +13,9 @@ QtObject {
   signal actionRequested(var entry, string action, var command)
 
   function openConsole(entry, url) {
-    if (url) { Quickshell.execDetached([helper, "open-url", url]); return true }
-    if (entry && entry.hasWeb === true) { Quickshell.execDetached([helper, "action", entry.id, "open"]); return true }
+    var configuredUrl = String(url || "").trim()
+    if (configuredUrl) { Quickshell.execDetached([helper, "open-url", configuredUrl]); return true }
+    if (entry && entry.id && entry.hasWeb === true) { Quickshell.execDetached([helper, "action", entry.id, "open"]); return true }
     return false
   }
 

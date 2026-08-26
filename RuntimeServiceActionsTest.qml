@@ -24,6 +24,8 @@ ShellRoot {
     actions.control({id:"syncthing"}, "delete")
     if (root.requests !== 1) throw new Error("invalid service action was dispatched")
     if (actions.openConsole({hasWeb:false}, "") !== false) throw new Error("missing console was reported as opened")
+    if (actions.openConsole({hasWeb:true}, "") !== false) throw new Error("console action without a service id was reported as opened")
+    if (actions.openConsole({hasWeb:false}, "   ") !== false) throw new Error("blank console URL was reported as opened")
     console.log("P2P_QML_SERVICE_ACTIONS_OK")
     Qt.quit()
   })

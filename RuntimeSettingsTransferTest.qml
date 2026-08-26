@@ -15,7 +15,7 @@ ShellRoot {
     onSucceeded: function(mode, payload) {
       if (root.stage !== 0 || mode !== "export" || payload !== "export-ok") throw new Error("settings transfer success payload failed")
       if (transfer.running) throw new Error("settings transfer remained busy before success publication")
-      if (transfer.activeMode !== "export") throw new Error("settings transfer mode was not retained for publication")
+      if (transfer.activeMode !== "") throw new Error("completed settings transfer mode was retained during publication")
       root.stage = 1
       if (transfer.request("invalid")) throw new Error("invalid settings transfer mode started")
       transfer.helper = root.failingHelper

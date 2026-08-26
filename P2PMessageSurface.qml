@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import qs.Commons
+import qs.Ui
 
 Rectangle {
   id: surface
@@ -23,6 +24,15 @@ Rectangle {
     spacing: Style.spacing.sm
     Text { text: surface.icon; textFormat: Text.PlainText; color: surface.tone; font.family: Style.font.family; font.pixelSize: Style.font.icon }
     Text { Layout.fillWidth: true; text: surface.message; textFormat: Text.PlainText; color: Color.popups.text; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.body }
-    Button { visible: surface.actionText !== ""; text: surface.actionText; onClicked: surface.actionRequested() }
+    Button {
+      objectName: "messageSurfaceAction"
+      visible: surface.actionText !== ""
+      text: surface.actionText
+      foreground: Color.popups.text
+      accent: surface.tone
+      bordered: true
+      selected: true
+      onClicked: surface.actionRequested()
+    }
   }
 }

@@ -53,6 +53,6 @@ ColumnLayout {
           }
           P2PSectionHeading { title: "Monitor diagnostics"; description: "Live health from the shared background watcher." }
           SettingsSurface {
-          Text { Layout.fillWidth: true; text: page.controller.monitoringTelemetryText(); textFormat: Text.PlainText; color: page.controller.p2pService && page.controller.p2pService.watcherHealth === "healthy" && page.controller.p2pService.settingsWatcherHealth === "healthy" ? Color.muted : Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { Layout.fillWidth: true; text: page.controller.monitoringTelemetryText(); textFormat: Text.PlainText; color: page.controller.p2pService && Model.monitoringHealthSeverity(page.controller.p2pService.watcherHealth, page.controller.p2pService.settingsWatcherHealth, page.controller.p2pService.settingsWatcherCode) === "neutral" ? Color.muted : Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           }
 }

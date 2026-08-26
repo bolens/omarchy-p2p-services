@@ -247,6 +247,12 @@ assert.equal(context.watcherExitState(true, 60000).nextRetryMilliseconds, 60000)
 assert.equal(context.watcherHeartbeatState(1000, 45000, 45000).stale, false);
 assert.deepEqual(JSON.parse(JSON.stringify(context.watcherHeartbeatState(1000, 46001, 45000))), {stale:true,health:"degraded",code:"heartbeat_stale"});
 assert.equal(context.watcherHeartbeatState(0, 1000, 45000).stale, true);
+assert.equal(context.monitoringHealthSeverity("healthy", "healthy", "ok"), "neutral");
+assert.equal(context.monitoringHealthSeverity("disabled", "healthy", "ok"), "neutral");
+assert.equal(context.monitoringHealthSeverity("polling", "starting", "waiting"), "neutral");
+assert.equal(context.monitoringHealthSeverity("degraded", "healthy", "ok"), "urgent");
+assert.equal(context.monitoringHealthSeverity("healthy", "starting", "restarting"), "urgent");
+assert.equal(context.monitoringHealthSeverity("healthy", "degraded", "handshake_timeout"), "urgent");
 assert.deepEqual(JSON.parse(JSON.stringify(context.parseTransferredSettings('{"popupWidth":700}', "plugin-id", "import"))), {
   valid:true,settings:{popupWidth:700}
 });

@@ -37,6 +37,8 @@ ShellRoot {
     if (notification.title !== "P2P service action failed" || notification.body.indexOf("last reason") >= 0) throw new Error("action notification leaked raw stderr")
     var watcher = Model.parseWatcherEvent('{"type":"watch-event","version":1,"kind":"changed"}', 1000)
     if (!watcher.accepted || !watcher.changed || Model.watcherExitState(true, 4000).nextRetryMilliseconds !== 8000) throw new Error("watcher lifecycle policy failed")
+    if (Model.monitoringHealthSeverity("disabled", "healthy", "ok") !== "neutral"
+        || Model.monitoringHealthSeverity("healthy", "starting", "restarting") !== "urgent") throw new Error("monitoring severity policy failed")
     console.log("P2P_QML_RUNTIME_OK")
     Qt.quit()
   }

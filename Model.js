@@ -300,6 +300,14 @@ function watcherHeartbeatState(lastHeartbeatAt, now, thresholdMilliseconds) {
   return {stale:true,health:"degraded",code:"heartbeat_stale"}
 }
 
+function monitoringHealthSeverity(watcherHealth, settingsWatcherHealth, settingsWatcherCode) {
+  var urgentHealth = ["degraded", "failed", "error"]
+  var urgentCode = ["restarting", "retrying", "handshake_timeout"]
+  return urgentHealth.indexOf(String(watcherHealth)) >= 0
+    || urgentHealth.indexOf(String(settingsWatcherHealth)) >= 0
+    || urgentCode.indexOf(String(settingsWatcherCode)) >= 0 ? "urgent" : "neutral"
+}
+
 function parseTransferredSettings(payload, moduleName, mode) {
   try {
     var parsed = JSON.parse(String(payload || "{}"))

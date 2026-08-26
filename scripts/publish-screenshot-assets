@@ -13,6 +13,8 @@ rollback() {
 }
 trap 'rollback "$@"' EXIT INT TERM
 for relative in "$@"; do
+  [[ $relative != /* && $relative != .. && $relative != ../* && $relative != */../* && $relative != */.. ]] \
+    || { printf 'Unsafe screenshot publication path: %s\n' "$relative" >&2; exit 2; }
   [[ -f $relative && -f $stage/$relative ]] || { printf 'Missing screenshot publication file: %s\n' "$relative" >&2; exit 1; }
   mkdir -p "$backup/$(dirname "$relative")"; cp -- "$relative" "$backup/$relative"
 done

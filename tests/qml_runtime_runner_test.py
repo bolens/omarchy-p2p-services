@@ -74,6 +74,31 @@ class QmlRuntimeRunnerTests(unittest.TestCase):
       self.assertEqual(result.returncode, 2)
       self.assertIn("Unknown QML runtime harness", result.stderr)
 
+  def test_success_marker_does_not_mask_runtime_warnings(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        printf '%s\n' P2P_QML_HEADER_OK
+        printf '%s\n' 'WARN scene: @Header.qml: Binding loop detected for property "width"'
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 1)
+      self.assertIn("runtime exception or binding loop", result.stderr)
+
 
 if __name__ == "__main__":
   unittest.main()

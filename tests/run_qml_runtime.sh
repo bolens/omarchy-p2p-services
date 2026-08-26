@@ -2,6 +2,8 @@
 set -euo pipefail
 
 plugin_dir="$(cd -- "$(dirname -- "$0")/.." && pwd)"
+requested_harnesses=("$@")
+selected_harnesses=0
 # shellcheck disable=SC1091
 source "$plugin_dir/tests/tooling_env.sh"
 quickshell_bin="$(find_command "${QUICKSHELL_BIN:-}" quickshell "$HOME/.local/opt/quickshell-git/usr/bin/quickshell")"
@@ -16,6 +18,14 @@ ln -s -- "$shell_root/Ui" "$runtime_dir/Ui"
 
 run_harness() {
   local file=$1 marker=$2 limit=${3:-4} output status
+  if (( ${#requested_harnesses[@]} > 0 )); then
+    local requested selected=false
+    for requested in "${requested_harnesses[@]}"; do
+      if [[ $requested == "$file" ]]; then selected=true; break; fi
+    done
+    [[ $selected == true ]] || return 0
+  fi
+  selected_harnesses=$((selected_harnesses + 1))
   set +e
   output="$(timeout "$limit" "$quickshell_bin" --no-color --path "$runtime_dir/$file" 2>&1)"
   status=$?
@@ -79,3 +89,8 @@ run_harness RuntimeMinimumLoadingStateTest.qml P2P_QML_MINIMUM_LOADING_STATE_OK
 run_harness RuntimeProcessTimeoutTest.qml P2P_QML_PROCESS_TIMEOUT_OK
 run_harness RuntimeProcessWatchdogTest.qml P2P_QML_PROCESS_WATCHDOG_OK
 run_harness RuntimeEventJournalTest.qml P2P_QML_EVENT_JOURNAL_OK
+
+if (( ${#requested_harnesses[@]} > 0 && selected_harnesses != ${#requested_harnesses[@]} )); then
+  printf 'Unknown QML runtime harness: %s\n' "${requested_harnesses[*]}" >&2
+  exit 2
+fi

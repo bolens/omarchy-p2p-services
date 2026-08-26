@@ -1,0 +1,68 @@
+import os
+import pathlib
+import subprocess
+import tempfile
+import textwrap
+import unittest
+
+
+class QmlRuntimeRunnerTests(unittest.TestCase):
+  def test_requested_harnesses_run_without_the_full_matrix(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      trace = root / "trace"
+      quickshell = root / "quickshell"
+      quickshell.write_text(textwrap.dedent("""\
+        #!/usr/bin/env bash
+        file=${@: -1}
+        name=${file##*/}
+        printf '%s\n' "$name" >> "$QML_FAKE_TRACE"
+        case "$name" in
+          RuntimeHeaderTest.qml) printf '%s\n' P2P_QML_HEADER_OK ;;
+          RuntimeFilterBarTest.qml) printf '%s\n' P2P_QML_FILTER_BAR_OK ;;
+        esac
+      """))
+      quickshell.chmod(0o755)
+      env = os.environ | {
+        "OMARCHY_SHELL_ROOT": str(shell_root),
+        "QUICKSHELL_BIN": str(quickshell),
+        "QML_FAKE_TRACE": str(trace),
+      }
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeHeaderTest.qml", "RuntimeFilterBarTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 0, result.stderr + "\ntrace=" + (trace.read_text() if trace.exists() else "missing"))
+      self.assertEqual(trace.read_text().splitlines(), ["RuntimeFilterBarTest.qml", "RuntimeHeaderTest.qml"])
+
+  def test_unknown_harness_is_rejected(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      shell_root = root / "shell"
+      (shell_root / "Commons").mkdir(parents=True)
+      (shell_root / "Ui").mkdir()
+      quickshell = root / "quickshell"
+      quickshell.write_text("#!/usr/bin/env bash\nexit 0\n")
+      quickshell.chmod(0o755)
+      env = os.environ | {"OMARCHY_SHELL_ROOT": str(shell_root), "QUICKSHELL_BIN": str(quickshell)}
+      result = subprocess.run(
+        [plugin_root / "tests/run_qml_runtime.sh", "RuntimeMissingTest.qml"],
+        cwd=plugin_root,
+        env=env,
+        capture_output=True,
+        text=True,
+      )
+      self.assertEqual(result.returncode, 2)
+      self.assertIn("Unknown QML runtime harness", result.stderr)
+
+
+if __name__ == "__main__":
+  unittest.main()

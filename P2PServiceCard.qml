@@ -97,7 +97,7 @@ Rectangle {
             required property var modelData
             indicator: modelData
             tone: card.controller.serviceColor(card.entry)
-            onActivated: card.activateIndicator(indicator)
+            onTriggered: card.activateIndicator(indicator)
           }
         }
         Text { visible: !card.grid; text: "●"; textFormat: Text.PlainText; color: controller.serviceColor(entry); font.family: Style.font.family; font.pixelSize: Style.font.caption }
@@ -117,7 +117,7 @@ Rectangle {
           visible: !card.grid && controller.setting("showBackendBadge", false) === true
           indicator: ({icon:"", value:String(entry.backend || "process").toUpperCase(), tooltip:"Show " + String(entry.backend || "process") + " services", action:"backend"})
           tone: Color.muted
-          onActivated: card.activateIndicator(indicator)
+          onTriggered: card.activateIndicator(indicator)
         }
       }
     }
@@ -137,7 +137,7 @@ Rectangle {
           indicator: modelData
           tone: card.controller.serviceColor(card.entry)
           horizontalPadding: Style.spacing.md
-          onActivated: card.activateIndicator(indicator)
+          onTriggered: card.activateIndicator(indicator)
         }
       }
       Item { Layout.fillWidth: true }
@@ -145,7 +145,7 @@ Rectangle {
         objectName: "gridStatusPill"
         indicator: ({icon:"", value:entry.active ? (entry.hasError ? "ISSUE" : "RUNNING") : "STOPPED", tooltip:"Show service details", action:"details"})
         tone: controller.serviceColor(entry)
-        onActivated: card.activateIndicator(indicator)
+        onTriggered: card.activateIndicator(indicator)
       }
     }
 

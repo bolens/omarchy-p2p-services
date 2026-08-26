@@ -88,8 +88,23 @@ ShellRoot {
     Qt.callLater(function() {
       if (status.visible || !actionLoading.visible || actionLoading.label !== "STARTING" || primary.enabled) throw new Error("pending service presentation failed")
       card.entry = Object.assign({}, card.entry, {controllable:false})
+      mockController.density = "compact"
       Qt.callLater(function() {
         if (primary.visible) throw new Error("observation-only service exposed mutation control")
+        var disabledConfigPill = null
+        function findDisabledConfigPill(item) {
+          if (!item) return null
+          if (item.objectName === "compactIndicatorPill" && item.indicator && item.indicator.action === "config") return item
+          var children = item.children || []
+          for (var index = 0; index < children.length; index++) { var match = findDisabledConfigPill(children[index]); if (match) return match }
+          return null
+        }
+        disabledConfigPill = findDisabledConfigPill(card)
+        if (!disabledConfigPill || disabledConfigPill.enabled || disabledConfigPill.Accessible.name.indexOf("Observation only") < 0)
+          throw new Error("observation-only config pill did not explain its disabled state")
+        var beforeDisabledActivation = mockController.events.length
+        disabledConfigPill.activate()
+        if (mockController.events.length !== beforeDisabledActivation) throw new Error("disabled config pill dispatched an action")
         card.entry = Object.assign({}, card.entry, {controllable:true,active:true,connections:2,listeners:1,processCount:1,hasWeb:true,configExists:true})
         mockController.pendingService = ""
         mockController.density = "compact"
@@ -97,7 +112,7 @@ ShellRoot {
           var pill = descendant(card, "compactIndicatorPill"), count = descendant(card, "indicatorPillCount")
           if (!pill || !count || count.text !== "2" || primary.text !== "" || primary.tooltipText !== "Stop service") throw new Error("compact icon card presentation failed")
           var beforePillEvents = mockController.events.length
-          pill.activated()
+          pill.activate()
           if (mockController.events.length !== beforePillEvents + 1 || mockController.events[beforePillEvents].kind !== "details") throw new Error("compact indicator pill did not dispatch details")
           var webPill = null
           function findWebPill(item) {
@@ -109,18 +124,18 @@ ShellRoot {
           }
           webPill = findWebPill(card)
           if (!webPill) throw new Error("web console indicator pill missing")
-          webPill.activated()
+          webPill.activate()
           if (mockController.events[mockController.events.length - 1].kind !== "console") throw new Error("web console indicator pill did not dispatch")
           var backendPill = descendant(card, "backendIndicatorPill")
           if (!backendPill) throw new Error("backend indicator pill missing")
-          backendPill.activated()
+          backendPill.activate()
           if (mockController.events[mockController.events.length - 1].kind !== "backend") throw new Error("backend indicator pill did not filter")
           mockController.layout = "grid"
           Qt.callLater(function() {
             var statusPill = descendant(card, "gridStatusPill")
             if (!statusPill) throw new Error("grid status pill missing")
             var beforeStatusEvents = mockController.events.length
-            statusPill.activated()
+            statusPill.activate()
             if (mockController.events.length !== beforeStatusEvents + 1 || mockController.events[beforeStatusEvents].kind !== "details") throw new Error("grid status pill did not dispatch details")
             mockController.layout = "list"
           mockController.density = "minimal"

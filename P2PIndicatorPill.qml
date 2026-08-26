@@ -7,13 +7,14 @@ Rectangle {
   property var indicator: ({})
   required property color tone
   property int horizontalPadding: Style.spacing.sm
-  signal activated
+  signal triggered
+  function activate() { if (enabled) triggered() }
 
   activeFocusOnTab: true
   enabled: indicator.enabled !== false
   Accessible.role: Accessible.Button
   Accessible.name: String(indicator.tooltip || "Service information")
-  Accessible.onPressAction: if (enabled) activated()
+  Accessible.onPressAction: activate()
   implicitWidth: indicatorRow.implicitWidth + horizontalPadding * 2
   implicitHeight: indicatorRow.implicitHeight + Style.space(4)
   radius: implicitHeight / 2
@@ -21,7 +22,7 @@ Rectangle {
   border.width: activeFocus ? 2 : 1
   border.color: Util.alpha(tone, activeFocus ? 0.8 : 0.25)
   opacity: enabled ? 1 : 0.45
-  readonly property bool hovered: pointer.containsMouse
+  readonly property bool hovered: hoverDetector.hovered
 
   Row {
     id: indicatorRow
@@ -37,11 +38,12 @@ Rectangle {
     enabled: pill.enabled
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
-    onClicked: pill.activated()
+    onClicked: pill.activate()
   }
-  Keys.onReturnPressed: if (enabled) activated()
-  Keys.onEnterPressed: if (enabled) activated()
-  Keys.onSpacePressed: if (enabled) activated()
-  ToolTip.visible: hovered
+  HoverHandler { id: hoverDetector }
+  Keys.onReturnPressed: activate()
+  Keys.onEnterPressed: activate()
+  Keys.onSpacePressed: activate()
+  ToolTip.visible: hoverDetector.hovered
   ToolTip.text: String(indicator.tooltip || "")
 }

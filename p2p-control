@@ -196,7 +196,10 @@ def watch_events():
   commands=[]
   busctl=shutil.which("busctl")
   if busctl: commands.append([os.path.realpath(busctl),"monitor","org.freedesktop.systemd1"])
-  for runtime in ("docker","podman"):
+  # Podman's events command polls its database continuously and can consume a
+  # full CPU core while idle. Status reconciliation already provides bounded
+  # Podman change detection, so only Docker gets a persistent event stream.
+  for runtime in ("docker",):
     command=shutil.which(runtime)
     if command: commands.append([os.path.realpath(command),"events","--filter","type=container"])
   processes=[]; selector=selectors.DefaultSelector()
@@ -217,7 +220,10 @@ def watch_events():
       events=selector.select(timeout=15)
       for key,_mask in events:
         line=key.fileobj.readline()
-        if not line: continue
+        if not line:
+          try: selector.unregister(key.fileobj)
+          except (KeyError,ValueError): pass
+          continue
         now=time.monotonic()
         if now-last_emit >= 1.0: print(json.dumps(watch_event_payload("changed"),separators=(",",":")),flush=True); last_emit=now
       now=time.monotonic()
@@ -229,6 +235,7 @@ def watch_events():
     for process in processes:
       try: process.terminate()
       except (OSError,ProcessLookupError): pass
+    selector.close()
     signal.signal(signal.SIGTERM,previous_term)
   return True
 

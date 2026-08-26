@@ -259,20 +259,23 @@ class ControlCliTests(ControlTestCase):
     self.assertEqual(errors.getvalue(), "")
     self.assertEqual(launch.call_count, 1)
 
-  def test_watch_debounces_backends_emits_idle_heartbeat_and_cleans_up(self):
+  def test_watch_excludes_podman_debounces_emits_heartbeat_and_cleans_up(self):
     class EventStream:
-      def readline(self): return "container changed\n"
+      def __init__(self, line): self.line = line
+      def readline(self): return self.line
 
     class Process:
-      def __init__(self): self.stdout, self.terminated = EventStream(), False
+      def __init__(self, line): self.stdout, self.terminated = EventStream(line), False
       def poll(self): return None
       def terminate(self): self.terminated = True
 
-    processes = [Process(), Process()]
+    processes = [Process(""), Process("container changed\n")]
 
     class Selector:
-      def __init__(self): self.streams = []; self.calls = 0
+      def __init__(self): self.streams = []; self.unregistered = []; self.calls = 0; self.closed = False
       def register(self, stream, _events): self.streams.append(stream)
+      def unregister(self, stream): self.unregistered.append(stream); self.streams.remove(stream)
+      def close(self): self.closed = True
       def select(self, timeout):
         self.calls += 1
         if self.calls == 1: return [(types.SimpleNamespace(fileobj=stream), None) for stream in self.streams]
@@ -281,11 +284,12 @@ class ControlCliTests(ControlTestCase):
 
     previous_handler = object()
     signal_calls = []
-    with mock.patch.object(CONTROL.shutil, "which", side_effect=lambda name: "/usr/bin/" + name if name in ("docker", "podman") else None), \
+    selector = Selector()
+    with mock.patch.object(CONTROL.shutil, "which", side_effect=lambda name: "/usr/bin/" + name if name in ("busctl", "docker", "podman") else None), \
          mock.patch.object(CONTROL.os.path, "realpath", side_effect=lambda path: path), \
          mock.patch.object(CONTROL.subprocess, "Popen", side_effect=processes) as launch, \
-         mock.patch.object(CONTROL.selectors, "DefaultSelector", side_effect=Selector), \
-         mock.patch.object(CONTROL.time, "monotonic", side_effect=[10.0, 10.2, 10.2, 30.0]), \
+         mock.patch.object(CONTROL.selectors, "DefaultSelector", return_value=selector), \
+         mock.patch.object(CONTROL.time, "monotonic", side_effect=[10.0, 10.2, 30.0]), \
          mock.patch.object(CONTROL.signal, "signal", side_effect=lambda kind, handler: signal_calls.append((kind, handler)) or previous_handler):
       output, errors = self.invoke("watch")
 
@@ -293,9 +297,11 @@ class ControlCliTests(ControlTestCase):
     self.assertEqual([message["kind"] for message in messages], ["heartbeat", "changed", "heartbeat"])
     self.assertEqual(errors, "")
     self.assertEqual([call.args[0] for call in launch.call_args_list], [
+      ["/usr/bin/busctl", "monitor", "org.freedesktop.systemd1"],
       ["/usr/bin/docker", "events", "--filter", "type=container"],
-      ["/usr/bin/podman", "events", "--filter", "type=container"],
     ])
+    self.assertEqual(selector.unregistered, [processes[0].stdout])
+    self.assertTrue(selector.closed)
     self.assertTrue(all(process.terminated for process in processes))
     self.assertEqual(signal_calls[-1], (CONTROL.signal.SIGTERM, previous_handler))
 

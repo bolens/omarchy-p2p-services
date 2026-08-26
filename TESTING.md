@@ -28,29 +28,12 @@ Omarchy session:
 tests/run_qml_runtime.sh
 ```
 
-These execute model behavior, keyboard-navigation geometry with content above
-the service list, queued refresh-controller behavior using real Quickshell
-`Process` objects, event-driven organization state, real Services and Appearance
-dropdown wiring, category icon edits, group-header rendering and collapse, and
-saved-view activation. They also cover durable-settings save coalescing, service
-editor persistence events, service-card state/actions, settings navigation,
-header actions, shared toggle/numeric-setting behavior, real settings
-reconciliation and failure signaling, refresh failure cleanup, service-list
-composition/collapse, Discovery input parsing and transfer actions, and
-General default/privacy behavior, package expansion and install/stop/uninstall
-dispatch, service lifecycle/configuration telemetry, per-service notification
-policy, Appearance density/rotation/theme-role behavior, per-service map/reset
-policy, global reset preservation, real saved-view button interaction, and
-settings-transfer concurrency/failure cleanup and service-action command
-dispatch/serialization, result messaging, and custom-service JSON validation.
-They also cover refresh merge/failure/health/cooldown policy, deferred refreshes,
-notification aggregation, the privacy-safe support-report projection, bounded
-event-journal storage and its live QML command queue, contextual settings links,
-watcher parsing/backoff/staleness and real debounce behavior, confirmation
-cleanup, catalog serialization, transfer-result application, console URL
-validation, and a real `Service.qml` plus `BarWidget.qml` plugin-load smoke test.
-Headless validation reports their explicit skip instead of silently implying
-that runtime behavior was exercised.
+The harnesses exercise real QML component behavior, process integration,
+settings persistence, refresh and watcher lifecycles, user interaction,
+privacy boundaries, and plugin-load smoke paths. `tests/run_qml_runtime.sh` is
+the canonical harness inventory; adding or removing a runtime test there avoids
+maintaining a second enumerated list in documentation. Headless validation
+reports an explicit skip instead of implying runtime behavior was exercised.
 
 ## Clean archive validation
 

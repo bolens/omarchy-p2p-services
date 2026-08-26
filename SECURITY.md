@@ -13,6 +13,10 @@ endpoints, usernames, paths, and unrelated personal information.
 
 ## Trust boundaries
 
+The user-facing [privacy and diagnostics guide](https://bolens.github.io/omarchy-p2p-services/#privacy)
+describes what can be shared safely. The invariants below define the maintainer
+contract that enforces that behavior.
+
 - Peer, process, unit, container, and package metadata is untrusted input.
 - Private mode redacts sensitive values before serialization to the UI.
 - Package and service actions use fixed identifiers and argument arrays.

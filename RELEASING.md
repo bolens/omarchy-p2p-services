@@ -8,7 +8,8 @@ tag, creates a source archive and SHA-256 checksum, and publishes both.
 1. Update `manifest.json` to the release version.
 2. Move `CHANGELOG.md` entries from Unreleased into a dated version and update
    its comparison links.
-3. Update user-visible behavior, dependencies, install, and removal guidance.
+3. Update user-visible behavior in the canonical [website guide](https://bolens.github.io/omarchy-p2p-services/#guide),
+   including dependencies, installation, troubleshooting, and removal when relevant.
 4. Run [TESTING.md](TESTING.md), then push the release commit and require CI to
    pass on the exact candidate SHA.
 5. Confirm the worktree is clean and `origin/main` matches the candidate.

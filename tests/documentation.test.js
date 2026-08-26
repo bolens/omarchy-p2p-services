@@ -29,10 +29,18 @@ for (const file of markdownFiles) {
 }
 
 const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
+const guide = fs.readFileSync(path.join(root, "docs/index.html"), "utf8");
+const guideIds = new Set([...guide.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]));
+for (const file of markdownFiles) {
+  const content = fs.readFileSync(file, "utf8");
+  for (const match of content.matchAll(/https:\/\/bolens\.github\.io\/omarchy-p2p-services\/#([A-Za-z0-9_-]+)/g))
+    assert.ok(guideIds.has(match[1]), `${path.relative(root, file)} links to missing guide anchor: #${match[1]}`);
+}
 assert.match(readme, /!\[P2P Services[^\]]*\]\(preview\.png(?:\?v=[0-9a-f]+)?\)/, "README must display preview.png");
 assert.match(readme, /omarchy plugin add https:\/\/github\.com\/bolens\/omarchy-p2p-services\.git --enable/);
 assert.ok(fs.statSync(path.join(root, "preview.png")).size > 0, "preview.png must not be empty");
 assert.match(readme, /bolens\.github\.io\/omarchy-p2p-services/);
+assert.match(fs.readFileSync(path.join(root, "DOCUMENTATION.md"), "utf8"), /canonical installation/);
 for (const image of ["compact.png", "grid.png", "general.png", "appearance.png", "services.png", "performance.png", "discovery.png", "packages.png", "bar.png"])
   assert.ok(fs.existsSync(path.join(root, "docs", image)), `missing screenshot: ${image}`);
 

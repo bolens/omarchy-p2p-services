@@ -3,6 +3,10 @@
 Thanks for helping improve P2P Services. Keep changes focused, local-first, and
 consistent with Omarchy Shell conventions.
 
+The [website guide](https://bolens.github.io/omarchy-p2p-services/#guide) is the
+canonical home for user behavior. Update it with user-visible changes and link
+to it from repository docs instead of duplicating operational guidance.
+
 ## Development
 
 Clone the repository and install the checkout through Omarchy when testing live

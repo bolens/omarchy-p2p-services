@@ -7,6 +7,7 @@ ShellRoot {
   property int stage: 0
   readonly property string fixtureHelper: PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/transfer-helper"))
   readonly property string failingHelper: PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/transfer-failing-helper"))
+  readonly property string longFailingHelper: PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/action-failing-helper"))
 
   P2PSettingsTransferController {
     id: transfer
@@ -21,12 +22,21 @@ ShellRoot {
       if (!transfer.request("undo")) throw new Error("failing settings transfer did not start")
     }
     onFailed: function(mode, exitCode, detail) {
-      if (root.stage !== 1 || mode !== "undo" || exitCode === 0) throw new Error("settings transfer failure payload failed")
-      if (detail !== "fixture transfer failed safely") throw new Error("settings transfer stderr detail was not preserved")
-      if (transfer.running) throw new Error("settings transfer remained busy after failure")
-      root.stage = 2
-      console.log("P2P_QML_SETTINGS_TRANSFER_OK")
-      Qt.quit()
+      if (root.stage === 1) {
+        if (mode !== "undo" || exitCode === 0) throw new Error("settings transfer failure payload failed")
+        if (detail !== "fixture transfer failed safely") throw new Error("settings transfer stderr detail was not preserved")
+        if (transfer.running) throw new Error("settings transfer remained busy after failure")
+        root.stage = 2
+        transfer.helper = root.longFailingHelper
+        if (!transfer.request("import")) throw new Error("settings transfer did not recover after failure")
+      } else if (root.stage === 2) {
+        if (mode !== "import" || exitCode === 0 || detail.length !== 512 || detail.charAt(511) !== "x")
+          throw new Error("settings transfer stderr was not bounded")
+        if (transfer.running) throw new Error("settings transfer remained busy after bounded failure")
+        root.stage = 3
+        console.log("P2P_QML_SETTINGS_TRANSFER_OK")
+        Qt.quit()
+      } else throw new Error("unexpected settings transfer failure at stage " + root.stage)
     }
   }
 

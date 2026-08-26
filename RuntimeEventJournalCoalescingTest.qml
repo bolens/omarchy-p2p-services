@@ -20,6 +20,10 @@ ShellRoot {
   }
 
   Component.onCompleted: {
+    journal.helper = "   "
+    if (journal.load() || journal.record("unhealthy", 1) || journal.clear()) throw new Error("blank journal helper was accepted")
+    if (journal.busy || journal.queue.length !== 0) throw new Error("blank journal helper changed queue state")
+    journal.helper = root.fixtureHelper
     journal.load()
     journal.load()
     journal.load()

@@ -9,14 +9,23 @@ QtObject {
   property var queue: []
   signal failed()
 
+  function hasHelper() { return String(helper || "").trim() !== "" }
   function load() {
-    if ((busy && process.command && process.command[1] === "events-list")
+    if (!hasHelper() || (busy && process.command && process.command[1] === "events-list")
         || queue.some(function(command) { return command[1] === "events-list" })) return false
     enqueue([helper, "events-list"])
     return true
   }
-  function record(kind, count) { enqueue([helper, "events-add", String(kind), String(Math.max(1, Number(count) || 1))]) }
-  function clear() { enqueue([helper, "events-clear"]) }
+  function record(kind, count) {
+    if (!hasHelper()) return false
+    enqueue([helper, "events-add", String(kind), String(Math.max(1, Number(count) || 1))])
+    return true
+  }
+  function clear() {
+    if (!hasHelper()) return false
+    enqueue([helper, "events-clear"])
+    return true
+  }
   function enqueue(command) {
     queue = queue.concat([command])
     startNext()

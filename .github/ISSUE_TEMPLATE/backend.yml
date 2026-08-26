@@ -1,0 +1,54 @@
+name: Backend, package, or action problem
+description: Report systemd, container, package, proxy, installation, or service-control failures.
+title: "[Backend]: "
+labels: [bug, backend]
+body:
+  - type: markdown
+    attributes:
+      value: Remove peer endpoints, credentials, registry hosts, private paths, and unredacted diagnostics.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Backend or action
+      options:
+        - systemd user service
+        - systemd system service
+        - Docker
+        - Podman
+        - process discovery or control
+        - package installation or removal
+        - web console or reverse proxy
+        - configuration or log action
+        - backup or restore
+        - custom service
+    validations:
+      required: true
+  - type: textarea
+    id: failure
+    attributes:
+      label: What failed?
+      description: Include the action, actual result, and expected result.
+    validations:
+      required: true
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions and backend details
+      description: Include plugin, Omarchy, service, package, and container-runtime versions that apply.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Redacted error output
+      description: Paste complete relevant output only after removing private data.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I updated the plugin and searched existing issues.
+          required: true
+        - label: I removed endpoints, credentials, private paths, usernames, and registry hosts.
+          required: true

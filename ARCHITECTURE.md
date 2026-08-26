@@ -89,6 +89,18 @@ points and sibling imports relative to the installed plugin directory.
 Docker and Podman remain optional. Discovery degrades without either runtime or
 without any supported P2P software installed.
 
+## Performance constraints
+
+- Keep one shared service instance; per-monitor widgets must not create their own watchers.
+- Reuse snapshot indexes for processes, sockets, units, packages, and containers.
+- Deduplicate equivalent multi-monitor refresh requests while preserving forced and full-scan upgrades.
+- Prefer event-driven refreshes with bounded polling as recovery, not repeated unbounded subprocesses.
+- Derive catalog, grouping, count, and bar projections once per reactive snapshot.
+- Run loading-animation and retry timers only while their corresponding state is active.
+- Bound command output, cache entries, retries, payloads, rendered rows, and filesystem reads.
+
+Changes that weaken these constraints require focused tests and live Quickshell verification.
+
 ## Settings contract
 
 `manifest.json` is the canonical source of default values. Python sanitization

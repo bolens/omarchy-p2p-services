@@ -73,6 +73,11 @@ preview on an empty workspace:
 scripts/capture-screenshots --monitor DP-1 --workspace 10
 ```
 
+Use `--verify` to exercise capture and restoration without publishing assets,
+and `--report FILE` to write a machine-readable result. Screenshot publication
+is transactional: incomplete updates roll back, while recovery helpers retain
+and prune interrupted state safely.
+
 The script snapshots the existing configuration, forces `privacyFilter: true`
 in both durable and shell settings, reconciles and verifies the private state,
 captures tightly cropped images, strips PNG metadata, and restores the exact

@@ -39,7 +39,7 @@ jobs:
           .omarchy/bin/omarchy-plugin-validate "$RUNNER_TEMP/plugin"
 
       - name: Check shell helpers
-        run: shellcheck scripts/build-site.sh scripts/capture-preview scripts/capture-screenshots tests/run_all.sh tests/run_qml_runtime.sh
+        run: shellcheck scripts/build-site.sh scripts/capture-preview scripts/capture-screenshots scripts/capture-plugin-fingerprint scripts/publish-screenshot-assets scripts/prune-capture-recovery scripts/restore-capture-state scripts/verify-capture-postconditions tests/run_all.sh tests/run_qml_runtime.sh
 
       - name: Run portable validation
         run: tests/run_all.sh --portable
@@ -63,3 +63,40 @@ jobs:
             --workdir /workspace \
             archlinux@sha256:4bf33b21a715aac0b48ce6e9eaed4782a898eae96f88f5da3635572129c2584a \
             bash -lc 'pacman -Syu --noconfirm quickshell qt6-declarative >/dev/null && /usr/lib/qt6/bin/qmllint -I .omarchy/shell BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml Runtime*.qml'
+
+  repository:
+    name: Repository and site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install document validators
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libxml2-utils tidy
+      - name: Validate HTML and XML
+        run: |
+          tidy -errors -quiet docs/index.html docs/404.html 2>&1 | tee /tmp/tidy-output
+          if grep -E 'Error:' /tmp/tidy-output; then exit 1; fi
+          xmllint --noout docs/favicon.svg docs/sitemap.xml
+      - name: Check documentation links
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --no-progress --accept 200,204,206,429 './**/*.md' './docs/**/*.html'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and test site
+        run: |
+          npm ci
+          npm run build:site
+          npm run test:site
+      - name: Audit site accessibility
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _site >/tmp/p2p-site.log 2>&1 &
+          site_server=$!
+          trap 'kill "$site_server" 2>/dev/null || true' EXIT
+          npx lighthouse http://127.0.0.1:4173/ --only-categories=accessibility --chrome-flags='--headless --no-sandbox' --output=json --output-path=/tmp/lighthouse.json
+          node -e 'const r=require("/tmp/lighthouse.json"); process.exit(r.categories.accessibility.score >= 0.95 ? 0 : 1)'

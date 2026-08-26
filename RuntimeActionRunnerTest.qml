@@ -34,6 +34,7 @@ ShellRoot {
   }
 
   Component.onCompleted: {
+    if (runner.request({id:"syncthing"}, "", [root.fixtureHelper])) throw new Error("empty service action was accepted")
     if (!runner.request({id:"syncthing"}, "start", [root.fixtureHelper])) throw new Error("service action did not start")
     if (runner.request({id:"tailscale"}, "stop", ["/usr/bin/false"])) throw new Error("concurrent service action was not rejected")
   }

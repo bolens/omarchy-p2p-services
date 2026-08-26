@@ -13,11 +13,12 @@ QtObject {
   signal actionFinished(var entry, string action, int exitCode, string detail)
 
   function request(entry, action, command) {
-    if (busy || !entry || !entry.id || !Array.isArray(command) || command.length === 0) return false
+    var selectedAction = String(action || "").trim()
+    if (busy || !entry || !entry.id || selectedAction === "" || !Array.isArray(command) || command.length === 0) return false
     busy = true
     timedOut = false
     activeEntry = entry
-    activeAction = String(action || "")
+    activeAction = selectedAction
     process.command = command.slice()
     process.running = true
     watchdog.start()

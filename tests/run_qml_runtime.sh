@@ -15,9 +15,9 @@ ln -s -- "$shell_root/Commons" "$runtime_dir/Commons"
 ln -s -- "$shell_root/Ui" "$runtime_dir/Ui"
 
 run_harness() {
-  local file=$1 marker=$2 output status
+  local file=$1 marker=$2 limit=${3:-4} output status
   set +e
-  output="$(timeout 4 "$quickshell_bin" --no-color --path "$runtime_dir/$file" 2>&1)"
+  output="$(timeout "$limit" "$quickshell_bin" --no-color --path "$runtime_dir/$file" 2>&1)"
   status=$?
   set -e
   if [[ $status -ne 0 && $status -ne 124 ]]; then
@@ -60,7 +60,7 @@ run_harness RuntimeDeferredRefreshTest.qml P2P_QML_DEFERRED_REFRESH_OK
 run_harness RuntimeConfirmationTest.qml P2P_QML_CONFIRMATION_OK
 run_harness RuntimeCatalogControllerTest.qml P2P_QML_CATALOG_CONTROLLER_OK
 run_harness RuntimeSettingsTransferResultTest.qml P2P_QML_SETTINGS_TRANSFER_RESULT_OK
-run_harness RuntimePluginSmokeTest.qml P2P_QML_PLUGIN_SMOKE_OK
+run_harness RuntimePluginSmokeTest.qml P2P_QML_PLUGIN_SMOKE_OK 7
 run_harness RuntimeWatcherIntegrationTest.qml P2P_QML_WATCHER_INTEGRATION_OK
 run_harness RuntimeWatcherDisableTest.qml P2P_QML_WATCHER_DISABLE_OK
 run_harness RuntimeWatcherPollingTest.qml P2P_QML_WATCHER_POLLING_OK

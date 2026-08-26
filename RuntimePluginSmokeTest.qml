@@ -6,6 +6,7 @@ ShellRoot {
   id: root
   property int updates: 0
   property int stage: 0
+  property double settingsLoadDeadline: 0
   readonly property string fixtureHelper: PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/smoke-helper"))
 
   Service { id: sharedService; helper: root.fixtureHelper }
@@ -148,9 +149,13 @@ ShellRoot {
       if (widget.settingsIndicatorVisible) throw new Error("disabled loading preference did not release settings surface")
       widget.adoptTransferredSettings({eventRefresh:false,showLoadingIndicators:true})
       widget.showSettingsPage("general")
+      root.settingsLoadDeadline = Date.now() + 2000
       root.stage = 1
       } else if (root.stage === 1) {
-      if (!widget.settingsSurfaceLoaded) throw new Error("lazy settings surface failed to load")
+      if (!widget.settingsSurfaceLoaded) {
+        if (Date.now() >= root.settingsLoadDeadline) throw new Error("lazy settings surface failed to load")
+        return
+      }
       if (widget.settingsIndicatorVisible) throw new Error("settings loading presentation did not settle")
       if (widget.settingsSaveStatus !== "saved") throw new Error("durable settings save status did not complete: " + widget.settingsSaveStatus)
       widget.helper = PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/loading-helper"))

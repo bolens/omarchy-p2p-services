@@ -17,6 +17,13 @@ class ActionPlanTests(unittest.TestCase):
     self.assertEqual(container_action_commands([running, stopped], "start"), [["/usr/bin/docker", "start", "stopped"]])
     self.assertEqual(container_action_commands([running, stopped], "stop"), [["/usr/bin/docker", "stop", "running"]])
 
+  def test_container_targets_do_not_depend_on_runtime_result_order(self):
+    alpha = {"Name":"/alpha","_runtime":"docker","_runtime_cmd":"/usr/bin/docker","State":{"Running":True}}
+    zeta = {"Name":"/zeta","_runtime":"docker","_runtime_cmd":"/usr/bin/docker","State":{"Running":True}}
+    expected = [["/usr/bin/docker","restart","alpha","zeta"]]
+    self.assertEqual(container_action_commands([zeta,alpha],"restart"),expected)
+    self.assertEqual(container_action_commands([alpha,zeta],"restart"),expected)
+
   def test_systemd_command_preserves_scope(self):
     self.assertEqual(systemd_action_command("/usr/bin/systemctl","sync.service",True,"stop"),["/usr/bin/systemctl","--user","stop","sync.service"])
     self.assertEqual(systemd_action_command("/usr/bin/systemctl","sync.service",False,"open"),[])

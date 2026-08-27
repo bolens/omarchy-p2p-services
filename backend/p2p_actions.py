@@ -10,7 +10,7 @@ def container_action_commands(items, action):
     owned = [item for item in items if item.get("_runtime", "docker") == runtime and not item.get("Name", "").lstrip("/").endswith("-init")]
     if action in ("stop", "restart"): owned = [item for item in owned if item.get("State", {}).get("Running")]
     elif action == "start": owned = [item for item in owned if not item.get("State", {}).get("Running")]
-    targets = [item.get("Name", "").lstrip("/") for item in owned]
+    targets = sorted(item.get("Name", "").lstrip("/") for item in owned)
     if targets: commands.append([owned[0].get("_runtime_cmd") or runtime, action] + targets)
   return commands
 

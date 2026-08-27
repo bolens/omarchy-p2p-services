@@ -90,6 +90,7 @@ ShellRoot {
     onTriggered: {
       if (root.stage === 0) {
       if (widget.moduleName !== "io.github.bolens.p2p-services" || widget.p2pService !== sharedService) throw new Error("plugin service wiring failed")
+      if (widget.captureContractVersion() !== "2") throw new Error("capture IPC contract version changed unexpectedly")
       if (!widget.durableSettingsLoaded || !Array.isArray(widget.services) || widget.barText() === "") throw new Error("plugin initial load failed")
       if (widget.serviceFiltersExpanded) throw new Error("service filters were not hidden by default")
       if (widget.serviceFiltersRowVisible) throw new Error("hidden service filters retained layout visibility")

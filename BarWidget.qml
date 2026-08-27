@@ -362,6 +362,7 @@ Panel {
     if (bar && typeof bar.findPanelWidget === "function") return bar.findPanelWidget(moduleName)
     return root
   }
+  function captureContractVersion() { return "2" }
   function openFocused() {
     var target = focusedPanelInstance()
     if (target && target !== root && typeof target.open === "function") target.open()
@@ -829,6 +830,7 @@ Panel {
 
   IpcHandler {
     target: root.moduleName
+    function captureContract(): string { return root.captureContractVersion() }
     function open(): string { return root.openMainView() }
     function close(): string { return root.closeFocused() }
     function mainReady(layout: string, density: string): string { return root.focusedMainReady(layout, density) ? "true" : "false" }

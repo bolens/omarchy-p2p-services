@@ -77,16 +77,17 @@ restored=false
 shell_pid=""
 
 wait_for_shell() {
-  local candidate reply
+  local candidate reply capture_contract
   for _attempt in {1..80}; do
     while read -r candidate; do
       [[ $candidate =~ ^[1-9][0-9]*$ ]] || continue
       reply=$(qs ipc --pid "$candidate" call shell ping 2>/dev/null || true)
-      if [[ $reply == ok ]]; then shell_pid=$candidate; return 0; fi
+      capture_contract=$(qs ipc --pid "$candidate" call "$plugin_id" captureContract 2>/dev/null || true)
+      if [[ $reply == ok && $capture_contract == 2 ]]; then shell_pid=$candidate; return 0; fi
     done < <(qs list --all | awk '/Process ID:/ { print $3 }' | sort -rn)
     sleep .25
   done
-  printf 'Omarchy Shell did not become IPC-ready.\n' >&2
+  printf 'Omarchy Shell did not expose P2P capture contract 2.\n' >&2
   return 1
 }
 

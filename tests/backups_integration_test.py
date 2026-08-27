@@ -1,13 +1,60 @@
 import pathlib
 import tempfile
 import os
+import multiprocessing
 from unittest import mock
 
 from control_test_support import CONTROL, ControlTestCase
 from backend.p2p_backup_store import ConfigBackupStore
 
 
+def backup_worker(home, config, ready, start, results):
+  store = ConfigBackupStore(pathlib.Path(home), lambda *_args: [])
+  ready.put(1)
+  start.wait()
+  fixed = __import__("datetime").datetime(2026, 1, 1, 0, 0, 0)
+  with mock.patch("backend.p2p_backup_store.datetime.datetime") as clock:
+    clock.now.return_value = fixed
+    results.put(store.backup({"id":"aria2", "config":config}, retention=20))
+
+
 class BackupsIntegrationTests(ControlTestCase):
+  def test_concurrent_backups_with_the_same_timestamp_are_serialized(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      config = root/"service.conf"
+      config.write_text("stable")
+      context = multiprocessing.get_context("fork")
+      ready,start,results = context.Queue(),context.Event(),context.Queue()
+      workers = [context.Process(target=backup_worker,args=(directory,str(config),ready,start,results)) for _ in range(12)]
+      for worker in workers: worker.start()
+      for _worker in workers: ready.get(timeout=5)
+      start.set()
+      for worker in workers: worker.join(timeout=5)
+      paths = [pathlib.Path(results.get(timeout=5)) for _worker in workers]
+      self.assertEqual([worker.exitcode for worker in workers],[0]*12)
+      self.assertEqual(len(set(paths)),12)
+      self.assertTrue(all(path.read_text() == "stable" for path in paths))
+
+  def test_backups_with_the_same_timestamp_remain_distinct(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      store = ConfigBackupStore(root, CONTROL.restore_plan)
+      config = root/"service.conf"
+      service = dict(self.service("aria2"), config=str(config))
+      fixed = __import__("datetime").datetime(2026, 1, 1, 0, 0, 0)
+      with mock.patch("backend.p2p_backup_store.datetime.datetime") as clock:
+        clock.now.return_value = fixed
+        config.write_text("first")
+        first = pathlib.Path(store.backup(service))
+        config.write_text("second")
+        second = pathlib.Path(store.backup(service))
+      self.assertNotEqual(first, second)
+      self.assertEqual(first.read_text(), "first")
+      self.assertEqual(second.read_text(), "second")
+      os.utime(first, (100,100)); os.utime(second, (100,100))
+      self.assertEqual(store.records("aria2")[0]["name"], second.name)
+
   def test_backup_records_break_mtime_ties_by_name(self):
     with tempfile.TemporaryDirectory() as directory:
       root = pathlib.Path(directory)

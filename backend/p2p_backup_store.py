@@ -1,6 +1,8 @@
 """Configuration backup inventory, retention, and restoration."""
 
 import datetime
+import fcntl
+import hashlib
 import os
 import pathlib
 import shutil
@@ -40,12 +42,20 @@ class ConfigBackupStore:
     return records
 
   def backup(self, service, retention=10, preserve=()):
+    with self._backup_lock(service["id"]):
+      return self._backup_locked(service, retention, preserve)
+
+  def _backup_locked(self, service, retention, preserve):
     source = pathlib.Path(os.path.expanduser(service["config"]))
     if not source.exists() and not source.is_symlink(): return ""
     root = self.service_root(service["id"])
     ensure_private_directory(root, self.data_home)
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    destination = root / (stamp + "-" + source.name)
+    sequence = 0
+    destination = root / (stamp + "-000000-" + source.name)
+    while destination.exists() or destination.is_symlink():
+      sequence += 1
+      destination = root / (stamp + "-" + str(sequence).zfill(6) + "-" + source.name)
     if source.is_dir() and not source.is_symlink(): shutil.copytree(source, destination, symlinks=True)
     else: shutil.copy2(source, destination, follow_symlinks=False)
     for record in self.records(service["id"])[max(1, min(50, int(retention or 10))):]:
@@ -54,6 +64,16 @@ class ConfigBackupStore:
       if stale.is_dir() and not stale.is_symlink(): shutil.rmtree(stale)
       else: stale.unlink(missing_ok=True)
     return str(destination)
+
+  def _backup_lock(self, service_id):
+    lock_root = self.data_home / "omarchy/p2p-services/config-backup-locks"
+    ensure_private_directory(lock_root, self.data_home)
+    digest = hashlib.sha256(str(service_id).encode("utf-8")).hexdigest()
+    descriptor = os.open(lock_root/(digest + ".lock"), os.O_RDWR|os.O_CREAT|getattr(os, "O_NOFOLLOW", 0), 0o600)
+    os.fchmod(descriptor, 0o600)
+    lock = os.fdopen(descriptor, "a+")
+    fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+    return lock
 
   def restore(self, service, backup_name=""):
     records = self.records(service["id"])

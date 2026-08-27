@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ $# == 3 ]] || { printf 'Usage: capture-environment-guard PID PLUGIN_ROOT FINGERPRINT\n' >&2; exit 2; }
+pid=$1
+plugin_root=$2
+expected_fingerprint=$3
+qs_command=${P2P_QS_COMMAND:-qs}
+root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+fingerprint_command=${P2P_FINGERPRINT_COMMAND:-$root/scripts/capture-plugin-fingerprint}
+plugin_id=io.github.bolens.p2p-services
+
+[[ $("$qs_command" ipc --pid "$pid" call shell ping 2>/dev/null || true) == ok ]] || {
+  printf 'Omarchy Shell changed during capture.\n' >&2
+  exit 1
+}
+[[ $("$qs_command" ipc --pid "$pid" call "$plugin_id" captureContract 2>/dev/null || true) == 2 ]] || {
+  printf 'P2P capture IPC contract was lost.\n' >&2
+  exit 1
+}
+[[ $("$fingerprint_command" "$plugin_root") == "$expected_fingerprint" ]] || {
+  printf 'Plugin runtime files changed during capture; aborting before publication.\n' >&2
+  exit 1
+}

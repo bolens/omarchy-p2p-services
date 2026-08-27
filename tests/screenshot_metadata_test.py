@@ -52,5 +52,12 @@ class ScreenshotMetadataTests(unittest.TestCase):
         METADATA.update_html(html, root)
       self.assertEqual(html.read_text(), original)
 
+  def test_zero_sized_png_header_is_rejected(self):
+    with tempfile.TemporaryDirectory() as directory:
+      image = pathlib.Path(directory)/"zero.png"
+      image.write_bytes(png_header(0, 50))
+      with self.assertRaisesRegex(ValueError, "invalid PNG dimensions"):
+        METADATA.png_dimensions(image)
+
 
 if __name__ == "__main__": unittest.main()

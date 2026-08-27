@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 trap 'printf "Capture failed at line %s.\n" "$LINENO" >&2' ERR
 
 plugin_id="io.github.bolens.p2p-services"
@@ -45,8 +45,10 @@ flock -n 9 || { printf 'Another P2P screenshot capture is running.\n' >&2; exit 
 
 monitor_json=$(hyprctl monitors -j)
 cursor_json=$(hyprctl cursorpos -j)
+active_window_json=$(hyprctl activewindow -j)
 if [[ -z $monitor ]]; then
-  monitor=$(jq -r '.[] | select(.focused) | .name' <<<"$monitor_json" | head -n1)
+  monitor_state=$(jq -cn --argjson active "$active_window_json" --argjson monitors "$monitor_json" --argjson cursor "$cursor_json" '{active:$active,monitors:$monitors,cursor:$cursor}')
+  monitor=$(scripts/select-capture-monitor "$monitor_state") || { printf 'Could not determine the launch monitor; pass --monitor NAME.\n' >&2; exit 2; }
 fi
 [[ $monitor =~ ^[A-Za-z0-9_.-]+$ ]] || { printf 'Invalid monitor name: %s\n' "$monitor" >&2; exit 2; }
 monitor_width=$(jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .width' <<<"$monitor_json")
@@ -75,6 +77,12 @@ install -m 0600 "$settings_file" "$capture_dir/shell.json"
 [[ -f $previous_file ]] && install -m 0600 "$previous_file" "$capture_dir/settings.previous.json"
 restored=false
 shell_pid=""
+initial_shell_pid=""
+
+check_capture_environment() {
+  [[ -n $initial_shell_pid ]] || return 0
+  scripts/capture-environment-guard "$initial_shell_pid" "$repo_root" "$runtime_fingerprint"
+}
 
 wait_for_shell() {
   local candidate reply capture_contract
@@ -169,15 +177,22 @@ restore_desktop() {
     reload_live_settings 'type == "object"' >/dev/null 2>&1 || true
     restored=true
   fi
+  return "$status"
+}
+cleanup_capture() {
+  local status=$?
+  restore_desktop || true
   rm -rf -- "$capture_dir"
   return "$status"
 }
-trap restore_desktop EXIT INT TERM
+trap cleanup_capture EXIT INT TERM
 
 # Durable settings win reconciliation and are pushed reactively to every live
 # monitor instance; no Quickshell restart is needed for capture-time swaps.
 ./p2p-control settings-patch '{"privacyFilter":true,"showStopped":true,"serviceLayout":"list","cardDensity":"comfortable","serviceGroupMode":"category","showBackendBadge":true,"serviceSortMode":"name","serviceSortDirection":"automatic"}' >/dev/null
 reload_live_settings '.privacyFilter == true and .serviceLayout == "list" and .cardDensity == "comfortable"'
+initial_shell_pid=$shell_pid
+check_capture_environment
 
 [[ $(./p2p-control settings-load | jq -r '.privacyFilter') == true ]] || { printf 'Durable privacy filter verification failed.\n' >&2; exit 1; }
 shell_config=$(qs ipc --pid "$shell_pid" call shell listShellConfig)
@@ -216,6 +231,7 @@ capture_panel() {
   local height=${2:-$panel_height}
   local colors
   for _attempt in {1..4}; do
+    check_capture_environment
     focus_capture_workspace
     grim -o "$monitor" "$capture_dir/$name-full.png"
     magick "$capture_dir/$name-full.png" -crop "${crop_width}x${height}+${panel_x}+20" +repage "$capture_dir/$name.png"
@@ -280,6 +296,7 @@ capture_layout() {
 capture_layout compact list compact
 capture_layout grid grid compact
 close_panel
+check_capture_environment
 grim -o "$monitor" "$capture_dir/bar-full.png"
 magick "$capture_dir/bar-full.png" -crop "${widget_width}x50+${widget_x}+0" +repage "$capture_dir/bar.png"
 
@@ -320,13 +337,22 @@ magick -size 1200x630 xc:'#08111f' \
   -strip -define png:compression-level=9 "$stage/docs/social-card.png"
 pngquant --force --quality=82-95 --speed 1 --strip --output "$stage/docs/social-card.png" "$stage/docs/social-card.png"
 assets+=(docs/preview.png docs/social-card.png preview.png)
-[[ $(scripts/capture-plugin-fingerprint "$repo_root") == "$runtime_fingerprint" ]] || { printf 'Plugin runtime files changed during capture.\n' >&2; exit 1; }
+check_capture_environment
 if [[ $verify_only == false ]]; then
-  scripts/publish-screenshot-assets "$stage" "${assets[@]}"
-  scripts/update-screenshot-metadata docs/index.html docs README.md
+  install -m 0644 docs/index.html "$stage/docs/index.html"
+  install -m 0644 README.md "$stage/README.md"
+  scripts/update-screenshot-metadata "$stage/docs/index.html" "$stage/docs" "$stage/README.md"
+  assets+=(docs/index.html README.md)
 fi
 
 restore_desktop
+wait_for_shell
+scripts/verify-capture-postconditions "$capture_dir" "$settings_file" "$durable_file" "$previous_file" "$monitor" "$original_workspace" "$initial_shell_pid" "$shell_pid"
+if [[ $verify_only == false ]]; then
+  check_capture_environment
+  scripts/publish-screenshot-assets "$stage" "${assets[@]}"
+fi
+rm -rf -- "$capture_dir"
 trap - EXIT INT TERM
 if [[ -n $report_file ]]; then
   mkdir -p "$(dirname "$report_file")"

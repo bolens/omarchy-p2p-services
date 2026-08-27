@@ -23,6 +23,8 @@ node tests/validation.test.js
 node tests/capture_transaction.test.js
 node tests/capture_recovery.test.js
 node tests/capture_fingerprint.test.js
+node tests/capture_monitor.test.js
+node tests/capture_safety.test.js
 ruby scripts/validate-issue-forms.rb
 "$python_bin" -m py_compile p2p-control backend/*.py scripts/update-screenshot-metadata
 

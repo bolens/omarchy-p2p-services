@@ -407,6 +407,28 @@ Panel {
     return !!target && target.opened === true && target.showingWidgetSettings !== true
       && target.statusIndicatorVisible !== true && target.expandedServiceId === String(serviceId)
   }
+  function applyServiceEditor(serviceId) {
+    var requested = String(serviceId || "")
+    if (!services.some(function(entry) { return entry.id === requested })) return "service not found"
+    showingWidgetSettings = false
+    expandedServiceId = ""
+    selectedServiceId = requested
+    editingServiceId = requested
+    popupScroll.contentY = 0
+    refreshCatalog()
+    if (!opened) open()
+    return "ok"
+  }
+  function openServiceEditor(serviceId) {
+    var target = focusedPanelInstance()
+    if (target && target !== root && typeof target.applyServiceEditor === "function") return target.applyServiceEditor(serviceId)
+    return applyServiceEditor(serviceId)
+  }
+  function focusedEditorReady(serviceId) {
+    var target = focusedPanelInstance()
+    return !!target && target.opened === true && target.showingWidgetSettings !== true
+      && target.statusIndicatorVisible !== true && target.editingServiceId === String(serviceId)
+  }
   function applyFiltersExpanded(expanded) {
     editingServiceId = ""
     showingWidgetSettings = false
@@ -812,6 +834,8 @@ Panel {
     function mainReady(layout: string, density: string): string { return root.focusedMainReady(layout, density) ? "true" : "false" }
     function openDetails(serviceId: string): string { return root.openServiceDetails(serviceId) }
     function detailsReady(serviceId: string): string { return root.focusedDetailsReady(serviceId) ? "true" : "false" }
+    function openEditor(serviceId: string): string { return root.openServiceEditor(serviceId) }
+    function editorReady(serviceId: string): string { return root.focusedEditorReady(serviceId) ? "true" : "false" }
     function showFilters(): string { return root.setFiltersExpanded(true) }
     function filtersReady(): string { return root.focusedFiltersExpanded() ? "true" : "false" }
     function panelClosed(): string { return root.focusedPanelClosed() ? "true" : "false" }

@@ -77,7 +77,7 @@ import "Model.js" as Model
               objectName: "serviceIconEditor"
               Layout.fillWidth: true
               placeholderText: "Icon"
-              text: editor.current ? editor.controller.iconFor(editor.current) : ""
+              text: editor.current ? String(editor.controller.iconFor(editor.current) || "") : ""
               foreground: Color.popups.text
               accent: Color.bar.active
               font.family: Style.font.family
@@ -131,7 +131,7 @@ import "Model.js" as Model
             Layout.fillWidth: true
             Button { objectName: "serviceMoveUpButton"; text: "Move up"; onClicked: editor.controller.moveService(editor.controller.editingServiceId, -1) }
             Button { objectName: "serviceMoveDownButton"; text: "Move down"; onClicked: editor.controller.moveService(editor.controller.editingServiceId, 1) }
-            Button { objectName: "serviceConfigButton"; text: "Config"; visible: editor.current && editor.current.configExists && editor.current.controllable !== false; onClicked: editor.controller.act(editor.current, "config") }
+            Button { objectName: "serviceConfigButton"; text: "Config"; visible: !!editor.current && editor.current.configExists === true && editor.current.controllable !== false; onClicked: editor.controller.act(editor.current, "config") }
             Item { Layout.fillWidth: true }
           }
 

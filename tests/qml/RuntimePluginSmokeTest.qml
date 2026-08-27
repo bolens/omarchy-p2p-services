@@ -58,6 +58,7 @@ ShellRoot {
     function applySettingsPage(page) { requestedPage = page; return "ok" }
     function applyMainView() { showingWidgetSettings = false; mainViewRequests += 1; return "ok" }
     function applyServiceDetails(id) { showingWidgetSettings = false; expandedServiceId = id; return "ok" }
+    function applyServiceEditor(id) { showingWidgetSettings = false; editingServiceId = id; return "ok" }
     function applyFiltersExpanded(expanded) { showingWidgetSettings = false; serviceFiltersExpanded = expanded; return "ok" }
     function setting(key, fallback) { var values = {serviceLayout:"grid",cardDensity:"compact"}; return values[key] === undefined ? fallback : values[key] }
     function close() { opened = false }
@@ -111,6 +112,7 @@ ShellRoot {
       if (widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.configuredPanelWidth) throw new Error("expanded details retained narrow intrinsic panel width")
       widget.expandedServiceId = ""
       if (widget.openServiceDetails("i2p") !== "ok" || !widget.focusedDetailsReady("i2p")) throw new Error("focused details routing failed")
+      if (widget.openServiceEditor("i2p") !== "ok" || !widget.focusedEditorReady("i2p")) throw new Error("focused editor routing failed")
       if (widget.setFiltersExpanded(true) !== "ok" || !widget.focusedFiltersExpanded()) throw new Error("focused filter disclosure routing failed")
       if (widget.closeFocused() !== "ok" || !widget.focusedPanelClosed()) throw new Error("focused close routing failed")
       focusedWidgetFixture.opened = true
@@ -227,6 +229,13 @@ ShellRoot {
       root.stage = 8
       } else if (root.stage === 8) {
       if (widget.catalogLoading || widget.catalogErrorText !== "" || widget.visibleErrorText === "Service catalog refresh failed") throw new Error("successful catalog retry did not clear its failure")
+      widget.services = [{id:"running",name:"Running",active:true,hasError:false},{id:"stopped",name:"Stopped",active:false,hasError:false}]
+      widget.collapsedServiceGroups = ({})
+      if (widget.openServiceEditor("missing") !== "service not found") throw new Error("service editor IPC accepted an unknown service")
+      if (widget.applyServiceEditor("running") !== "ok" || widget.editingServiceId !== "running") throw new Error("service editor did not open")
+      if (widget.canMoveServiceEditor("running", -1) || !widget.canMoveServiceEditor("running", 1)) throw new Error("service editor navigation boundaries failed")
+      widget.moveServiceEditor(1)
+      if (widget.editingServiceId !== "stopped" || widget.selectedServiceId !== "stopped" || !widget.canMoveServiceEditor("stopped", -1) || widget.canMoveServiceEditor("stopped", 1)) throw new Error("service editor did not navigate in visible order")
       if (widget.tooltip().indexOf("Middle: settings") < 0 || widget.tooltip().indexOf("Right: full refresh") < 0) throw new Error("bar tooltip omitted mouse actions")
       widget.handleBarPress(Qt.MiddleButton)
       if (!widget.opened || !widget.showingWidgetSettings || widget.editingServiceId !== "") throw new Error("middle-click settings action failed")

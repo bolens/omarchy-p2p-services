@@ -113,6 +113,15 @@ class RuntimeProbeTests(unittest.TestCase):
     self.assertEqual(first[0]["_runtime_cmd"], "/usr/bin/docker")
     self.assertEqual(len(calls), 2)
 
+  def test_container_discovery_order_is_stable(self):
+    def run(args, _timeout):
+      if args[1] == "ps": return types.SimpleNamespace(returncode=0,stdout="zeta alpha\n")
+      return types.SimpleNamespace(returncode=0,stdout='[{"Name":"/zeta"},{"Name":"/alpha"}]')
+    probe = RuntimeProbe(self.snapshot,run,lambda: [],"/usr/bin/ps","/usr/bin/systemctl",{})
+    with mock.patch("backend.p2p_runtime.shutil.which",side_effect=lambda name:"/usr/bin/docker" if name == "docker" else None), \
+         mock.patch("backend.p2p_runtime.os.path.realpath",side_effect=lambda path:path):
+      self.assertEqual([item["Name"] for item in probe.containers()],["/alpha","/zeta"])
+
   def test_container_discovery_treats_malformed_inspection_as_unavailable(self):
     def run(args, _timeout):
       if args[1] == "ps": return types.SimpleNamespace(returncode=0, stdout="abc123\n")

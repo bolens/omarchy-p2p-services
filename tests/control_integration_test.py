@@ -153,6 +153,15 @@ class ControlIntegrationTests(ControlTestCase):
         CONTROL.show_logs(service)
     follow.assert_not_called()
 
+  def test_logs_choose_container_independently_of_runtime_order(self):
+    service = self.service("syncthing")
+    alpha = self.item("alpha"); alpha.update({"_runtime_cmd":"/usr/bin/docker","_runtime":"docker"})
+    zeta = self.item("zeta"); zeta.update({"_runtime_cmd":"/usr/bin/docker","_runtime":"docker"})
+    with mock.patch.object(CONTROL.PROBE,"docker_matches",return_value=[zeta,alpha]), \
+         mock.patch.object(CONTROL.subprocess,"call",return_value=0) as follow:
+      CONTROL.show_logs(service)
+    follow.assert_called_once_with(["/usr/bin/docker","logs","--tail","200","-f","alpha"])
+
   def test_container_control_targets_exact_owned_non_init_containers(self):
     service = self.service("syncthing")
     running = self.item("syncthing"); running.update({"_runtime":"docker","_runtime_cmd":"/usr/bin/docker"})
@@ -377,6 +386,18 @@ class ControlIntegrationTests(ControlTestCase):
       missing_item = self.item("syncthing", workdir=str(root), config_files=str(root/"missing.yml"))
       missing_root = self.item("syncthing", workdir=str(root/"absent"), config_files=str(compose))
       self.assertEqual(CONTROL.config_targets(service, [outside_item, missing_item, missing_root]), [])
+
+  def test_config_targets_do_not_depend_on_container_order(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      alpha = root/"alpha.yml"; alpha.write_text("services: {}\n")
+      zeta = root/"zeta.yml"; zeta.write_text("services: {}\n")
+      alpha_item = self.item("alpha",workdir=str(root),config_files=str(alpha))
+      zeta_item = self.item("zeta",workdir=str(root),config_files=str(zeta))
+      expected = [str(alpha),str(zeta)]
+      service = dict(self.service("syncthing"),config=str(root/"missing"))
+      self.assertEqual(CONTROL.config_targets(service,[zeta_item,alpha_item]),expected)
+      self.assertEqual(CONTROL.config_targets(service,[alpha_item,zeta_item]),expected)
 
   def test_protected_config_action_forces_validated_terminal_editor(self):
     original_docker = CONTROL.PROBE.docker_matches

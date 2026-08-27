@@ -139,6 +139,7 @@ class RuntimeProbe:
         for item in found: item["_runtime"]=runtime; item["_runtime_cmd"]=executable
         self.snapshot.containers += found
       except Exception: pass
+    self.snapshot.containers.sort(key=lambda item:(item.get("_runtime","docker"),str(item.get("Name","")).lstrip("/")))
     return self.snapshot.containers
   
   def container_stats(self, items):

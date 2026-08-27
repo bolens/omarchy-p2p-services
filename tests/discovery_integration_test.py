@@ -239,6 +239,15 @@ class DiscoveryIntegrationTests(ControlTestCase):
     finally:
       CONTROL.run = original_run
 
+  def test_socket_endpoints_do_not_depend_on_kernel_output_order(self):
+    alpha = 'tcp ESTAB 0 0 127.0.0.1:1 10.0.0.1:2 users:(("daemon",pid=42,fd=3))'
+    zeta = 'tcp ESTAB 0 0 127.0.0.1:9 10.0.0.9:2 users:(("daemon",pid=42,fd=4))'
+    expected = ["127.0.0.1:1 → 10.0.0.1:2","127.0.0.1:9 → 10.0.0.9:2"]
+    for lines in ([zeta,alpha],[alpha,zeta]):
+      CONTROL.SNAPSHOT.socket_lines = lines
+      CONTROL.SNAPSHOT.socket_by_pid = None
+      self.assertEqual(CONTROL.sockets([42],False)[2],expected)
+
   def test_systemd_snapshot_batches_declared_units(self):
     original_run = CONTROL.run
     calls = []

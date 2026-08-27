@@ -148,15 +148,17 @@ def sockets(pids, private):
   connected=sum(1 for x in lines if "ESTAB" in x)
   endpoints=[]
   if not private:
-    for line in lines[:6]:
+    for line in lines:
       fields=line.split()
       if len(fields)>5: endpoints.append(fields[4]+" → "+fields[5])
+    endpoints=sorted(endpoints)[:6]
   return connected,listening,endpoints
 
 def config_targets(service, items=None):
   """Resolve editable host config paths, preferring Compose project files."""
   targets=[]
-  for item in (PROBE.docker_matches(service) if items is None else items):
+  matched = PROBE.docker_matches(service) if items is None else items
+  for item in sorted(matched, key=lambda value: (value.get("_runtime", "docker"), str(value.get("Name", "")).lstrip("/"))):
     labels=(item.get("Config",{}).get("Labels") or {})
     workdir=labels.get("com.docker.compose.project.working_dir","")
     try:
@@ -175,7 +177,7 @@ def config_targets(service, items=None):
 INSPECTOR = ServiceInspector(PROBE, SNAPSHOT, lambda *args: sockets(*args), lambda *args: config_targets(*args))
 
 def show_logs(service):
-  docker_items=PROBE.docker_matches(service)
+  docker_items=sorted(PROBE.docker_matches(service),key=lambda item:(item.get("_runtime","docker"),str(item.get("Name","")).lstrip("/")))
   if docker_items:
     item=docker_items[0]; runtime=item.get("_runtime_cmd") or shutil.which(item.get("_runtime","docker")); name=str(item.get("Name","")).lstrip("/")
     if runtime and name: return subprocess.call([runtime,"logs","--tail","200","-f",name])

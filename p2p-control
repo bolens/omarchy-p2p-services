@@ -340,6 +340,31 @@ def terminate_matching_process(pid, names, proc_root=pathlib.Path("/proc")):
   finally:
     if pidfd is not None: os.close(pidfd)
 
+def matching_process_alive(pid, names, proc_root=pathlib.Path("/proc")):
+  """Check whether an original PID still belongs to the expected current-user service."""
+  try:
+    process_root=pathlib.Path(proc_root)/str(pid)
+    if process_root.stat().st_uid != os.getuid(): return False
+    comm=process_root.joinpath("comm").read_text(errors="replace").strip()
+    raw=process_root.joinpath("cmdline").read_bytes().split(b"\0",1)[0]
+    argv0=os.path.basename(raw.decode("utf-8","replace")) if raw else ""
+    return comm in names or argv0 in names
+  except (OSError,ValueError): return False
+
+def wait_for_process_exit(pids, names, timeout=3.0, interval=0.05):
+  deadline=time.monotonic()+max(0,float(timeout))
+  while any(matching_process_alive(pid,names) for pid in pids):
+    remaining=deadline-time.monotonic()
+    if remaining <= 0: raise RuntimeError("service processes are still stopping; try restart again")
+    time.sleep(min(max(0.01,float(interval)),remaining))
+
+def wait_for_path(path, timeout=5.0, interval=0.05):
+  deadline=time.monotonic()+max(0,float(timeout))
+  while not pathlib.Path(path).exists():
+    remaining=deadline-time.monotonic()
+    if remaining <= 0: raise RuntimeError("service configuration was not created after startup")
+    time.sleep(min(max(0.01,float(interval)),remaining))
+
 def prepare_service_start(service, system_unit, terminal_auth=False):
   if service["id"] != "amule" or not system_unit: return
   config="/var/lib/amule/.aMule/amule.conf"
@@ -348,7 +373,7 @@ def prepare_service_start(service, system_unit, terminal_auth=False):
   credential_file=credential_dir/"amule-ec-password"
   if not credential_file.exists() and not os.path.exists(config):
     privileged_call([SYSTEMCTL,"start",system_unit],terminal_auth)
-    time.sleep(1.0)
+    wait_for_path(config)
   password=read_or_create_secret(credential_file,lambda: secrets.token_urlsafe(24),base=data_home())
   digest=hashlib.md5(password.encode("utf-8"),usedforsecurity=False).hexdigest()
   web_edit=r"/^\[WebServer\]"+chr(36)+r"/,/^\[GUI\]$/{s/^Enabled=.*/Enabled=1/;s/^Password="+chr(36)+"/Password="+digest+"/;s/^Template="+chr(36)+"/Template=default/;}"
@@ -395,9 +420,9 @@ def control(service, action, terminal_auth=False):
       privileged_call([SYSTEMCTL,action,system_unit],terminal_auth); return
     pids=PROBE.pids_for(service["processes"], current_user_only=True)
     if action in ("stop","restart"):
-      for pid in pids: terminate_matching_process(pid,service["processes"])
+      terminating=[pid for pid in pids if terminate_matching_process(pid,service["processes"])]
       if action=="stop": return
-      time.sleep(.3)
+      wait_for_process_exit(terminating,service["processes"])
     command=launch_command(service)
     if command: subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True); return
   raise RuntimeError("unsupported action")

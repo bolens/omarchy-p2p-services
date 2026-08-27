@@ -208,6 +208,27 @@ class ControlIntegrationTests(ControlTestCase):
         self.assertFalse(CONTROL.terminate_matching_process(42,["syncthing"],proc))
       send.assert_not_called()
 
+  def test_process_exit_wait_observes_identity_instead_of_elapsed_delay(self):
+    with tempfile.TemporaryDirectory() as directory:
+      proc = pathlib.Path(directory); process = proc/"42"; process.mkdir()
+      (process/"comm").write_text("syncthing\n")
+      (process/"cmdline").write_bytes(b"/usr/bin/syncthing\0serve\0")
+      identity_check = CONTROL.matching_process_alive
+      def process_exits(_seconds):
+        (process/"comm").unlink(); (process/"cmdline").unlink(); process.rmdir()
+      with mock.patch.object(CONTROL, "matching_process_alive", side_effect=lambda pid, names: identity_check(pid,names,proc)), \
+           mock.patch.object(CONTROL.time, "sleep", side_effect=process_exits) as sleep:
+        CONTROL.wait_for_process_exit([42],["syncthing"],timeout=1,interval=0.05)
+      sleep.assert_called_once_with(0.05)
+
+  def test_process_exit_wait_has_a_bounded_timeout(self):
+    with mock.patch.object(CONTROL, "matching_process_alive", return_value=True), \
+         mock.patch.object(CONTROL.time, "monotonic", side_effect=[10.0,10.6]), \
+         mock.patch.object(CONTROL.time, "sleep") as sleep:
+      with self.assertRaisesRegex(RuntimeError, "still stopping"):
+        CONTROL.wait_for_process_exit([42],["syncthing"],timeout=0.5)
+    sleep.assert_not_called()
+
   def test_process_restart_terminates_current_instance_before_launching_replacement(self):
     service = self.service("nicotine")
     events = []
@@ -215,14 +236,26 @@ class ControlIntegrationTests(ControlTestCase):
          mock.patch.object(CONTROL.PROBE, "unit_state", return_value=("", False)), \
          mock.patch.object(CONTROL.PROBE, "pids_for", return_value=[42]), \
          mock.patch.object(CONTROL, "terminate_matching_process", side_effect=lambda pid, names: events.append(("kill", pid, CONTROL.signal.SIGTERM)) or True), \
-         mock.patch.object(CONTROL.time, "sleep", side_effect=lambda seconds: events.append(("wait", seconds))), \
+         mock.patch.object(CONTROL, "wait_for_process_exit", side_effect=lambda pids, names: events.append(("wait-exit", pids, names))), \
          mock.patch.object(CONTROL, "launch_command", return_value=["/usr/bin/nicotine"]), \
          mock.patch.object(CONTROL.subprocess, "Popen", side_effect=lambda command, **kwargs: events.append(("launch", command, kwargs))):
       CONTROL.control(service, "restart")
     self.assertEqual(events[0], ("kill", 42, CONTROL.signal.SIGTERM))
-    self.assertEqual(events[1], ("wait", 0.3))
+    self.assertEqual(events[1], ("wait-exit", [42], service["processes"]))
     self.assertEqual(events[2][0:2], ("launch", ["/usr/bin/nicotine"]))
     self.assertTrue(events[2][2]["start_new_session"])
+
+  def test_process_restart_does_not_launch_while_original_instance_survives(self):
+    service = self.service("nicotine")
+    with mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[]), \
+         mock.patch.object(CONTROL.PROBE, "unit_state", return_value=("", False)), \
+         mock.patch.object(CONTROL.PROBE, "pids_for", return_value=[42]), \
+         mock.patch.object(CONTROL, "terminate_matching_process", return_value=True), \
+         mock.patch.object(CONTROL, "wait_for_process_exit", side_effect=RuntimeError("still stopping")), \
+         mock.patch.object(CONTROL.subprocess, "Popen") as launch:
+      with self.assertRaisesRegex(RuntimeError, "still stopping"):
+        CONTROL.control(service, "restart")
+    launch.assert_not_called()
 
   def test_control_routes_user_and_system_units_through_correct_authority(self):
     service = self.service("syncthing")
@@ -418,6 +451,44 @@ class ControlIntegrationTests(ControlTestCase):
       CONTROL.privileged_call = original_privileged
       CONTROL.HOME = original_home
       temporary_home.cleanup()
+
+  def test_amule_first_start_waits_for_generated_configuration(self):
+    amule = self.service("amule")
+    with tempfile.TemporaryDirectory() as directory, \
+         mock.patch.object(CONTROL, "data_home", return_value=pathlib.Path(directory)), \
+         mock.patch.object(CONTROL.os.path, "exists", return_value=False), \
+         mock.patch.object(CONTROL, "read_or_create_secret", return_value="secret"), \
+         mock.patch.object(CONTROL, "privileged_call") as execute, \
+         mock.patch.object(CONTROL, "wait_for_path") as wait:
+      CONTROL.prepare_service_start(amule,"amuled.service",True)
+    self.assertEqual(execute.call_args_list[0], mock.call([CONTROL.SYSTEMCTL,"start","amuled.service"],True))
+    wait.assert_called_once_with("/var/lib/amule/.aMule/amule.conf")
+
+  def test_amule_first_start_does_not_edit_before_configuration_exists(self):
+    amule = self.service("amule")
+    with tempfile.TemporaryDirectory() as directory, \
+         mock.patch.object(CONTROL, "data_home", return_value=pathlib.Path(directory)), \
+         mock.patch.object(CONTROL.os.path, "exists", return_value=False), \
+         mock.patch.object(CONTROL, "privileged_call") as execute, \
+         mock.patch.object(CONTROL, "wait_for_path", side_effect=RuntimeError("not created")):
+      with self.assertRaisesRegex(RuntimeError,"not created"):
+        CONTROL.prepare_service_start(amule,"amuled.service",True)
+    self.assertEqual(execute.call_count,1)
+
+  def test_path_wait_observes_file_creation(self):
+    with tempfile.TemporaryDirectory() as directory:
+      target=pathlib.Path(directory)/"generated.conf"
+      with mock.patch.object(CONTROL.time,"sleep",side_effect=lambda _seconds: target.touch()) as sleep:
+        CONTROL.wait_for_path(target,timeout=1,interval=0.05)
+      sleep.assert_called_once_with(0.05)
+
+  def test_path_wait_has_a_bounded_timeout(self):
+    with tempfile.TemporaryDirectory() as directory, \
+         mock.patch.object(CONTROL.time,"monotonic",side_effect=[10.0,10.6]), \
+         mock.patch.object(CONTROL.time,"sleep") as sleep:
+      with self.assertRaisesRegex(RuntimeError,"was not created"):
+        CONTROL.wait_for_path(pathlib.Path(directory)/"missing.conf",timeout=0.5)
+    sleep.assert_not_called()
 
   def test_install_autostart_uses_verified_control_path(self):
     original_which = CONTROL.shutil.which

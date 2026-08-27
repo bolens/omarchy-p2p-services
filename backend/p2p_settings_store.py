@@ -28,7 +28,10 @@ class SettingsStore:
     if not self.settings_file.exists():
       self.last_recovery = ""
       return {}
-    with self._lock(): return self._load_unlocked()
+    try:
+      with self._lock(): return self._load_unlocked()
+    except OSError:
+      return self._load_unlocked()
 
   def _load_unlocked(self):
     self.last_recovery = ""

@@ -60,6 +60,14 @@ class SettingsStoreTests(unittest.TestCase):
       store.settings_file.write_text("[]")
       self.assertEqual(store.load(), {})
 
+  def test_existing_settings_remain_readable_when_lock_storage_is_read_only(self):
+    with tempfile.TemporaryDirectory() as directory:
+      store = self.store(directory)
+      store.state_root.mkdir(parents=True)
+      store.settings_file.write_text('{"showCount":false}')
+      with mock.patch.object(store,"_lock",side_effect=OSError("read-only")):
+        self.assertFalse(store.load()["showCount"])
+
   def test_corrupt_current_settings_recover_previous_and_quarantine_damage(self):
     with tempfile.TemporaryDirectory() as directory:
       store = self.store(directory)

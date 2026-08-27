@@ -4,9 +4,9 @@ import pathlib
 import tempfile
 import unittest
 
-from p2p_cache import cached_status
-from p2p_settings import sanitize_settings
-from p2p_settings_store import SettingsStore
+from backend.p2p_cache import cached_status
+from backend.p2p_settings import sanitize_settings
+from backend.p2p_settings_store import SettingsStore
 
 
 def patch_settings_worker(state_root, ready, start, index):

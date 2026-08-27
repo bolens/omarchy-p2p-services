@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from p2p_cache import cached_status
+from backend.p2p_cache import cached_status
 
 
 class StatusCacheTests(unittest.TestCase):
@@ -52,7 +52,7 @@ class StatusCacheTests(unittest.TestCase):
   def test_unavailable_cache_storage_falls_back_to_uncached_producer(self):
     with tempfile.TemporaryDirectory() as directory:
       root = pathlib.Path(directory)/"cache"
-      with mock.patch("p2p_cache.pathlib.Path.mkdir", side_effect=OSError("read only")):
+      with mock.patch("backend.p2p_cache.pathlib.Path.mkdir", side_effect=OSError("read only")):
         self.assertEqual(cached_status("key", lambda: {"fresh": True}, root), {"fresh": True})
 
   def test_symlinked_cache_root_is_never_traversed_or_pruned(self):

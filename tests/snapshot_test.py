@@ -1,6 +1,6 @@
 import unittest
 
-from p2p_snapshot import SnapshotContext
+from backend.p2p_snapshot import SnapshotContext
 
 
 class SnapshotContextTests(unittest.TestCase):

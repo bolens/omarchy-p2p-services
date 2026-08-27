@@ -6,9 +6,9 @@ from contextlib import redirect_stdout
 from io import StringIO
 from unittest import mock
 
-from p2p_settings_watch import SettingsChangeTracker, watch_settings
-from p2p_settings import sanitize_settings
-from p2p_settings_store import SettingsStore
+from backend.p2p_settings_watch import SettingsChangeTracker, watch_settings
+from backend.p2p_settings import sanitize_settings
+from backend.p2p_settings_store import SettingsStore
 
 
 class SettingsChangeTrackerTests(unittest.TestCase):
@@ -55,7 +55,7 @@ class SettingsChangeTrackerTests(unittest.TestCase):
       settings = pathlib.Path(directory) / "settings.json"
       settings.write_text('{"_p2pRevision":7}')
       output = StringIO()
-      with mock.patch("p2p_settings_watch.time.sleep", side_effect=RuntimeError("stop")) as sleep:
+      with mock.patch("backend.p2p_settings_watch.time.sleep", side_effect=RuntimeError("stop")) as sleep:
         with redirect_stdout(output), self.assertRaisesRegex(RuntimeError, "stop"):
           watch_settings(settings, interval=0.125)
       self.assertEqual(json.loads(output.getvalue()), {"type":"settings-changed", "version":1, "revision":7})

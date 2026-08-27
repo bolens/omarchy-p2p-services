@@ -1,25 +1,25 @@
 #!/usr/bin/python3
 """Discovery, status, and narrowly-scoped controls for the P2P Services widget."""
 import hashlib, json, os, pathlib, re, secrets, selectors, shutil, signal, subprocess, sys, time
-from p2p_backups import restore_plan
-from p2p_backup_store import ConfigBackupStore
-from p2p_actions import CONTROL_ACTIONS, container_action_commands, systemd_action_command
-from p2p_cache import cached_status
-from p2p_catalog import (
+from backend.p2p_backups import restore_plan
+from backend.p2p_backup_store import ConfigBackupStore
+from backend.p2p_actions import CONTROL_ACTIONS, container_action_commands, systemd_action_command
+from backend.p2p_cache import cached_status
+from backend.p2p_catalog import (
   AUR_INSTALL_IDS, AUR_SIGNING_KEYS, DOCKER_ALIASES, PACKAGE_HINTS, SERVICES,
 )
-from p2p_inspection import ServiceInspector
-from p2p_event_store import EventStore
-from p2p_packages import install_command, uninstall_command
-from p2p_registry import normalize_custom_services, validate_registry
-from p2p_runtime import RuntimeProbe
-from p2p_settings import reconcile_settings, sanitize_settings
-from p2p_settings_store import SettingsStore
-from p2p_settings_watch import watch_settings
-from p2p_secure_files import atomic_private_write, ensure_private_directory, read_or_create_secret, read_private_text
-from p2p_snapshot import SnapshotContext
-from p2p_support import support_report, support_report_text
-from p2p_validation import safe_http_url
+from backend.p2p_inspection import ServiceInspector
+from backend.p2p_event_store import EventStore
+from backend.p2p_packages import install_command, uninstall_command
+from backend.p2p_registry import normalize_custom_services, validate_registry
+from backend.p2p_runtime import RuntimeProbe
+from backend.p2p_settings import reconcile_settings, sanitize_settings
+from backend.p2p_settings_store import SettingsStore
+from backend.p2p_settings_watch import watch_settings
+from backend.p2p_secure_files import atomic_private_write, ensure_private_directory, read_or_create_secret, read_private_text
+from backend.p2p_snapshot import SnapshotContext
+from backend.p2p_support import support_report, support_report_text
+from backend.p2p_validation import safe_http_url
 
 HOME = pathlib.Path.home()
 

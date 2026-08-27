@@ -4,7 +4,7 @@ import json
 import pathlib
 import time
 
-from p2p_secure_files import atomic_private_write, read_private_text
+from backend.p2p_secure_files import atomic_private_write, read_private_text
 
 KINDS = {"stopped", "unhealthy", "recovered", "restarts", "action-success", "action-failure", "watcher-fallback"}
 

@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from unittest import mock
 
-from p2p_settings import SETTINGS_VERSION, sanitize_settings
-from p2p_settings_store import SettingsStore
+from backend.p2p_settings import SETTINGS_VERSION, sanitize_settings
+from backend.p2p_settings_store import SettingsStore
 
 
 class SettingsStoreTests(unittest.TestCase):
@@ -80,7 +80,7 @@ class SettingsStoreTests(unittest.TestCase):
       store.settings_file.write_text("new corruption")
       existing = store.settings_file.with_name("settings.corrupt-1234.json")
       existing.write_text("older corruption")
-      with mock.patch("p2p_settings_store.time.time", return_value=1.234):
+      with mock.patch("backend.p2p_settings_store.time.time", return_value=1.234):
         recovered = store.load()
       self.assertTrue(recovered["showCount"])
       self.assertEqual(existing.read_text(), "older corruption")

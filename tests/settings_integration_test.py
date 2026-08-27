@@ -1,5 +1,5 @@
 from control_test_support import CONTROL, ROOT, ControlTestCase
-from p2p_settings import (
+from backend.p2p_settings import (
   BAR_PRESENTATIONS, GROUP_COUNT_MODES, GROUP_DIRECTIONS, GROUP_MODES,
   SETTINGS_VERSION, SORT_DIRECTIONS, SORT_MODES,
 )

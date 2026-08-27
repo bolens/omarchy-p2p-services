@@ -3,7 +3,7 @@ import tempfile
 from unittest import mock
 
 from control_test_support import CONTROL, ControlTestCase
-from p2p_backup_store import ConfigBackupStore
+from backend.p2p_backup_store import ConfigBackupStore
 
 
 class BackupsIntegrationTests(ControlTestCase):
@@ -107,7 +107,7 @@ class BackupsIntegrationTests(ControlTestCase):
       service = {"id": "daemon", "config": str(config)}
       selected = pathlib.Path(store.backup(service)).name
       (config/"settings.ini").write_text("current\n")
-      with mock.patch("p2p_backup_store.shutil.copytree", side_effect=OSError("disk full")):
+      with mock.patch("backend.p2p_backup_store.shutil.copytree", side_effect=OSError("disk full")):
         with self.assertRaisesRegex(OSError, "disk full"):
           store.restore(service, selected)
       self.assertEqual((config/"settings.ini").read_text(), "current\n")
@@ -131,7 +131,7 @@ class BackupsIntegrationTests(ControlTestCase):
         if calls == 2: raise OSError("commit failed")
         return real_replace(source, destination)
 
-      with mock.patch("p2p_backup_store.os.replace", side_effect=fail_commit):
+      with mock.patch("backend.p2p_backup_store.os.replace", side_effect=fail_commit):
         with self.assertRaisesRegex(OSError, "commit failed"):
           store.restore(service, selected)
       self.assertEqual(config.read_text(), "current-version\n")
@@ -149,7 +149,7 @@ class BackupsIntegrationTests(ControlTestCase):
       selected = pathlib.Path(store.backup(service)).name
       config.write_text("changed\n")
 
-      with mock.patch("p2p_backup_store.subprocess.check_call") as execute:
+      with mock.patch("backend.p2p_backup_store.subprocess.check_call") as execute:
         restored = store.restore(service, selected)
 
       execute.assert_called_once_with(planned)

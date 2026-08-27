@@ -1,6 +1,6 @@
 import unittest
 
-from p2p_validation import safe_console_host, safe_http_url
+from backend.p2p_validation import safe_console_host, safe_http_url
 
 
 class ValidationTests(unittest.TestCase):

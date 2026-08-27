@@ -4,8 +4,8 @@ import types
 import unittest
 from unittest import mock
 
-from p2p_runtime import RuntimeProbe
-from p2p_snapshot import SnapshotContext
+from backend.p2p_runtime import RuntimeProbe
+from backend.p2p_snapshot import SnapshotContext
 
 
 class RuntimeProbeTests(unittest.TestCase):
@@ -32,7 +32,7 @@ class RuntimeProbeTests(unittest.TestCase):
     )
 
   def test_process_queries_share_one_snapshot(self):
-    with mock.patch("p2p_runtime.os.getuid", return_value=1000):
+    with mock.patch("backend.p2p_runtime.os.getuid", return_value=1000):
       self.assertEqual(self.probe.pids_for(["daemon"], current_user_only=True), [42])
     self.assertEqual(self.probe.pids_for(["daemon"]), [42, 43])
     with mock.patch.object(self.probe, "process_rows", wraps=self.probe.process_rows) as rows:
@@ -104,8 +104,8 @@ class RuntimeProbeTests(unittest.TestCase):
       return types.SimpleNamespace(returncode=0, stdout='[{"Name":"/daemon","State":{"Running":true}}]')
 
     probe = RuntimeProbe(self.snapshot, run, lambda: [], "/usr/bin/ps", "/usr/bin/systemctl", {})
-    with mock.patch("p2p_runtime.shutil.which", side_effect=lambda name: "/usr/bin/docker" if name == "docker" else None), \
-         mock.patch("p2p_runtime.os.path.realpath", side_effect=lambda path: path):
+    with mock.patch("backend.p2p_runtime.shutil.which", side_effect=lambda name: "/usr/bin/docker" if name == "docker" else None), \
+         mock.patch("backend.p2p_runtime.os.path.realpath", side_effect=lambda path: path):
       first = probe.containers()
       second = probe.containers()
     self.assertIs(first, second)
@@ -119,8 +119,8 @@ class RuntimeProbeTests(unittest.TestCase):
       return types.SimpleNamespace(returncode=0, stdout="not-json")
 
     probe = RuntimeProbe(self.snapshot, run, lambda: [], "/usr/bin/ps", "/usr/bin/systemctl", {})
-    with mock.patch("p2p_runtime.shutil.which", side_effect=lambda name: "/usr/bin/docker" if name == "docker" else None), \
-         mock.patch("p2p_runtime.os.path.realpath", side_effect=lambda path: path):
+    with mock.patch("backend.p2p_runtime.shutil.which", side_effect=lambda name: "/usr/bin/docker" if name == "docker" else None), \
+         mock.patch("backend.p2p_runtime.os.path.realpath", side_effect=lambda path: path):
       self.assertEqual(probe.containers(), [])
 
   def test_diagnostics_combines_systemd_and_container_failure_signals(self):
@@ -136,7 +136,7 @@ class RuntimeProbeTests(unittest.TestCase):
 
   def test_uptime_sources_return_elapsed_seconds_and_reject_invalid_state(self):
     self.snapshot.unit_snapshots[True] = {"daemon.service": {"ActiveState": "active", "ActiveEnterTimestampMonotonic": "1000000"}}
-    with mock.patch("p2p_runtime.pathlib.Path.read_text", return_value="11.0 0.0\n"):
+    with mock.patch("backend.p2p_runtime.pathlib.Path.read_text", return_value="11.0 0.0\n"):
       self.assertEqual(self.probe.unit_uptime("daemon.service", True), 10)
     self.snapshot.unit_snapshots[True]["daemon.service"]["ActiveEnterTimestampMonotonic"] = "invalid"
     self.assertEqual(self.probe.unit_uptime("daemon.service", True), 0)

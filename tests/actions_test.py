@@ -1,6 +1,6 @@
 import unittest
 
-from p2p_actions import container_action_commands, systemd_action_command
+from backend.p2p_actions import container_action_commands, systemd_action_command
 
 
 class ActionPlanTests(unittest.TestCase):

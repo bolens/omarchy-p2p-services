@@ -1,7 +1,7 @@
 import unittest
 
-from p2p_catalog import AUR_INSTALL_IDS, DOCKER_ALIASES, PACKAGE_HINTS, SERVICES
-from p2p_registry import normalize_custom_services, validate_registry
+from backend.p2p_catalog import AUR_INSTALL_IDS, DOCKER_ALIASES, PACKAGE_HINTS, SERVICES
+from backend.p2p_registry import normalize_custom_services, validate_registry
 
 
 class RegistryTests(unittest.TestCase):

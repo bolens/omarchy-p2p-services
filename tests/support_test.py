@@ -1,7 +1,7 @@
 import pathlib, sys, unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
-from p2p_support import support_report, support_report_text
+from backend.p2p_support import support_report, support_report_text
 
 
 class SupportReportTest(unittest.TestCase):

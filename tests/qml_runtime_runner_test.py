@@ -26,6 +26,11 @@ class QmlRuntimeRunnerTests(unittest.TestCase):
     ))
     self.assertEqual(registered, harnesses)
 
+  def test_runtime_sandbox_includes_the_backend_package(self):
+    plugin_root = pathlib.Path(__file__).resolve().parents[1]
+    runner = (plugin_root / "tests/run_qml_runtime.sh").read_text()
+    self.assertIn('ln -s -- "$plugin_dir/backend" "$runtime_dir/backend"', runner)
+
   def test_runtime_harnesses_are_registered_once(self):
     _, entries = self.runtime_entries()
     harnesses = [harness for harness, _ in entries]

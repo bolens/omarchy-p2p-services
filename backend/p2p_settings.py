@@ -4,10 +4,10 @@ import json
 import pathlib
 import re
 
-from p2p_validation import safe_http_url
+from backend.p2p_validation import safe_http_url
 
 SETTINGS_VERSION = 1
-PLUGIN_DEFAULTS = json.loads((pathlib.Path(__file__).parent / "manifest.json").read_text())["barWidget"]["defaults"]
+PLUGIN_DEFAULTS = json.loads((pathlib.Path(__file__).parent.parent / "manifest.json").read_text())["barWidget"]["defaults"]
 
 BOOLEAN_KEYS = {key: PLUGIN_DEFAULTS[key] for key in (
   "privacyFilter", "showStopped", "showCount", "notifyOnControlChanges",

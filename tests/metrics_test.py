@@ -1,6 +1,6 @@
 import unittest
 
-from p2p_metrics import parse_netio, parse_size
+from backend.p2p_metrics import parse_netio, parse_size
 
 
 class MetricsTests(unittest.TestCase):

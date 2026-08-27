@@ -7,8 +7,8 @@ import pathlib
 import re
 import shutil
 
-from p2p_metrics import parse_netio
-from p2p_validation import safe_console_host
+from backend.p2p_metrics import parse_netio
+from backend.p2p_validation import safe_console_host
 
 
 class RuntimeProbe:

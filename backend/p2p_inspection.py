@@ -2,7 +2,7 @@
 
 import os
 
-from p2p_validation import safe_http_url
+from backend.p2p_validation import safe_http_url
 
 
 def public_web_fields(url, private):

@@ -5,9 +5,9 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const read = relative => fs.readFileSync(path.join(root, relative), "utf8");
-const python = fs.readdirSync(root)
-  .filter(name => name === "p2p-control" || /^p2p_.*\.py$/.test(name))
-  .map(read).join("\n");
+const python = [read("p2p-control"), ...fs.readdirSync(path.join(root, "backend"))
+  .filter(name => /^p2p_.*\.py$/.test(name))
+  .map(name => read(path.join("backend", name)))].join("\n");
 const qml = ["BarWidget.qml", "Service.qml", "P2PServiceCard.qml", "P2PMessageSurface.qml"]
   .map(read).join("\n");
 

@@ -1,7 +1,7 @@
 import unittest
 
-from p2p_inspection import ServiceInspector, public_web_fields
-from p2p_snapshot import SnapshotContext
+from backend.p2p_inspection import ServiceInspector, public_web_fields
+from backend.p2p_snapshot import SnapshotContext
 
 
 class FakeProbe:

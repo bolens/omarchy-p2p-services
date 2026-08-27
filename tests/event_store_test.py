@@ -2,7 +2,7 @@ import pathlib, sys, tempfile, unittest
 from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
-from p2p_event_store import EventStore
+from backend.p2p_event_store import EventStore
 
 
 class EventStoreTest(unittest.TestCase):
@@ -10,7 +10,7 @@ class EventStoreTest(unittest.TestCase):
     with tempfile.TemporaryDirectory() as directory:
       store = EventStore(pathlib.Path(directory) / "state")
       store.MAX_EVENTS = 2
-      with mock.patch("p2p_event_store.time.time", side_effect=[1, 2, 3]):
+      with mock.patch("backend.p2p_event_store.time.time", side_effect=[1, 2, 3]):
         store.append("unhealthy", 2); store.append("recovered"); events = store.append("action-success")
       self.assertEqual(events, [{"kind":"recovered","count":1,"at":2},{"kind":"action-success","count":1,"at":3}])
       self.assertEqual(store.path.stat().st_mode & 0o777, 0o600)
@@ -29,7 +29,7 @@ class EventStoreTest(unittest.TestCase):
         "not-an-event",
       ]))
       self.assertEqual(store.load(), [{"kind":"unhealthy","count":2,"at":1}])
-      with mock.patch("p2p_event_store.time.time", return_value=5):
+      with mock.patch("backend.p2p_event_store.time.time", return_value=5):
         self.assertEqual(store.append("recovered", -10)[-1]["count"], 1)
         self.assertEqual(store.append("restarts", 5000)[-1]["count"], 999)
 

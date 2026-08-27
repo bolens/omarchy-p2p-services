@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import uuid
 
-from p2p_secure_files import ensure_private_directory
+from backend.p2p_secure_files import ensure_private_directory
 
 
 class ConfigBackupStore:

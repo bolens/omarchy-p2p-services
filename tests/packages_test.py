@@ -1,6 +1,6 @@
 import unittest
 
-from p2p_packages import install_command, uninstall_command
+from backend.p2p_packages import install_command, uninstall_command
 
 
 class PackagePlanTests(unittest.TestCase):

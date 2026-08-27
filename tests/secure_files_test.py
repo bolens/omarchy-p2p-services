@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from p2p_secure_files import atomic_private_write, ensure_private_directory, read_or_create_secret, read_private_text
+from backend.p2p_secure_files import atomic_private_write, ensure_private_directory, read_or_create_secret, read_private_text
 
 
 class SecureFilesTests(unittest.TestCase):
@@ -22,7 +22,7 @@ class SecureFilesTests(unittest.TestCase):
     with tempfile.TemporaryDirectory() as directory:
       root = pathlib.Path(directory)
       target = root/"export.json"; target.write_text("previous\n")
-      with mock.patch("p2p_secure_files.os.replace", side_effect=OSError("disk full")):
+      with mock.patch("backend.p2p_secure_files.os.replace", side_effect=OSError("disk full")):
         with self.assertRaisesRegex(OSError, "disk full"):
           atomic_private_write(target, "replacement\n")
       self.assertEqual(target.read_text(), "previous\n")

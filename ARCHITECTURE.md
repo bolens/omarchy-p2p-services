@@ -10,21 +10,23 @@
   service and compatibility fallback. `Service.qml` owns the keep-loaded
   watcher and shared results.
 - `Model.js` owns pure presentation policy and the QML default-settings contract.
-- `p2p-control` is the CLI, command execution, and privileged orchestration
-  boundary. `RuntimeProbe` owns process, systemd, socket, container, and proxy
-  discovery; `ServiceInspector` projects those observations into the public,
+- `p2p-control` is the root CLI, command execution, and privileged orchestration
+  boundary. Internal Python modules live in the `backend` package;
+  `RuntimeProbe` owns process, systemd, socket, container, and proxy discovery,
+  while `ServiceInspector` projects those observations into the public,
   privacy-aware status model.
-- `p2p_catalog.py` is the canonical built-in service, category, package,
-  container-alias, and AUR metadata source. `p2p_registry.py`, `p2p_snapshot.py`,
-  `p2p_actions.py`, and `p2p_packages.py` own validation, per-request probe
-  state, backend command planning, and package routing respectively.
-- `p2p_settings.py` validates and reconciles settings while
-  `p2p_settings_store.py` owns private locking, atomic writes, and one-step
-  undo. `p2p_backup_store.py` owns configuration backup inventory, retention,
-  and restoration. `p2p_cache.py` and `p2p_backups.py` isolate cache and
-  privileged restore-command policy.
+- `backend/p2p_catalog.py` is the canonical built-in service, category, package,
+  container-alias, and AUR metadata source. The sibling `p2p_registry.py`,
+  `p2p_snapshot.py`, `p2p_actions.py`, and `p2p_packages.py` modules own
+  validation, per-request probe state, backend command planning, and package
+  routing respectively.
+- `backend/p2p_settings.py` validates and reconciles settings while its sibling
+  `p2p_settings_store.py` owns private locking, atomic writes, and one-step undo.
+  `p2p_backup_store.py` owns configuration backup inventory, retention, and
+  restoration. `p2p_cache.py` and `p2p_backups.py` isolate cache and privileged
+  restore-command policy.
   Python defaults are read from `manifest.json`.
-- `p2p_validation.py` is the shared security boundary for user-controlled HTTP
+- `backend/p2p_validation.py` is the shared security boundary for user-controlled HTTP
   URLs and console hosts. `p2p_metrics.py` owns pure container-counter parsing.
 - `p2p_support.py` projects whole-plugin diagnostics into aggregate-only reports.
   `p2p_event_store.py` persists a bounded journal whose schema cannot carry

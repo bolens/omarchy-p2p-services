@@ -16,6 +16,8 @@ const pageNames = ["General", "Appearance", "Services", "Performance", "Discover
 
 assert.equal(fs.readdirSync(root).filter(name => /^Runtime.*Test\.qml$/.test(name)).length, 0)
 assert.ok(fs.readdirSync(path.join(root, "tests", "qml")).length > 0)
+assert.equal(fs.readdirSync(root).filter(name => /^p2p_.*\.py$/.test(name)).length, 0)
+assert.ok(fs.readdirSync(path.join(root, "backend")).some(name => /^p2p_.*\.py$/.test(name)))
 
 assert.ok(manifest.kinds.includes("service"))
 assert.equal(manifest.entryPoints.service, "Service.qml")

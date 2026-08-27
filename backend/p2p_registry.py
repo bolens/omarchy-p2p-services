@@ -2,7 +2,7 @@
 
 import re
 
-from p2p_validation import safe_http_url
+from backend.p2p_validation import safe_http_url
 
 
 def validate_registry(services, package_ids, alias_ids, installer_ids):

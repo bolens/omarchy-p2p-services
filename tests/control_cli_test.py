@@ -10,9 +10,9 @@ from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
 
 from control_test_support import CONTROL, ControlTestCase
-from p2p_backup_store import ConfigBackupStore
-from p2p_settings import sanitize_settings
-from p2p_settings_store import SettingsStore
+from backend.p2p_backup_store import ConfigBackupStore
+from backend.p2p_settings import sanitize_settings
+from backend.p2p_settings_store import SettingsStore
 
 
 class ControlCliTests(ControlTestCase):

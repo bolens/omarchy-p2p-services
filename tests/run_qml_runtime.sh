@@ -12,6 +12,7 @@ runtime_dir="$(mktemp -d)"
 trap 'rm -rf -- "$runtime_dir"' EXIT
 
 find "$plugin_dir" -maxdepth 1 -type f -exec ln -s -- '{}' "$runtime_dir/" \;
+find "$plugin_dir/tests/qml" -maxdepth 1 -type f -name 'Runtime*Test.qml' -exec ln -s -- '{}' "$runtime_dir/" \;
 ln -s -- "$plugin_dir/tests" "$runtime_dir/tests"
 ln -s -- "$shell_root/Commons" "$runtime_dir/Commons"
 ln -s -- "$shell_root/Ui" "$runtime_dir/Ui"

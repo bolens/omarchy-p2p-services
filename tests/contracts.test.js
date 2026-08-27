@@ -14,6 +14,9 @@ const performanceSettings = read("P2PPerformanceSettings.qml")
 const messageSurface = read("P2PMessageSurface.qml")
 const pageNames = ["General", "Appearance", "Services", "Performance", "Discovery", "Packages"]
 
+assert.equal(fs.readdirSync(root).filter(name => /^Runtime.*Test\.qml$/.test(name)).length, 0)
+assert.ok(fs.readdirSync(path.join(root, "tests", "qml")).length > 0)
+
 assert.ok(manifest.kinds.includes("service"))
 assert.equal(manifest.entryPoints.service, "Service.qml")
 assert.equal(manifest.keepLoaded, true)

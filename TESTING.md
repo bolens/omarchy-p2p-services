@@ -28,7 +28,9 @@ Omarchy session:
 tests/run_qml_runtime.sh
 ```
 
-The harnesses exercise real QML component behavior, process integration,
+Harness sources live under `tests/qml/`; the runner links them beside the
+production components in an isolated temporary directory before launch. The
+harnesses exercise real QML component behavior, process integration,
 settings persistence, refresh and watcher lifecycles, user interaction,
 privacy boundaries, and plugin-load smoke paths. `tests/run_qml_runtime.sh` is
 the canonical harness inventory; adding or removing a runtime test there avoids

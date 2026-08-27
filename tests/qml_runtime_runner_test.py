@@ -18,7 +18,7 @@ class QmlRuntimeRunnerTests(unittest.TestCase):
 
   def test_every_runtime_harness_is_registered(self):
     plugin_root = pathlib.Path(__file__).resolve().parents[1]
-    harnesses = {path.name for path in plugin_root.glob("Runtime*Test.qml")}
+    harnesses = {path.name for path in (plugin_root / "tests/qml").glob("Runtime*Test.qml")}
     registered = set(re.findall(
       r"^run_harness (Runtime\S+Test\.qml) ",
       (plugin_root / "tests/run_qml_runtime.sh").read_text(),
@@ -41,7 +41,7 @@ class QmlRuntimeRunnerTests(unittest.TestCase):
     mismatches = [
       f"{harness}: {marker}"
       for harness, marker in entries
-      if not re.search(rf"(?<![A-Z0-9_]){re.escape(marker)}(?![A-Z0-9_])", (plugin_root / harness).read_text())
+      if not re.search(rf"(?<![A-Z0-9_]){re.escape(marker)}(?![A-Z0-9_])", (plugin_root / "tests/qml" / harness).read_text())
     ]
     self.assertEqual(mismatches, [])
 

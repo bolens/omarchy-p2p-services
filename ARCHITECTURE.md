@@ -29,7 +29,11 @@
 - `p2p_support.py` projects whole-plugin diagnostics into aggregate-only reports.
   `p2p_event_store.py` persists a bounded journal whose schema cannot carry
   service names or arbitrary detail.
-- `tests/` contains JavaScript, Python, and Quickshell runtime validation.
+- `tests/` contains JavaScript and Python validation, fixtures, and the
+  development-only Quickshell harnesses under `tests/qml/`. The runtime runner
+  links those harnesses beside production components in an isolated temporary
+  directory so their relative QML topology matches an installed plugin without
+  shipping test entry points.
 - `.github/` contains contribution forms and CI/release automation.
 
 Runtime files stay at the plugin root because Omarchy resolves manifest entry

@@ -41,7 +41,7 @@ assert.match(readme, /omarchy plugin add https:\/\/github\.com\/bolens\/omarchy-
 assert.ok(fs.statSync(path.join(root, "preview.png")).size > 0, "preview.png must not be empty");
 assert.match(readme, /bolens\.github\.io\/omarchy-p2p-services/);
 assert.match(fs.readFileSync(path.join(root, "DOCUMENTATION.md"), "utf8"), /canonical installation/);
-for (const image of ["compact.png", "grid.png", "general.png", "appearance.png", "services.png", "performance.png", "discovery.png", "packages.png", "bar.png"])
+for (const image of ["compact.png", "grid.png", "general.png", "appearance.png", "services.png", "performance.png", "discovery.png", "packages.png", "bar.png", "social-card.png"])
   assert.ok(fs.existsSync(path.join(root, "docs", image)), `missing screenshot: ${image}`);
 
 console.log("documentation checks passed");

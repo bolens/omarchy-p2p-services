@@ -274,7 +274,16 @@ done
 [[ $(sha256sum "$stage"/docs/{panel,compact,grid,general,appearance,services,performance,discovery,packages}.png | cut -d' ' -f1 | sort -u | wc -l) == 9 ]] || { printf 'Panel, layout, and settings captures are not distinct.\n' >&2; exit 1; }
 install -m 0644 "$stage/docs/panel.png" "$stage/docs/preview.png"
 install -m 0644 "$stage/docs/panel.png" "$stage/preview.png"
-assets+=(docs/preview.png preview.png)
+magick -size 1200x630 xc:'#08111f' \
+  -fill '#0d1b2d' -stroke '#203b55' -strokewidth 2 -draw 'roundrectangle 42,42 1158,588 28,28' \
+  \( "$stage/docs/panel.png" -resize '500x500>' \) -gravity east -geometry +82+0 -composite \
+  -gravity northwest -stroke none -font DejaVu-Sans-Bold -fill '#55d6ff' -pointsize 28 -annotate +92+132 'OMARCHY SHELL PLUGIN' \
+  -fill '#e8f4ff' -pointsize 70 -annotate +88+204 'P2P Services' \
+  -font DejaVu-Sans -fill '#91a8bd' -pointsize 30 -interline-spacing 10 -annotate +92+308 'Your peers.\nOne surface.' \
+  -fill '#69e6a6' -pointsize 23 -annotate +92+472 'Private by default  •  30+ services' \
+  -strip -define png:compression-level=9 "$stage/docs/social-card.png"
+pngquant --force --quality=82-95 --speed 1 --strip --output "$stage/docs/social-card.png" "$stage/docs/social-card.png"
+assets+=(docs/preview.png docs/social-card.png preview.png)
 [[ $(scripts/capture-plugin-fingerprint "$repo_root") == "$runtime_fingerprint" ]] || { printf 'Plugin runtime files changed during capture.\n' >&2; exit 1; }
 if [[ $verify_only == false ]]; then
   scripts/publish-screenshot-assets "$stage" "${assets[@]}"

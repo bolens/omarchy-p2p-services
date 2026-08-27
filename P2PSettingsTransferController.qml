@@ -38,10 +38,11 @@ QtObject {
       var completedMode = process.mode
       var payload = String(output.text || "").trim()
       var detail = String(errorOutput.text || "").trim().slice(0, 512)
-      controller.busy = false
-      controller.activeMode = ""
-      if (completedMode === "check") { controller.undoAvailable = exitCode === 0; return }
+      if (completedMode === "check") controller.undoAvailable = exitCode === 0
       if (exitCode === 0 && (completedMode === "import" || completedMode === "undo")) controller.undoAvailable = true
+      controller.activeMode = ""
+      controller.busy = false
+      if (completedMode === "check") return
       if (exitCode === 0) controller.succeeded(completedMode, payload)
       else controller.failed(completedMode, exitCode, detail)
     }

@@ -20,15 +20,15 @@ ShellRoot {
     onFailed: function(mode, exitCode, _detail) { throw new Error("settings transfer availability flow failed: " + mode + "/" + exitCode) }
   }
 
-  Timer {
-    interval: 20
-    running: true
-    repeat: true
-    onTriggered: {
+  Connections {
+    target: transfer
+    function onRunningChanged() {
       if (root.stage !== 0 || transfer.running) return
       if (!transfer.undoAvailable || transfer.activeMode !== "") throw new Error("undo availability probe did not clear completed state")
       root.stage = 1
-      if (!transfer.request("export")) throw new Error("transfer remained blocked after undo availability probe")
+      Qt.callLater(function() {
+        if (!transfer.request("export")) throw new Error("transfer remained blocked after undo availability probe")
+      })
     }
   }
   Timer { interval: 3000; running: true; onTriggered: { throw new Error("settings transfer availability test timed out at stage " + root.stage) } }

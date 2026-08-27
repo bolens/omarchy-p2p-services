@@ -243,6 +243,12 @@ open_service_details() {
   wait_plugin_state detailsReady true "$service_id" || { printf 'Could not expand %s details.\n' "$service_id" >&2; return 1; }
 }
 
+open_service_editor() {
+  local service_id=$1
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" openEditor "$service_id" 2>/dev/null || true) == ok ]] || return 1
+  wait_plugin_state editorReady true "$service_id" || { printf 'Could not open %s editor.\n' "$service_id" >&2; return 1; }
+}
+
 close_panel() {
   [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" close 2>/dev/null || true) == ok ]] || return 1
   wait_plugin_state panelClosed true
@@ -253,6 +259,8 @@ capture_panel panel
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
 open_service_details i2p
 capture_panel details
+open_service_editor i2p
+capture_panel editor
 open_main_view list comfortable
 for page in general appearance services performance discovery packages; do
   open_settings_page "$page"
@@ -285,7 +293,7 @@ validate_capture() {
     exit 1
   }
 }
-for image in panel details compact grid general appearance services performance discovery packages bar; do
+for image in panel details editor compact grid general appearance services performance discovery packages bar; do
   colors=$(magick "$capture_dir/$image.png" -format '%k' info:)
   if [[ ! $colors =~ ^[0-9]+$ ]] || ((colors < 8)); then
     printf 'Capture has too little content: %s\n' "$image" >&2
@@ -295,10 +303,10 @@ for image in panel details compact grid general appearance services performance 
   pngquant --force --quality=82-95 --speed 1 --strip --output "$stage/docs/$image.png" "$stage/docs/$image.png"
   assets+=("docs/$image.png")
 done
-for image in panel details compact grid general appearance services performance discovery; do validate_capture "$stage/docs/$image.png" "$crop_width" "$panel_height"; done
+for image in panel details editor compact grid general appearance services performance discovery; do validate_capture "$stage/docs/$image.png" "$crop_width" "$panel_height"; done
 validate_capture "$stage/docs/packages.png" "$crop_width" 400
 validate_capture "$stage/docs/bar.png" "$widget_width" 50
-[[ $(sha256sum "$stage"/docs/{panel,details,compact,grid,general,appearance,services,performance,discovery,packages,bar}.png | cut -d' ' -f1 | sort -u | wc -l) == 11 ]] || { printf 'Published captures are not all distinct.\n' >&2; exit 1; }
+[[ $(sha256sum "$stage"/docs/{panel,details,editor,compact,grid,general,appearance,services,performance,discovery,packages,bar}.png | cut -d' ' -f1 | sort -u | wc -l) == 12 ]] || { printf 'Published captures are not all distinct.\n' >&2; exit 1; }
 install -m 0644 "$stage/docs/panel.png" "$stage/docs/preview.png"
 install -m 0644 "$stage/docs/panel.png" "$stage/preview.png"
 magick -size 1200x630 xc:'#08111f' \

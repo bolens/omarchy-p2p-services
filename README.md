@@ -11,16 +11,16 @@ local peer-to-peer clients and overlay-network services.
 Contributors: [contributing guide](CONTRIBUTING.md) ·
 [architecture](ARCHITECTURE.md) · [security policy](SECURITY.md)
 
-![P2P Services status panel with privacy filtering enabled](preview.png?v=0fee0f6182f2)
+![P2P Services status panel with privacy filtering enabled](preview.png?v=4ef6a8cc4ae6)
 
 <details>
 <summary>More interface previews</summary>
 
 | Expanded details | Compact list | Two-column grid |
 | --- | --- | --- |
-| ![Privacy-filtered I2P details](docs/details.png?v=aa088842318d) | ![Compact service list](docs/compact.png?v=4823e3b07119) | ![Two-column service grid](docs/grid.png?v=9b707894d7a3) |
+| ![Privacy-filtered I2P details](docs/details.png?v=7f3f1e70e4aa) | ![Compact service list](docs/compact.png?v=58751d521da0) | ![Two-column service grid](docs/grid.png?v=37e30e29373a) |
 | General settings | Performance settings | Bar widget |
-| ![General settings](docs/general.png?v=426126a10222) | ![Performance settings](docs/performance.png?v=16eb7539e03e) | ![Omarchy bar widget](docs/bar.png?v=a829587448de) |
+| ![General settings](docs/general.png?v=81fcb1cb3a1d) | ![Performance settings](docs/performance.png?v=4f35e3820b71) | ![Omarchy bar widget](docs/bar.png?v=3524debc7318) |
 
 </details>
 

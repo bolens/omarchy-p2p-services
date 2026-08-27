@@ -37,10 +37,10 @@ assert.match(notFound, /<html lang="en">/);
 assert.match(notFound, /name="robots" content="noindex"/);
 assert.equal((html.match(/<div class="showcase" data-showcase>/g) || []).length, 2);
 assert.equal((html.match(/role="tablist"/g) || []).length, 2);
-assert.equal((html.match(/<button class="tab" role="tab"/g) || []).length, 10);
+assert.equal((html.match(/<button class="tab" role="tab"/g) || []).length, 11);
 assert.match(html, /ArrowLeft/);
 assert.match(html, /aria-selected/);
-for (const image of ["panel.png", "details.png", "compact.png", "grid.png", "general.png", "appearance.png", "services.png", "performance.png", "discovery.png", "packages.png", "bar.png"]) {
+for (const image of ["panel.png", "details.png", "editor.png", "compact.png", "grid.png", "general.png", "appearance.png", "services.png", "performance.png", "discovery.png", "packages.png", "bar.png"]) {
   const [width, height] = dimensions(image);
   assert.ok(width > 0 && height > 0, `${image} must not be empty`);
   assert.match(html, new RegExp(`src="${image.replace(".", "\\.")}"`));
@@ -56,6 +56,6 @@ assert.match(capture, /privacyFilter[\\"]*:?[\\"]*true/);
 assert.match(capture, /for page in general appearance services performance discovery packages/);
 assert.match(capture, /update-screenshot-metadata/);
 assert.doesNotMatch(capture, /\bsleep\s+(?:1|2)\b/, "capture workflow must wait on observable IPC state, not fixed delays");
-for (const readiness of ["mainReady", "detailsReady", "panelClosed"])
+for (const readiness of ["mainReady", "detailsReady", "editorReady", "panelClosed"])
   assert.ok(capture.includes(readiness), `capture workflow is missing readiness probe: ${readiness}`);
 console.log("site checks passed");

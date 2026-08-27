@@ -32,6 +32,16 @@ class StatusCacheTests(unittest.TestCase):
       self.assertEqual(other["services"], [3])
       self.assertEqual(calls, [1, 3])
 
+  def test_future_dated_payload_is_not_treated_as_fresh(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root=pathlib.Path(directory)
+      self.assertEqual(cached_status("clock",lambda:{"generation":1},root,ttl=10)["generation"],1)
+      target=next(root.glob("*.json"))
+      with mock.patch("backend.p2p_cache.time.time",return_value=100):
+        os.utime(target,(200,200))
+        refreshed=cached_status("clock",lambda:{"generation":2},root,ttl=10)
+      self.assertEqual(refreshed["generation"],2)
+
   def test_bypass_invalidates_every_partition_before_refresh(self):
     with tempfile.TemporaryDirectory() as directory:
       root = pathlib.Path(directory)

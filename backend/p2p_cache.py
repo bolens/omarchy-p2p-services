@@ -11,7 +11,8 @@ import time
 def _read_fresh(path, ttl):
   try:
     stat = path.stat()
-    if time.time() - stat.st_mtime > ttl: return None
+    age=time.time()-stat.st_mtime
+    if age < 0 or age > ttl: return None
     value = json.loads(path.read_text())
     return value if isinstance(value, dict) else None
   except (OSError, ValueError, TypeError): return None

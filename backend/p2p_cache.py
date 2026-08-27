@@ -18,7 +18,7 @@ def _read_fresh(path, ttl):
 
 
 def _prune_payloads(root, keep, max_entries):
-  try: payloads = sorted(root.glob("*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
+  try: payloads = sorted(root.glob("*.json"), key=lambda path: (path.stat().st_mtime,path.name), reverse=True)
   except OSError: return
   keepers = {keep}
   for path in payloads:

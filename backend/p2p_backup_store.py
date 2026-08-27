@@ -35,7 +35,7 @@ class ConfigBackupStore:
         modified = path.stat().st_mtime
         records.append({"name": path.name, "timestamp": datetime.datetime.fromtimestamp(modified).isoformat(timespec="seconds"), "_mtime": modified})
       except OSError: pass
-    records.sort(key=lambda record: record["_mtime"], reverse=True)
+    records.sort(key=lambda record: (record["_mtime"],record["name"]), reverse=True)
     for record in records: record.pop("_mtime", None)
     return records
 

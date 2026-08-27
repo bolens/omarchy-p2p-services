@@ -1,5 +1,6 @@
 import pathlib
 import tempfile
+import os
 from unittest import mock
 
 from control_test_support import CONTROL, ControlTestCase
@@ -7,6 +8,20 @@ from backend.p2p_backup_store import ConfigBackupStore
 
 
 class BackupsIntegrationTests(ControlTestCase):
+  def test_backup_records_break_mtime_ties_by_name(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      store = ConfigBackupStore(root, CONTROL.restore_plan)
+      backup_root = store.service_root("aria2")
+      backup_root.mkdir(parents=True)
+      older_name = backup_root/"20260101-000000-000000-service.conf"
+      newer_name = backup_root/"20260101-000000-000001-service.conf"
+      older_name.write_text("older")
+      newer_name.write_text("newer")
+      os.utime(older_name, (100,100)); os.utime(newer_name, (100,100))
+      with mock.patch.object(pathlib.Path,"iterdir",return_value=iter([older_name,newer_name])):
+        self.assertEqual([record["name"] for record in store.records("aria2")], [newer_name.name,older_name.name])
+
   def test_backup_store_accepts_xdg_data_root(self):
     with tempfile.TemporaryDirectory() as directory:
       root = pathlib.Path(directory)

@@ -1,12 +1,26 @@
 import pathlib
 import tempfile
 import unittest
+import os
 from unittest import mock
 
-from backend.p2p_cache import cached_status
+from backend.p2p_cache import _prune_payloads, cached_status
 
 
 class StatusCacheTests(unittest.TestCase):
+  def test_pruning_breaks_mtime_ties_by_filename(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root=pathlib.Path(directory)
+      root.mkdir(exist_ok=True)
+      first=root/"a.json"; second=root/"b.json"; keep=root/"keep.json"
+      for path in (first,second,keep):
+        path.write_text('{"value":"same-time"}')
+        os.utime(path,(100,100))
+      with mock.patch.object(pathlib.Path,"glob",return_value=[first,second,keep]):
+        _prune_payloads(root,keep,2)
+      self.assertFalse(first.exists())
+      self.assertTrue(second.exists())
+
   def test_partitions_keys_and_reuses_fresh_payload(self):
     with tempfile.TemporaryDirectory() as directory:
       calls = []

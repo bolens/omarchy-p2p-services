@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "docs/index.html"), "utf8");
+const notFound = fs.readFileSync(path.join(root, "docs/404.html"), "utf8");
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
 assert.equal(new Set(ids).size, ids.length, "site element IDs must be unique");
 for (const match of html.matchAll(/href="#([^"]+)"/g))
@@ -16,6 +17,10 @@ function dimensions(name) {
 }
 
 assert.match(html, /<main id="main">/);
+assert.match(html, /rel="canonical" href="https:\/\/bolens\.github\.io\/omarchy-p2p-services\/"/);
+assert.match(html, /name="twitter:card" content="summary_large_image"/);
+assert.match(html, /type="application\/ld\+json"/);
+assert.match(html, /"softwareVersion":"__PLUGIN_VERSION__"/);
 assert.match(html, /prefers-reduced-motion/);
 assert.match(html, /bolens\/omarchy-p2p-services/);
 assert.match(html, /__PLUGIN_VERSION__/);
@@ -25,6 +30,11 @@ for (const section of ["guide", "usage", "configuration", "services", "privacy",
   assert.match(html, new RegExp(`id="${section}"`), `user guide is missing #${section}`);
 assert.match(html, /omarchy plugin remove io\.github\.bolens\.p2p-services/);
 assert.match(html, /\$XDG_STATE_HOME/);
+assert.equal((html.match(/<img /g) || []).length, (html.match(/loading="lazy" decoding="async"/g) || []).length);
+for (const tabContract of ["aria-controls", "aria-labelledby", "tabIndex", "history.replaceState", "location.hash"])
+  assert.ok(html.includes(tabContract), `accessible tabs are missing ${tabContract}`);
+assert.match(notFound, /<html lang="en">/);
+assert.match(notFound, /name="robots" content="noindex"/);
 assert.equal((html.match(/<div class="showcase" data-showcase>/g) || []).length, 2);
 assert.equal((html.match(/role="tablist"/g) || []).length, 2);
 assert.equal((html.match(/<button class="tab" role="tab"/g) || []).length, 10);

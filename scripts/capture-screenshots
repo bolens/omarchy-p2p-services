@@ -44,13 +44,19 @@ exec 9>"$lock_file"
 flock -n 9 || { printf 'Another P2P screenshot capture is running.\n' >&2; exit 1; }
 
 monitor_json=$(hyprctl monitors -j)
+cursor_json=$(hyprctl cursorpos -j)
 if [[ -z $monitor ]]; then
   monitor=$(jq -r '.[] | select(.focused) | .name' <<<"$monitor_json" | head -n1)
 fi
 [[ $monitor =~ ^[A-Za-z0-9_.-]+$ ]] || { printf 'Invalid monitor name: %s\n' "$monitor" >&2; exit 2; }
 monitor_width=$(jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .width' <<<"$monitor_json")
+monitor_height=$(jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .height' <<<"$monitor_json")
+monitor_x=$(jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .x' <<<"$monitor_json")
+monitor_y=$(jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .y' <<<"$monitor_json")
 original_workspace=$(jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .activeWorkspace.id' <<<"$monitor_json")
-[[ $monitor_width =~ ^[1-9][0-9]*$ && $original_workspace =~ ^-?[0-9]+$ ]] || { printf 'Monitor is not active: %s\n' "$monitor" >&2; exit 2; }
+original_cursor_x=$(jq -r '.x' <<<"$cursor_json")
+original_cursor_y=$(jq -r '.y' <<<"$cursor_json")
+[[ $monitor_width =~ ^[1-9][0-9]*$ && $monitor_height =~ ^[1-9][0-9]*$ && $monitor_x =~ ^-?[0-9]+$ && $monitor_y =~ ^-?[0-9]+$ && $original_cursor_x =~ ^-?[0-9]+$ && $original_cursor_y =~ ^-?[0-9]+$ && $original_workspace =~ ^-?[0-9]+$ ]] || { printf 'Monitor is not active: %s\n' "$monitor" >&2; exit 2; }
 
 if [[ -z $capture_workspace ]]; then
   capture_workspace=$(jq -r --arg monitor "$monitor" '[.[] | select(.monitor == $monitor and .id > 0 and .windows == 0) | .id] | sort | reverse | .[0] // empty' < <(hyprctl workspaces -j))
@@ -133,6 +139,14 @@ focus_capture_workspace() {
   return 1
 }
 
+park_capture_cursor() {
+  hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $((monitor_x + monitor_width / 2)), y = $((monitor_y + monitor_height / 2)) }))" >/dev/null
+}
+
+restore_cursor() {
+  hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $original_cursor_x, y = $original_cursor_y }))" >/dev/null 2>&1
+}
+
 restore_desktop() {
   local status=$?
   if [[ $restored == false ]]; then
@@ -150,6 +164,7 @@ restore_desktop() {
     if [[ -f $capture_dir/settings.previous.json ]]; then restore_file "$capture_dir/settings.previous.json" "$previous_file"; else rm -f -- "$previous_file"; fi
     hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"$monitor\" }))" >/dev/null 2>&1 || true
     hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"$original_workspace\" }))" >/dev/null 2>&1 || true
+    restore_cursor || true
     reload_live_settings 'type == "object"' >/dev/null 2>&1 || true
     restored=true
   fi
@@ -176,6 +191,7 @@ shell_config=$(qs ipc --pid "$shell_pid" call shell listShellConfig)
 ' >/dev/null
 
 focus_capture_workspace
+park_capture_cursor
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" open) == ok ]]
 wait_plugin_state mainReady true list comfortable
 widget_x=""
@@ -261,6 +277,14 @@ magick "$capture_dir/bar-full.png" -crop "${widget_width}x50+${widget_x}+0" +rep
 stage="$capture_dir/stage"
 mkdir -p "$stage/docs"
 assets=()
+validate_capture() {
+  local image=$1 expected_width=$2 expected_height=$3 actual
+  actual=$(magick identify -format '%wx%h' "$image")
+  [[ $actual == "${expected_width}x${expected_height}" ]] || {
+    printf 'Capture dimensions do not match: %s expected=%sx%s actual=%s\n' "$image" "$expected_width" "$expected_height" "$actual" >&2
+    exit 1
+  }
+}
 for image in panel details compact grid general appearance services performance discovery packages bar; do
   colors=$(magick "$capture_dir/$image.png" -format '%k' info:)
   if [[ ! $colors =~ ^[0-9]+$ ]] || ((colors < 8)); then
@@ -271,7 +295,10 @@ for image in panel details compact grid general appearance services performance 
   pngquant --force --quality=82-95 --speed 1 --strip --output "$stage/docs/$image.png" "$stage/docs/$image.png"
   assets+=("docs/$image.png")
 done
-[[ $(sha256sum "$stage"/docs/{panel,compact,grid,general,appearance,services,performance,discovery,packages}.png | cut -d' ' -f1 | sort -u | wc -l) == 9 ]] || { printf 'Panel, layout, and settings captures are not distinct.\n' >&2; exit 1; }
+for image in panel details compact grid general appearance services performance discovery; do validate_capture "$stage/docs/$image.png" "$crop_width" "$panel_height"; done
+validate_capture "$stage/docs/packages.png" "$crop_width" 400
+validate_capture "$stage/docs/bar.png" "$widget_width" 50
+[[ $(sha256sum "$stage"/docs/{panel,details,compact,grid,general,appearance,services,performance,discovery,packages,bar}.png | cut -d' ' -f1 | sort -u | wc -l) == 11 ]] || { printf 'Published captures are not all distinct.\n' >&2; exit 1; }
 install -m 0644 "$stage/docs/panel.png" "$stage/docs/preview.png"
 install -m 0644 "$stage/docs/panel.png" "$stage/preview.png"
 magick -size 1200x630 xc:'#08111f' \

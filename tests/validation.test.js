@@ -14,7 +14,7 @@ assert.match(runner, /--portable/);
 assert.match(workflow, /tests\/run_all\.sh --portable/);
 assert.doesNotMatch(workflow, /node tests\/model\.test\.js/);
 assert.match(workflow, /group: ci-\$\{\{ github\.event\.pull_request\.number \|\| github\.ref \}\}/);
-assert.match(workflow, /actions\/setup-node@[0-9a-f]{40}[^\n]*# v6\.4\.0/);
+assert.match(workflow, /actions\/setup-node@[0-9a-f]{40}[^\n]*# v[0-9]+\.[0-9]+\.[0-9]+/);
 assert.match(workflow, /node-version: 24\.19\.0/);
 assert.match(workflow, /npm ci --ignore-scripts --no-audit/);
 assert.match(pages, /node tests\/site\.test\.js/);

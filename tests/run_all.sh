@@ -18,6 +18,7 @@ node tests/security.test.js
 node tests/release.test.js
 node tests/documentation.test.js
 node tests/site.test.js
+node tests/site_build.test.js
 node tests/validation.test.js
 node tests/capture_transaction.test.js
 node tests/capture_recovery.test.js

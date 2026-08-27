@@ -13,38 +13,20 @@ ShellRoot {
     onTimedOut: root.timeouts += 1
   }
 
-  Timer {
-    interval: 60
-    running: true
-    onTriggered: {
-      if (root.timeouts !== 0 || !watchdog.armed) throw new Error("watchdog timed out before its initial deadline")
-      watchdog.start()
-    }
-  }
-
-  Timer {
-    interval: 130
-    running: true
-    onTriggered: {
-      if (root.timeouts !== 0 || !watchdog.armed || !process.running) throw new Error("watchdog restart retained the original deadline")
-    }
-  }
-
-  Timer {
-    interval: 190
-    running: true
-    onTriggered: {
-      if (root.timeouts !== 1 || watchdog.armed) throw new Error("watchdog timeout was not single-shot")
-      if (process.running) throw new Error("watchdog did not stop the timed-out process")
-      console.log("P2P_QML_PROCESS_WATCHDOG_OK")
-      Qt.quit()
-    }
-  }
-
-  Component.onCompleted: {
+  Component.onCompleted: Qt.callLater(function() {
     watchdog.start()
+    if (!watchdog.armed || !watchdog.timer.running) throw new Error("started watchdog was not armed")
     watchdog.stop()
-    if (watchdog.armed) throw new Error("stopped watchdog remained armed")
+    if (watchdog.armed || watchdog.timer.running) throw new Error("stopped watchdog retained its deadline")
     watchdog.start()
-  }
+    watchdog.start()
+    if (!watchdog.armed || !watchdog.timer.running || root.timeouts !== 0) throw new Error("watchdog restart did not reset cleanly")
+    watchdog.timer.triggered()
+    if (root.timeouts !== 1 || watchdog.armed) throw new Error("watchdog timeout was not single-shot")
+    if (process.running) throw new Error("watchdog did not stop the timed-out process")
+    watchdog.timer.triggered()
+    if (root.timeouts !== 1) throw new Error("disarmed watchdog emitted a duplicate timeout")
+    console.log("P2P_QML_PROCESS_WATCHDOG_OK")
+    Qt.quit()
+  })
 }

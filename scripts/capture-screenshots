@@ -32,7 +32,7 @@ while (($#)); do
   esac
 done
 
-for command in qs hyprctl jq grim magick pngquant flock python3; do
+for command in qs hyprctl jq grim magick pngquant flock python3 ps; do
   command -v "$command" >/dev/null || { printf 'Missing required command: %s\n' "$command" >&2; exit 1; }
 done
 
@@ -47,7 +47,16 @@ monitor_json=$(hyprctl monitors -j)
 cursor_json=$(hyprctl cursorpos -j)
 active_window_json=$(hyprctl activewindow -j)
 if [[ -z $monitor ]]; then
-  monitor_state=$(jq -cn --argjson active "$active_window_json" --argjson monitors "$monitor_json" --argjson cursor "$cursor_json" '{active:$active,monitors:$monitors,cursor:$cursor}')
+  client_json=$(hyprctl clients -j)
+  launcher_pids=()
+  launcher_pid=$PPID
+  while [[ $launcher_pid =~ ^[1-9][0-9]*$ ]] && ((launcher_pid > 1)); do
+    launcher_pids+=("$launcher_pid")
+    launcher_pid=$(ps -o ppid= -p "$launcher_pid" 2>/dev/null | tr -d ' ')
+  done
+  launcher_pid_json=$(printf '%s\n' "${launcher_pids[@]}" | jq -s 'map(select(length > 0) | tonumber)')
+  launcher_monitor=$(jq -r --argjson pids "$launcher_pid_json" '[ $pids[] as $pid | .[] | select(.pid == $pid) | .monitor ][0] // -1' <<<"$client_json")
+  monitor_state=$(jq -cn --argjson launcher "$launcher_monitor" --argjson active "$active_window_json" --argjson monitors "$monitor_json" --argjson cursor "$cursor_json" '{launcher:{monitor:$launcher},active:$active,monitors:$monitors,cursor:$cursor}')
   monitor=$(scripts/select-capture-monitor "$monitor_state") || { printf 'Could not determine the launch monitor; pass --monitor NAME.\n' >&2; exit 2; }
 fi
 [[ $monitor =~ ^[A-Za-z0-9_.-]+$ ]] || { printf 'Invalid monitor name: %s\n' "$monitor" >&2; exit 2; }
@@ -138,7 +147,14 @@ open_settings_page() {
 }
 
 focus_capture_workspace() {
-  hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"$monitor\" }))" >/dev/null
+  local focused
+  hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $((monitor_x + monitor_width / 2)), y = $((monitor_y + monitor_height / 2)) }))" >/dev/null
+  for _attempt in {1..20}; do
+    focused=$(hyprctl monitors -j | jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .focused')
+    [[ $focused == true ]] && break
+    sleep .1
+  done
+  [[ $focused == true ]] || { printf 'Could not focus capture monitor %s.\n' "$monitor" >&2; return 1; }
   hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"$capture_workspace\" }))" >/dev/null
   for _attempt in {1..30}; do
     state=$(hyprctl monitors -j | jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | "\(.focused) \(.activeWorkspace.id)"')
@@ -171,7 +187,7 @@ restore_desktop() {
     restore_file "$capture_dir/shell.json" "$settings_file"
     if [[ -f $capture_dir/settings.json ]]; then restore_file "$capture_dir/settings.json" "$durable_file"; else rm -f -- "$durable_file"; fi
     if [[ -f $capture_dir/settings.previous.json ]]; then restore_file "$capture_dir/settings.previous.json" "$previous_file"; else rm -f -- "$previous_file"; fi
-    hyprctl eval "hl.dispatch(hl.dsp.focus({ monitor = \"$monitor\" }))" >/dev/null 2>&1 || true
+    hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $((monitor_x + monitor_width / 2)), y = $((monitor_y + monitor_height / 2)) }))" >/dev/null 2>&1 || true
     hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"$original_workspace\" }))" >/dev/null 2>&1 || true
     restore_cursor || true
     reload_live_settings 'type == "object"' >/dev/null 2>&1 || true
@@ -229,6 +245,7 @@ panel_x=$((widget_x + widget_width / 2 - crop_width / 2))
 capture_panel() {
   local name=$1
   local height=${2:-$panel_height}
+  local distinct_from=${3:-}
   local colors
   for _attempt in {1..4}; do
     check_capture_environment
@@ -236,7 +253,9 @@ capture_panel() {
     grim -o "$monitor" "$capture_dir/$name-full.png"
     magick "$capture_dir/$name-full.png" -crop "${crop_width}x${height}+${panel_x}+20" +repage "$capture_dir/$name.png"
     colors=$(magick "$capture_dir/$name.png" -format '%k' info: 2>/dev/null || true)
-    [[ $colors =~ ^[0-9]+$ ]] && ((colors >= 8)) && return 0
+    if [[ $colors =~ ^[0-9]+$ ]] && ((colors >= 8)); then
+      if [[ -z $distinct_from ]] || ! magick compare -metric AE "$capture_dir/$distinct_from.png" "$capture_dir/$name.png" null: >/dev/null 2>&1; then return 0; fi
+    fi
     sleep .5
   done
   printf 'Could not capture populated %s view.\n' "$name" >&2
@@ -275,7 +294,7 @@ open_main_view
 capture_panel panel
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
 open_service_details i2p
-capture_panel details
+capture_panel details "$panel_height" panel
 open_service_editor i2p
 capture_panel editor
 open_main_view list comfortable
@@ -324,7 +343,15 @@ done
 for image in panel details editor compact grid general appearance services performance discovery; do validate_capture "$stage/docs/$image.png" "$crop_width" "$panel_height"; done
 validate_capture "$stage/docs/packages.png" "$crop_width" 400
 validate_capture "$stage/docs/bar.png" "$widget_width" 50
-[[ $(sha256sum "$stage"/docs/{panel,details,editor,compact,grid,general,appearance,services,performance,discovery,packages,bar}.png | cut -d' ' -f1 | sort -u | wc -l) == 12 ]] || { printf 'Published captures are not all distinct.\n' >&2; exit 1; }
+declare -A capture_digests=()
+for image in panel details editor compact grid general appearance services performance discovery packages bar; do
+  digest=$(sha256sum "$stage/docs/$image.png" | awk '{print $1}')
+  if [[ -n ${capture_digests[$digest]:-} ]]; then
+    printf 'Duplicate captures: %s and %s\n' "${capture_digests[$digest]}" "$image" >&2
+    exit 1
+  fi
+  capture_digests[$digest]=$image
+done
 install -m 0644 "$stage/docs/panel.png" "$stage/docs/preview.png"
 install -m 0644 "$stage/docs/panel.png" "$stage/preview.png"
 magick -size 1200x630 xc:'#08111f' \
@@ -356,6 +383,9 @@ rm -rf -- "$capture_dir"
 trap - EXIT INT TERM
 if [[ -n $report_file ]]; then
   mkdir -p "$(dirname "$report_file")"
-  printf '{"verified":true,"published":%s,"privacyFilter":true,"shellPid":%s,"monitor":"%s","workspace":%s}\n' "$([[ $verify_only == false ]] && printf true || printf false)" "$shell_pid" "$monitor" "$capture_workspace" >"$report_file"
+  jq -n --argjson published "$([[ $verify_only == false ]] && printf true || printf false)" \
+    --argjson shellPid "$shell_pid" --arg monitor "$monitor" --argjson captureWorkspace "$capture_workspace" \
+    --argjson restoredWorkspace "$original_workspace" \
+    '{version:1,result:"passed",verified:true,published:$published,privacyFilter:true,shellPid:$shellPid,monitor:$monitor,captureWorkspace:$captureWorkspace,restoredWorkspace:$restoredWorkspace}' >"$report_file"
 fi
 printf 'Updated privacy-filtered screenshots from %s workspace %s; restored workspace %s.\n' "$monitor" "$capture_workspace" "$original_workspace"

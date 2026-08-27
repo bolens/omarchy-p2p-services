@@ -261,6 +261,13 @@ Panel {
     popupScroll.contentY = Model.ensureVisibleContentY(
       popupScroll.contentY, popupScroll.height, contentPosition.y, item.height, popupScroll.contentHeight)
   }
+  function serviceIsVisible(serviceId) {
+    var item = serviceList.itemForId(serviceId)
+    if (!item || !opened) return false
+    var contentPosition = item.mapToItem(popupScroll.contentItem, 0, 0)
+    return contentPosition.y < popupScroll.contentY + popupScroll.height
+      && contentPosition.y + item.height > popupScroll.contentY
+  }
   function activateServiceSelection() {
     var rows = selectableServices()
     if (!rows.length) { selectedServiceId = ""; return }
@@ -396,6 +403,7 @@ Panel {
     selectedServiceId = requested
     expandedServiceId = requested
     if (!opened) open()
+    Qt.callLater(function() { ensureServiceVisible(requested) })
     return "ok"
   }
   function openServiceDetails(serviceId) {
@@ -407,6 +415,7 @@ Panel {
     var target = focusedPanelInstance()
     return !!target && target.opened === true && target.showingWidgetSettings !== true
       && target.statusIndicatorVisible !== true && target.expandedServiceId === String(serviceId)
+      && (typeof target.serviceIsVisible !== "function" || target.serviceIsVisible(serviceId))
   }
   function applyServiceEditor(serviceId) {
     var requested = String(serviceId || "")

@@ -50,7 +50,7 @@ assert.deepEqual(dimensions("social-card.png"), [1200, 630]);
 assert.match(html, /og:image" content="https:\/\/bolens\.github\.io\/omarchy-p2p-services\/social-card\.png"/);
 assert.match(html, /twitter:image" content="https:\/\/bolens\.github\.io\/omarchy-p2p-services\/social-card\.png"/);
 const capture = fs.readFileSync(path.join(root, "scripts/capture-screenshots"), "utf8");
-for (const safeguard of ["flock -n", "trap cleanup_capture", "settings-patch", "privacyEnabled", "status private", "-strip", "window_count", "sha256sum", "social-card.png", "restore_cursor", "validate_capture", "captureContract", "verify-capture-postconditions", "capture-environment-guard", "select-capture-monitor"])
+for (const safeguard of ["flock -n", "trap cleanup_capture", "settings-patch", "privacyEnabled", "status private", "-strip", "window_count", "sha256sum", "Duplicate captures", "social-card.png", "restore_cursor", "validate_capture", "captureContract", "verify-capture-postconditions", "capture-environment-guard", "select-capture-monitor"])
   assert.ok(capture.includes(safeguard), `capture workflow is missing safeguard: ${safeguard}`);
 assert.match(capture, /privacyFilter[\\"]*:?[\\"]*true/);
 assert.match(capture, /for page in general appearance services performance discovery packages/);

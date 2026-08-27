@@ -1,10 +1,12 @@
 """Bounded privacy-safe operational event journal."""
 
+import fcntl
 import json
+import os
 import pathlib
 import time
 
-from backend.p2p_secure_files import atomic_private_write, read_private_text
+from backend.p2p_secure_files import atomic_private_write, ensure_private_directory, read_private_text
 
 KINDS = {"stopped", "unhealthy", "recovered", "restarts", "action-success", "action-failure", "watcher-fallback"}
 
@@ -26,12 +28,22 @@ class EventStore:
   def append(self, kind, count=1):
     if kind not in KINDS: raise ValueError("invalid event kind")
     event = {"kind": kind, "count": max(1, min(999, int(count))), "at": int(time.time())}
-    events = (self.load() + [event])[-self.MAX_EVENTS:]
-    atomic_private_write(self.path, json.dumps(events, separators=(",", ":")), self.root)
-    return events
+    with self._lock():
+      events = (self.load() + [event])[-self.MAX_EVENTS:]
+      atomic_private_write(self.path, json.dumps(events, separators=(",", ":")), self.root)
+      return events
 
   def clear(self):
-    self.path.unlink(missing_ok=True)
+    with self._lock(): self.path.unlink(missing_ok=True)
+
+  def _lock(self):
+    ensure_private_directory(self.root)
+    lock_path=self.root/"events.lock"
+    descriptor=os.open(lock_path,os.O_RDWR|os.O_CREAT|getattr(os,"O_NOFOLLOW",0),0o600)
+    os.fchmod(descriptor,0o600)
+    lock=os.fdopen(descriptor,"a+")
+    fcntl.flock(lock.fileno(),fcntl.LOCK_EX)
+    return lock
 
   @staticmethod
   def _valid(item):

@@ -45,11 +45,7 @@ ShellRoot {
     }
   }
 
-  Timer {
-    interval: 100
-    running: true
-    repeat: false
-    onTriggered: {
+  Component.onCompleted: Qt.callLater(function() {
     content.forceLayout()
     viewport.contentHeight = content.childrenRect.height
     harness.move(1)
@@ -65,6 +61,5 @@ ShellRoot {
       throw new Error("initial Up navigation failed: index=" + harness.selectedIndex + " contentY=" + harness.scrollPosition)
     console.log("P2P_QML_NAVIGATION_OK")
     Qt.quit()
-    }
-  }
+  })
 }

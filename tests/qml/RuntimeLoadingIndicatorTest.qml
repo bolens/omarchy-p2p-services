@@ -12,20 +12,21 @@ ShellRoot {
   function descendant(item, name) {
     if (!item) return null
     if (item.objectName === name) return item
-    var children = item.children || []
-    for (var index = 0; index < children.length; index++) {
-      var match = descendant(children[index], name)
+    var objects = item.data || item.children || []
+    for (var index = 0; index < objects.length; index++) {
+      var match = descendant(objects[index], name)
       if (match) return match
     }
     return null
   }
 
-  Timer {
-    interval: 100
-    running: true
-    onTriggered: {
+  Component.onCompleted: Qt.callLater(function() {
       var frame = descendant(indicator, "loadingFrame"), label = descendant(indicator, "loadingLabel")
-      if (!frame || !label || !indicator.animationRunning || label.text !== "LOADING TEST DATA" || frame.text === ".  ") throw new Error("animated loading presentation failed")
+      var animationTimer = descendant(indicator, "loadingAnimationTimer")
+      if (!frame || !label || !animationTimer || !indicator.animationRunning || label.text !== "LOADING TEST DATA") throw new Error("animated loading presentation failed")
+      var initialFrame = frame.text
+      animationTimer.triggered()
+      if (frame.text === initialFrame) throw new Error("animation trigger did not advance its frame")
       if (indicator.animationInterval !== 60) throw new Error("initial animation cadence was not exposed")
       indicator.speed = 1
       if (indicator.animationInterval !== 60) throw new Error("animation cadence minimum was bypassed")
@@ -51,6 +52,5 @@ ShellRoot {
           Qt.quit()
         })
       })
-    }
-  }
+  })
 }

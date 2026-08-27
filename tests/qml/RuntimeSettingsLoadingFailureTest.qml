@@ -5,6 +5,8 @@ import "PathUtils.js" as PathUtils
 ShellRoot {
   id: root
   property int stage: 0
+  property bool completed: false
+  property bool advanceScheduled: false
   readonly property string fixtureHelper: PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/smoke-helper"))
   QtObject {
     id: shellMock
@@ -36,23 +38,36 @@ ShellRoot {
     widget.showingWidgetSettings = true
     if (!widget.settingsIndicatorVisible) throw new Error("failed settings load did not start presentation")
   }
-  Timer {
-    interval: 400
-    running: true
-    repeat: true
-    onTriggered: {
-      if (root.stage === 0) {
+
+  function advanceWhenReady() {
+    advanceScheduled = false
+    if (completed) return
+    if (root.stage === 0 && widget.settingsErrorText === "Unable to load P2P settings interface") {
       if (widget.settingsIndicatorVisible || widget.visibleErrorText !== "Unable to load P2P settings interface") throw new Error("failed settings load did not terminate presentation")
       widget.showingWidgetSettings = false
       widget.settingsSurfaceSource = ""
       widget.showingWidgetSettings = true
       if (!widget.settingsIndicatorVisible) throw new Error("settings retry did not restart loading presentation")
       root.stage = 1
-      } else if (root.stage === 1) {
+    } else if (root.stage === 1 && widget.settingsSurfaceLoaded && !widget.settingsIndicatorVisible) {
       if (!widget.settingsSurfaceLoaded || widget.settingsIndicatorVisible || widget.settingsErrorText !== "") throw new Error("settings retry did not recover from loader failure")
+      completed = true
       console.log("P2P_QML_SETTINGS_LOADING_FAILURE_OK")
       Qt.quit()
-      }
     }
   }
+
+  function scheduleAdvance() {
+    if (advanceScheduled || completed) return
+    advanceScheduled = true
+    Qt.callLater(root.advanceWhenReady)
+  }
+
+  Connections {
+    target: widget
+    function onSettingsErrorTextChanged() { root.scheduleAdvance() }
+    function onSettingsSurfaceLoadedChanged() { root.scheduleAdvance() }
+    function onSettingsIndicatorVisibleChanged() { root.scheduleAdvance() }
+  }
+  Timer { interval: 3000; running: !root.completed; onTriggered: { throw new Error("settings loading recovery timed out at stage " + root.stage) } }
 }

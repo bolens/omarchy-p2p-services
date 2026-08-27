@@ -15,8 +15,9 @@ import "Model.js" as Model
 
           RowLayout {
             Layout.fillWidth: true
-            Button { iconText: "󰁍"; tooltipText: "Back"; horizontalPadding: Style.spacing.controlGap; onClicked: editor.controller.editingServiceId = "" }
+            Button { objectName: "serviceEditorBackButton"; iconText: "󰁍"; tooltipText: "Back to services"; horizontalPadding: Style.spacing.controlGap; onClicked: editor.controller.editingServiceId = "" }
             Text {
+              objectName: "serviceEditorTitle"
               Layout.fillWidth: true
               text: editor.current ? editor.controller.labelFor(editor.current) + " settings" : "Service settings"
               textFormat: Text.PlainText
@@ -24,6 +25,22 @@ import "Model.js" as Model
               font.family: Style.font.family
               font.pixelSize: Style.font.title
               font.weight: Font.DemiBold
+            }
+            Button {
+              objectName: "serviceEditorPreviousButton"
+              iconText: "󰅁"
+              tooltipText: "Previous visible service"
+              enabled: editor.controller.canMoveServiceEditor(editor.controller.editingServiceId, -1)
+              horizontalPadding: Style.spacing.controlGap
+              onClicked: editor.controller.moveServiceEditor(-1)
+            }
+            Button {
+              objectName: "serviceEditorNextButton"
+              iconText: "󰅂"
+              tooltipText: "Next visible service"
+              enabled: editor.controller.canMoveServiceEditor(editor.controller.editingServiceId, 1)
+              horizontalPadding: Style.spacing.controlGap
+              onClicked: editor.controller.moveServiceEditor(1)
             }
           }
 

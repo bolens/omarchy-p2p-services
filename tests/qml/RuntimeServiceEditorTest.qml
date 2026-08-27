@@ -10,6 +10,7 @@ ShellRoot {
     property bool privacyFilter: true
     property var events: []
     property var currentService: ({id:"syncthing",name:"Syncthing",backend:"systemd",active:false,configExists:false,unit:"syncthing.service",backups:[]})
+    property var navigation: []
     function service(_id) { return currentService }
     function labelFor(_entry) { return "Home Sync" }
     function iconFor(_entry) { return "S" }
@@ -20,6 +21,8 @@ ShellRoot {
     function catalogEntry(_id) { return {backups:[{name:"backup-1",timestamp:"2026-08-26T12:00:00Z"}]} }
     function hasConsole(_entry) { return true }
     function canUninstall(_entry) { return true }
+    function canMoveServiceEditor(_id, delta) { return delta === 1 }
+    function moveServiceEditor(delta) { navigation = navigation.concat([delta]) }
     function persistServiceMap(key, id, value, removeEmpty) { events = events.concat([{kind:"map",key:key,id:id,value:value,removeEmpty:removeEmpty}]) }
     function saveConsoleUrl(id, value) { events = events.concat([{kind:"console",id:id,value:value}]) }
     function toggleFavorite(_id) {}
@@ -54,7 +57,14 @@ ShellRoot {
     var restore = descendant(editor, "serviceRestoreButton")
     var reset = descendant(editor, "serviceResetButton")
     var uninstall = descendant(editor, "serviceUninstallButton")
-    if (!label || !icon || !policy || !consoleEditor || !configButton || !moveUp || !moveDown || !restore || !reset || !uninstall) throw new Error("service editor controls are not addressable")
+    var back = descendant(editor, "serviceEditorBackButton")
+    var title = descendant(editor, "serviceEditorTitle")
+    var previous = descendant(editor, "serviceEditorPreviousButton")
+    var next = descendant(editor, "serviceEditorNextButton")
+    if (!label || !icon || !policy || !consoleEditor || !configButton || !moveUp || !moveDown || !restore || !reset || !uninstall || !back || !title || !previous || !next) throw new Error("service editor controls are not addressable")
+    if (title.text !== "Home Sync settings" || previous.enabled || !next.enabled) throw new Error("service editor navigation state is wrong")
+    next.clicked()
+    if (mockController.navigation.length !== 1 || mockController.navigation[0] !== 1) throw new Error("service editor navigation action failed")
     label.text = "Family Sync"; label.accepted()
     icon.text = "F"; icon.accepted()
     policy.changed("failures")

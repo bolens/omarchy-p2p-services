@@ -278,6 +278,20 @@ Panel {
     close()
   }
   function editService(id) { editingServiceId = id; refreshCatalog() }
+  function canMoveServiceEditor(id, delta) {
+    var rows = visibleServices
+    var index = rows.findIndex(function(entry) { return entry.id === id })
+    return index >= 0 && index + delta >= 0 && index + delta < rows.length
+  }
+  function moveServiceEditor(delta) {
+    var rows = visibleServices
+    var index = rows.findIndex(function(entry) { return entry.id === editingServiceId })
+    if (index < 0 || index + delta < 0 || index + delta >= rows.length) return
+    editingServiceId = rows[index + delta].id
+    selectedServiceId = editingServiceId
+    popupScroll.contentY = 0
+    refreshCatalog()
+  }
   function serviceNotificationPolicy(id) {
     return Model.serviceNotificationPolicy(setting("serviceNotificationPolicies", {}), id)
   }

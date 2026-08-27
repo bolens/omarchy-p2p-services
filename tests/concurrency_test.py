@@ -29,13 +29,56 @@ def cache_worker(cache_root, ready, start, produced, results):
   results.put(cached_status("shared-key", produce, pathlib.Path(cache_root), ttl=30))
 
 
+def partitioned_cache_worker(cache_root, ready, start, index):
+  ready.put(1)
+  start.wait()
+  cached_status("key-" + str(index), lambda: {"index":index}, pathlib.Path(cache_root), ttl=30, max_entries=3)
+
+
 def event_worker(state_root, ready, start):
   ready.put(1)
   start.wait()
   EventStore(pathlib.Path(state_root)).append("recovered")
 
 
+def settings_load_worker(state_root, ready, start, results):
+  root=pathlib.Path(state_root)
+  store=SettingsStore(root,root/"settings.json",lambda values:values)
+  ready.put(1)
+  start.wait()
+  results.put(store.load())
+
+
 class ConcurrencyTests(unittest.TestCase):
+  def test_concurrent_corruption_recovery_is_consistent(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root=pathlib.Path(directory)
+      (root/"settings.json").write_text("malformed")
+      (root/"settings.previous.json").write_text('{"value":7}')
+      context=multiprocessing.get_context("fork")
+      ready,start,results=context.Queue(),context.Event(),context.Queue()
+      workers=[context.Process(target=settings_load_worker,args=(directory,ready,start,results)) for _ in range(24)]
+      for worker in workers: worker.start()
+      for _worker in workers: ready.get(timeout=5)
+      start.set()
+      values=[results.get(timeout=5) for _worker in workers]
+      for worker in workers: worker.join(timeout=5)
+      self.assertEqual([worker.exitcode for worker in workers],[0]*24)
+      self.assertEqual(values,[{"value":7}]*24)
+
+  def test_cache_pruning_is_serialized_across_partitions(self):
+    context=multiprocessing.get_context("fork")
+    for _attempt in range(12):
+      with tempfile.TemporaryDirectory() as directory:
+        ready,start=context.Queue(),context.Event()
+        workers=[context.Process(target=partitioned_cache_worker,args=(directory,ready,start,index)) for index in range(24)]
+        for worker in workers: worker.start()
+        for _worker in workers: ready.get(timeout=5)
+        start.set()
+        for worker in workers: worker.join(timeout=5)
+        self.assertEqual([worker.exitcode for worker in workers],[0]*24)
+        self.assertEqual(len(list(pathlib.Path(directory).glob("*.json"))),3)
+
   def test_concurrent_event_appends_do_not_lose_entries(self):
     with tempfile.TemporaryDirectory() as directory:
       context=multiprocessing.get_context("fork")

@@ -25,6 +25,12 @@ class SettingsStore:
     return self.settings_file.with_name("settings.lock")
 
   def load(self):
+    if not self.settings_file.exists():
+      self.last_recovery = ""
+      return {}
+    with self._lock(): return self._load_unlocked()
+
+  def _load_unlocked(self):
     self.last_recovery = ""
     try:
       data = json.loads(self.settings_file.read_text())
@@ -41,7 +47,9 @@ class SettingsStore:
       recovered = self.sanitize(previous)
       stamp = str(int(time.time() * 1000)) + "-" + uuid.uuid4().hex
       corrupt = self.settings_file.with_name("settings.corrupt-" + stamp + ".json")
-      try: os.replace(self.settings_file, corrupt)
+      try:
+        os.link(self.settings_file, corrupt, follow_symlinks=False)
+        os.chmod(corrupt, 0o600, follow_symlinks=False)
       except OSError: return recovered
       self._atomic_write(self.settings_file, recovered)
       self.last_recovery = str(corrupt)
@@ -52,16 +60,16 @@ class SettingsStore:
   def save(self, raw):
     data = self._decode_object(raw, "settings payload")
     with self._lock():
-      saved = self._stamp(data, self.load())
+      saved = self._stamp(data, self._load_unlocked())
       self._write(saved)
       return saved
 
   def patch(self, raw):
     patch = self._decode_object(raw, "settings patch")
     with self._lock():
-      current = self.load()
+      current = self._load_unlocked()
       current.update(patch)
-      saved = self._stamp(current, self.load())
+      saved = self._stamp(current, self._load_unlocked())
       self._write(saved)
       return saved
 
@@ -75,7 +83,7 @@ class SettingsStore:
         restored = self.sanitize(previous)
       except (OSError, ValueError, TypeError) as error:
         raise RuntimeError("invalid previous settings snapshot") from error
-      current = self.load()
+      current = self._load_unlocked()
       restored = self._stamp(restored, current)
       self._atomic_write(self.settings_file, restored)
       self._atomic_write(self.previous_file, current)

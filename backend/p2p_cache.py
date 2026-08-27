@@ -33,7 +33,7 @@ def _prune_payloads(root, keep, max_entries):
 def cached_status(key, producer, root, ttl=1.5, bypass=False, max_entries=32):
   root = pathlib.Path(root)
   digest = hashlib.sha256(str(key).encode("utf-8")).hexdigest()
-  target, lock_path = root/(digest + ".json"), root/(digest + ".lock")
+  target, lock_path = root/(digest + ".json"), root/"cache.lock"
   try:
     if root.is_symlink(): return producer()
     root.mkdir(mode=0o700, parents=True, exist_ok=True)

@@ -168,15 +168,22 @@ Item {
       onRead: function(line) {
         var state = Model.parseWatcherEvent(line, Date.now())
         if (!state.accepted) return
-        root.watcherLastHeartbeatAt = state.heartbeatAt
         root.watcherHealth = state.health
         root.watcherCode = state.code
         if (state.code === "polling-only") root.watcherPollingOnly = true
         root.watcherRetryMilliseconds = state.retryMilliseconds
-        if (state.changed) eventRefreshDelay.restart()
+        if (state.changed && root.settings.eventRefresh !== false) eventRefreshDelay.restart()
+        root.watcherLastHeartbeatAt = state.heartbeatAt
       }
     }
     onExited: function(exitCode) {
+      if (root.settings.eventRefresh === false) {
+        root.watcherPollingOnly = false
+        root.watcherHealth = "disabled"
+        root.watcherCode = "disabled"
+        watcherRetry.stop()
+        return
+      }
       if (exitCode === 3) {
         root.watcherPollingOnly = true
         root.watcherHealth = "polling"

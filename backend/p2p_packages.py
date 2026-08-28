@@ -9,5 +9,5 @@ def install_command(omarchy, service_id, packages, aur_service_ids):
 
 
 def uninstall_command(omarchy, packages):
-  if not packages: raise RuntimeError("no removable Omarchy-managed package is installed")
+  if not packages: raise RuntimeError("no removable allowlisted package is installed")
   return [omarchy, "pkg", "drop"] + list(packages)

@@ -591,6 +591,7 @@ class ControlIntegrationTests(ControlTestCase):
     original_control = CONTROL.control
     original_verify = CONTROL.verify_action
     original_aur_environment = CONTROL.aur_environment
+    original_installed_packages = CONTROL.installed_packages
     try:
       calls = []
       CONTROL.shutil.which = lambda command: "/usr/bin/omarchy" if command == "omarchy" else original_which(command)
@@ -599,12 +600,13 @@ class ControlIntegrationTests(ControlTestCase):
       CONTROL.control = lambda service, action, terminal_auth=False: calls.append(("control", service["id"], action, terminal_auth))
       CONTROL.verify_action = lambda service, action: calls.append(("verify", service["id"], action))
       CONTROL.aur_environment = lambda service: {"GNUPGHOME": "/tmp/test-aur-gnupg"}
+      CONTROL.installed_packages = lambda service: CONTROL.PACKAGE_HINTS[service["id"]][:1]
       CONTROL.install_service(self.service("aria2"), True)
-      self.assertEqual(calls[1:], [("reset",), ("control", "aria2", "start", True), ("verify", "aria2", "start")])
+      self.assertEqual(calls[1:], [("reset",), ("reset",), ("control", "aria2", "start", True), ("verify", "aria2", "start")])
       self.assertIn("aria2", calls[0][1])
       calls.clear()
       CONTROL.install_service(self.service("gnunet"), False)
-      self.assertEqual(calls, [("install", ["/usr/bin/omarchy", "pkg", "aur", "add", "gnunet"])])
+      self.assertEqual(calls, [("install", ["/usr/bin/omarchy", "pkg", "aur", "add", "gnunet"]), ("reset",)])
     finally:
       CONTROL.shutil.which = original_which
       CONTROL.subprocess.check_call = original_check
@@ -612,6 +614,25 @@ class ControlIntegrationTests(ControlTestCase):
       CONTROL.control = original_control
       CONTROL.verify_action = original_verify
       CONTROL.aur_environment = original_aur_environment
+      CONTROL.installed_packages = original_installed_packages
+
+  def test_install_and_uninstall_verify_package_postconditions(self):
+    service = self.service("i2pd")
+    with mock.patch.object(CONTROL.shutil, "which", return_value="/usr/bin/omarchy"), \
+         mock.patch.object(CONTROL.os.path, "realpath", side_effect=lambda path: path), \
+         mock.patch.object(CONTROL.subprocess, "check_call"), \
+         mock.patch.object(CONTROL, "installed_packages", return_value=[]):
+      with self.assertRaisesRegex(RuntimeError, "package was not detected after installation"):
+        CONTROL.install_service(service)
+
+    with mock.patch.object(CONTROL, "installed_packages", side_effect=[["i2pd"], ["i2pd"]]), \
+         mock.patch.object(CONTROL.INSPECTOR, "inspect", return_value={"active": False}), \
+         mock.patch.object(CONTROL.BACKUPS, "backup", return_value=""), \
+         mock.patch.object(CONTROL.shutil, "which", return_value="/usr/bin/omarchy"), \
+         mock.patch.object(CONTROL.os.path, "realpath", side_effect=lambda path: path), \
+         mock.patch.object(CONTROL.subprocess, "check_call"):
+      with self.assertRaisesRegex(RuntimeError, "package is still installed after removal"):
+        CONTROL.uninstall_service(service)
 
   def test_aur_signing_key_download_failure_stops_before_import(self):
     with tempfile.TemporaryDirectory() as directory, \
@@ -661,7 +682,7 @@ class ControlIntegrationTests(ControlTestCase):
   def test_uninstall_backs_up_before_exact_package_removal(self):
     service = self.service("i2pd")
     events = []
-    with mock.patch.object(CONTROL, "installed_packages", return_value=["i2pd"]), \
+    with mock.patch.object(CONTROL, "installed_packages", side_effect=[["i2pd"], []]), \
          mock.patch.object(CONTROL.INSPECTOR, "inspect", return_value={"active": False}), \
          mock.patch.object(CONTROL.BACKUPS, "backup", side_effect=lambda item, retention: events.append(("backup", item["id"], retention)) or "/backup/i2pd"), \
          mock.patch.object(CONTROL.shutil, "which", return_value="/usr/bin/omarchy"), \
@@ -676,7 +697,7 @@ class ControlIntegrationTests(ControlTestCase):
     ])
     self.assertEqual(output.getvalue(), "Configuration backup: /backup/i2pd\nCompleted stage: package removed\n")
 
-  def test_uninstall_requires_managed_package_without_side_effects(self):
+  def test_uninstall_requires_allowlisted_package_without_side_effects(self):
     with mock.patch.object(CONTROL, "installed_packages", return_value=[]), \
          mock.patch.object(CONTROL.INSPECTOR, "inspect") as inspect, \
          mock.patch.object(CONTROL.BACKUPS, "backup") as backup:

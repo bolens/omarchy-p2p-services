@@ -286,6 +286,8 @@ def install_service(service, auto_start=False):
   command=install_command(os.path.realpath(omarchy),service["id"],packages,AUR_INSTALL_IDS)
   install_env=aur_environment(service) if service["id"] in AUR_INSTALL_IDS else None
   subprocess.check_call(command, **({"env":install_env} if install_env else {}))
+  reset_discovery()
+  if not installed_packages(service): raise RuntimeError("package was not detected after installation")
   print("Completed stage: package installed",flush=True)
   if auto_start:
     try:
@@ -304,13 +306,15 @@ def installed_packages(service):
 
 def uninstall_service(service, retention=10):
   packages=installed_packages(service)
-  if not packages: raise RuntimeError("no removable Omarchy-managed package is installed for this service")
+  if not packages: raise RuntimeError("no removable allowlisted package is installed for this service")
   if INSPECTOR.inspect(service,True)["active"]: raise RuntimeError("stop the service before uninstalling it")
   backup=BACKUPS.backup(service,retention)
   omarchy=shutil.which("omarchy")
   if not omarchy: raise RuntimeError("Omarchy package remover is unavailable")
   if backup: print("Configuration backup: "+backup,flush=True)
   subprocess.check_call(uninstall_command(os.path.realpath(omarchy),packages))
+  reset_discovery()
+  if installed_packages(service): raise RuntimeError("package is still installed after removal")
   print("Completed stage: package removed",flush=True)
 
 def launch_command(service):

@@ -54,7 +54,7 @@ for (const safeguard of ["flock -n", "trap cleanup_capture", "settings-patch", "
   assert.ok(capture.includes(safeguard), `capture workflow is missing safeguard: ${safeguard}`);
 assert.match(capture, /privacyFilter[\\"]*:?[\\"]*true/);
 assert.match(capture, /for page in general appearance services performance discovery packages/);
-assert.match(capture, /panel_width >= 420 && panel_width <= 800/, "capture width audit must enforce the supported popup range");
+assert.match(capture, /panel_width < 420 \|\| panel_width > 800/, "capture width audit must enforce the supported popup range");
 assert.match(capture, /audit-\$\{page\}-top/);
 assert.match(capture, /audit-\$\{page\}-bottom/);
 assert.match(capture, /audit-appearance-conditional-bottom/);

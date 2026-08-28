@@ -37,8 +37,10 @@ while (($#)); do
   esac
 done
 
-[[ $panel_width =~ ^[0-9]+$ ]] && ((panel_width >= 420 && panel_width <= 800)) \
-  || { printf 'Panel width must be an integer from 420 through 800.\n' >&2; exit 2; }
+if [[ ! $panel_width =~ ^[0-9]+$ ]] || ((panel_width < 420 || panel_width > 800)); then
+  printf 'Panel width must be an integer from 420 through 800.\n' >&2
+  exit 2
+fi
 if [[ -n $audit_dir ]]; then
   [[ $audit_dir == /tmp/* ]] || { printf 'Audit output must be below /tmp.\n' >&2; exit 2; }
   verify_only=true
@@ -320,7 +322,10 @@ capture_audit_bar() {
   grim -o "$monitor" "$capture_dir/$name-full.png"
   magick "$capture_dir/$name-full.png" -crop "${widget_width}x50+${widget_x}+0" +repage "$capture_dir/$name.png"
   colors=$(magick "$capture_dir/$name.png" -format '%k' info: 2>/dev/null || true)
-  [[ $colors =~ ^[0-9]+$ ]] && ((colors >= 2)) || { printf 'Could not capture populated %s bar view.\n' "$name" >&2; return 1; }
+  if [[ ! $colors =~ ^[0-9]+$ ]] || ((colors < 2)); then
+    printf 'Could not capture populated %s bar view.\n' "$name" >&2
+    return 1
+  fi
 }
 
 open_main_view() {

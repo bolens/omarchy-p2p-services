@@ -1,5 +1,6 @@
 import Quickshell
 import QtQuick
+import QtQuick.Layouts
 
 ShellRoot {
   id: root
@@ -25,7 +26,17 @@ ShellRoot {
     function setAllServiceGroupsCollapsed(collapsed) { allServiceGroupsCollapsed = collapsed; events = events.concat([{allGroupsCollapsed:collapsed}]) }
   }
 
-  P2PFilterBar { id: filterBar; width: 620; controller: mockController }
+  ColumnLayout {
+    id: filterHost
+    width: 620
+    P2PFilterBar { id: filterBar; Layout.fillWidth: true; controller: mockController }
+  }
+  ColumnLayout {
+    id: narrowFilterHost
+    x: 700
+    width: 400
+    P2PFilterBar { id: narrowFilterBar; Layout.fillWidth: true; controller: mockController }
+  }
 
   function descendant(item, name) {
     if (!item) return null
@@ -48,10 +59,16 @@ ShellRoot {
     var primaryFlow = descendant(filterBar, "primaryFilterFlow")
     var actions = descendant(filterBar, "filterActionRow")
     var toolbar = descendant(filterBar, "filterToolbar")
+    var narrowPrimary = descendant(narrowFilterBar, "primaryFilterFlow")
+    var narrowActions = descendant(narrowFilterBar, "filterActionRow")
+    var narrowToolbar = descendant(narrowFilterBar, "filterToolbar")
     if (!backend || !count || !primary || !layout || !density || !groups || !primaryFlow || !actions || !toolbar || count.text !== "3 SHOWN") throw new Error("filter controls are not addressable")
     if (primaryFlow.height < primary.height || toolbar.height < primaryFlow.height || actions.y + actions.height > toolbar.height + 0.01) throw new Error("filter toolbar clips its controls")
     if (primaryFlow.y !== actions.y) throw new Error("wide filter toolbar did not use one row")
     if (Math.abs(actions.x + actions.width - toolbar.width) > 0.01 || primaryFlow.x !== 0) throw new Error("filter toolbar did not split left and right control groups")
+    if (narrowToolbar.singleRow || narrowActions.y <= narrowPrimary.y) throw new Error("constrained filter toolbar did not wrap its action group")
+    if (Math.abs(narrowActions.x + narrowActions.width - narrowToolbar.width) > 0.01) throw new Error("wrapped filter actions were not right-aligned")
+    if (narrowActions.y + narrowActions.height > narrowToolbar.height + 0.01 || narrowPrimary.width > narrowToolbar.width + 0.01) throw new Error("wrapped filter toolbar clipped its controls")
     if (!groups.visible || groups.iconText !== "▴" || groups.tooltipText !== "Collapse all service groups") throw new Error("expanded groups did not expose collapse-all control")
     groups.clicked()
     if (!mockController.allServiceGroupsCollapsed || groups.iconText !== "▾" || groups.tooltipText !== "Expand all service groups") throw new Error("collapse-all control did not become expand-all")

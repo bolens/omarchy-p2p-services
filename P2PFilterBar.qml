@@ -23,7 +23,9 @@ ColumnLayout {
     objectName: "filterToolbar"
     Layout.fillWidth: true
     readonly property bool singleRow: width >= primaryFilters.width + filterActions.width + Style.spacing.sm
-    Layout.preferredHeight: singleRow ? Math.max(primaryFilters.height, filterActions.height) : primaryFilters.height + Style.spacing.sm + filterActions.height
+    implicitHeight: singleRow ? Math.max(primaryFilters.height, filterActions.height) : primaryFilters.height + Style.spacing.sm + filterActions.height
+    Layout.minimumHeight: implicitHeight
+    Layout.preferredHeight: implicitHeight
     Row {
       id: primaryFilters
       objectName: "primaryFilterFlow"

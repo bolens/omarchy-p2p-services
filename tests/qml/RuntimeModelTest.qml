@@ -24,6 +24,9 @@ ShellRoot {
     if (Model.compareGroupLabels("NEEDS ATTENTION", "RUNNING", "status", "automatic") >= 0) throw new Error("semantic group ordering failed")
     if (!Model.organizationChanged({serviceSortMode:"name"}) || Model.organizationChanged({popupWidth:700})) throw new Error("organization invalidation failed")
     if (Model.barPresentationText([service], "category-active-total", "W", {"File sync":"F"}, false) !== "F 1/1") throw new Error("category bar presentation failed")
+    var crowded = []
+    for (var categoryIndex = 0; categoryIndex < 6; categoryIndex++) crowded.push({category:String.fromCharCode(65 + categoryIndex),icon:String.fromCharCode(65 + categoryIndex),active:categoryIndex === 5})
+    if (Model.barPresentationText(crowded, "category-active", "W", {}, false) !== "F 1  A 0  B 0  C 0  +2") throw new Error("category bar overflow presentation failed")
     if (Model.loadingFrame("spinner", ">", 1) !== "⠙") throw new Error("bar spinner frame failed")
     if (Model.loadingFrame("glyph", " # ", 9) !== "#") throw new Error("bar custom loading glyph failed")
     var indicators = Model.compactIndicators({connections:2,listeners:1,processCount:1,hasWeb:true,configExists:false})

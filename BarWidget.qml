@@ -810,6 +810,11 @@ Panel {
   }
   function tooltip() {
     var status = services.length ? activeCount + "/" + services.length + " active\nPrivacy filter: " + (privacyFilter ? "on" : "off") : "No supported services detected"
+    var presentation = String(setting("barPresentation", "active"))
+    if (presentation === "category-active" || presentation === "category-active-total") {
+      var categories = Model.categorySummaries(services, setting("categoryIcons", {}) || {}, presentation === "category-active-total", setting("hideZeroCount", false) === true)
+      if (categories.length) status += "\nGroups: " + categories.map(function(row) { return row.text }).join("  ")
+    }
     if (consecutiveRefreshFailures > 0) status += "\nRefresh degraded: showing last successful data"
     return "P2P Services · " + status + "\nMiddle: settings · Right: full refresh"
   }

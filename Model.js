@@ -561,6 +561,14 @@ function categorySummaries(entries, iconOverrides, includeTotal, hideZero) {
   }).filter(function(row) { return hideZero !== true || row.active > 0 })
 }
 
+function compactCategorySummaries(categories, limit) {
+  var rows = (categories || []).slice(), maximum = Math.max(1, Number(limit) || 4)
+  rows.sort(function(a, b) { return Number(b.active || 0) - Number(a.active || 0) || String(a.category).localeCompare(String(b.category)) })
+  var visible = rows.slice(0, maximum).map(function(row) { return row.text })
+  if (rows.length > maximum) visible.push("+" + (rows.length - maximum))
+  return visible.join("  ")
+}
+
 function barPresentationText(entries, mode, icon, categoryIcons, hideZero, summary) {
   var rows = entries || [], fallback = String(icon || "󰒍")
   var indexed = summary && typeof summary === "object" ? summary : null
@@ -575,7 +583,7 @@ function barPresentationText(entries, mode, icon, categoryIcons, hideZero, summa
   var total = indexed ? Number(indexed.total) || 0 : rows.length
   if (mode === "category-active" || mode === "category-active-total") {
     var categories = categorySummaries(rows, categoryIcons || {}, mode === "category-active-total", hideZero === true)
-    return categories.length ? categories.map(function(row) { return row.text }).join("  ") : fallback
+    return categories.length ? compactCategorySummaries(categories, 4) : fallback
   }
   if (mode === "icon") return fallback
   if (mode === "health") return fallback + (errors ? " !" : (active ? " ●" : ""))

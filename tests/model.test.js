@@ -117,6 +117,15 @@ assert.equal(context.barPresentationText(barEntries, "category-active", "W", {"F
 assert.equal(context.barPresentationText(barEntries, "category-active-total", "W", {}, false), "S 1/1  O 0/1");
 assert.equal(context.barPresentationText(barEntries, "category-active", "W", {}, true), "S 1");
 assert.equal(context.barPresentationText([], "category-active", "W", {}, true), "W");
+const manyCategories = [
+  {category:"Alpha",icon:"A",active:false},
+  {category:"Beta",icon:"B",active:true},
+  {category:"Charlie",icon:"C",active:false},
+  {category:"Delta",icon:"D",active:true},
+  {category:"Echo",icon:"E",active:false},
+  {category:"Foxtrot",icon:"F",active:false},
+];
+assert.equal(context.barPresentationText(manyCategories, "category-active", "W", {}, false), "B 1  D 1  A 0  C 0  +2");
 assert.equal(context.barPresentationText(barEntries, "active-total", "W", {}, false), "W 1/2");
 assert.equal(context.barPresentationText([], "active-total", "W", {}, false, {active:3,errors:1,total:7}), "W 3/7");
 assert.equal(context.barPresentationText([], "health", "W", {}, false, {active:3,errors:1,total:7}), "W !");

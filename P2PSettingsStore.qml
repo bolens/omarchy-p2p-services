@@ -8,6 +8,7 @@ QtObject {
   property var durableSettings: ({})
   property var queuedSettings: null
   property var queuedPatch: null
+  property bool queuedFullSave: false
   property var queuedFallback: null
   property var loadFallback: ({})
   property var activeSaveFallback: ({})
@@ -45,10 +46,15 @@ QtObject {
       queuedSettings = durableSettings
       if (queuedFallback === null) queuedFallback = previous
       if (patch) {
-        var merged = queuedPatch || {}
-        for (var key in patch) merged[key] = patch[key]
-        queuedPatch = merged
-      } else queuedPatch = null
+        if (!queuedFullSave) {
+          var merged = queuedPatch || {}
+          for (var key in patch) merged[key] = patch[key]
+          queuedPatch = merged
+        }
+      } else {
+        queuedPatch = null
+        queuedFullSave = true
+      }
       return true
     }
     startSave(durableSettings, patch, previous)
@@ -118,10 +124,11 @@ QtObject {
       }
       if (store.queuedSettings) {
         var next = store.queuedSettings
-        var patch = store.queuedPatch
+        var patch = store.queuedFullSave ? null : store.queuedPatch
         var fallback = failed ? store.activeSaveFallback : store.queuedFallback
         store.queuedSettings = null
         store.queuedPatch = null
+        store.queuedFullSave = false
         store.queuedFallback = null
         store.durableSettings = next
         Qt.callLater(function() { store.startSave(next, patch, fallback) })

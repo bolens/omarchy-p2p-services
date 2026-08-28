@@ -59,6 +59,7 @@ Panel {
   property bool showingWidgetSettings: false
   property bool availablePackagesExpanded: false
   readonly property bool settingsTransferRunning: settingsTransferController.running
+  readonly property bool settingsPersistenceRunning: settingsStore.running || settingsStore.loading
   readonly property bool settingsUndoAvailable: settingsTransferController.undoAvailable
   readonly property bool settingsTransferLoading: settingsTransferLoadingState.visible
   property string settingsTransferDisplayMode: ""
@@ -590,6 +591,7 @@ Panel {
     persistKeepingOpen({customServices: parsed.services}); refresh(true, true, true)
   }
   function startSettingsTransfer(mode) {
+    if (settingsPersistenceRunning) return false
     if (!settingsTransferController.request(mode)) return false
     settingsTransferDisplayMode = mode
     settingsTransferLoadingState.start()
@@ -1157,6 +1159,7 @@ Panel {
       root.settings = merged
       if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function") root.bar.shell.updateEntryInline(root.moduleName, merged)
       root.applyInitialView()
+      Qt.callLater(root.reloadIfSharedSettingsAdvanced)
     }
     onUpdated: function(merged) {
       root.settings = merged

@@ -8,6 +8,7 @@ ShellRoot {
     id: mockController
     property string settingsPage: "discovery"
     property bool settingsTransferRunning: false
+    property bool settingsPersistenceRunning: false
     property bool settingsTransferLoading: true
     property bool settingsUndoAvailable: true
     property var patches: []
@@ -53,6 +54,10 @@ ShellRoot {
     if (!transferLoading.visible || transferLoading.label !== "IMPORTING SETTINGS") throw new Error("settings transfer loading presentation failed")
     mockController.settingsTransferLoading = false
     if (transferLoading.visible) throw new Error("settings transfer loading presentation did not settle")
+    mockController.settingsPersistenceRunning = true
+    if (exportButton.enabled || importButton.enabled || undoButton.enabled) throw new Error("settings transfer controls remained enabled during persistence")
+    mockController.settingsPersistenceRunning = false
+    if (!exportButton.enabled || !importButton.enabled || !undoButton.enabled) throw new Error("settings transfer controls did not recover after persistence")
     host.text = " node.home.arpa "; host.accepted()
     allowlist.text = "syncthing, tailscale,  , headscale"; allowlistSave.clicked()
     custom.text = '[{"id":"mesh"}]'; customSave.clicked()

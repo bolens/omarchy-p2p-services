@@ -121,6 +121,15 @@ class ControlIntegrationTests(ControlTestCase):
       self.assertEqual(CONTROL.package_snapshot(), {"syncthing"})
     self.assertEqual(query.call_count, 2)
 
+  def test_required_package_inventory_rejects_query_failure_and_bypasses_cache(self):
+    with tempfile.TemporaryDirectory() as directory, \
+         mock.patch.object(CONTROL, "STATUS_CACHE_ROOT", pathlib.Path(directory)), \
+         mock.patch.object(CONTROL, "run", return_value=None) as query:
+      self.assertEqual(CONTROL.package_snapshot(), set())
+      with self.assertRaisesRegex(RuntimeError, "package inventory is unavailable"):
+        CONTROL.package_snapshot(required=True, bypass=True)
+    self.assertEqual(query.call_count, 2)
+
   def test_terminal_editor_accepts_only_allowlisted_single_executable(self):
     with mock.patch.dict(CONTROL.os.environ, {"EDITOR": "sh -c injected"}), \
          mock.patch.object(CONTROL.shutil, "which", return_value=None):
@@ -336,6 +345,11 @@ class ControlIntegrationTests(ControlTestCase):
         with self.assertRaisesRegex(RuntimeError, "multiple systemd scopes"):
           CONTROL.control(service, action, terminal_auth=True)
       user_execute.assert_not_called(); system_execute.assert_not_called()
+
+    with mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[]), \
+         mock.patch.object(CONTROL.PROBE, "unit_state", side_effect=[("syncthing.service", True), ("syncthing.service", True)]):
+      with self.assertRaisesRegex(RuntimeError, "multiple systemd scopes"):
+        CONTROL.control(service, "start", terminal_auth=True)
 
   def test_control_rejects_mixed_container_and_active_systemd_ownership(self):
     service = self.service("syncthing")
@@ -600,7 +614,7 @@ class ControlIntegrationTests(ControlTestCase):
       CONTROL.control = lambda service, action, terminal_auth=False: calls.append(("control", service["id"], action, terminal_auth))
       CONTROL.verify_action = lambda service, action: calls.append(("verify", service["id"], action))
       CONTROL.aur_environment = lambda service: {"GNUPGHOME": "/tmp/test-aur-gnupg"}
-      CONTROL.installed_packages = lambda service: CONTROL.PACKAGE_HINTS[service["id"]][:1]
+      CONTROL.installed_packages = lambda service, **_options: CONTROL.PACKAGE_HINTS[service["id"]][:1]
       CONTROL.install_service(self.service("aria2"), True)
       self.assertEqual(calls[1:], [("reset",), ("reset",), ("control", "aria2", "start", True), ("verify", "aria2", "start")])
       self.assertIn("aria2", calls[0][1])
@@ -704,4 +718,13 @@ class ControlIntegrationTests(ControlTestCase):
       with self.assertRaisesRegex(RuntimeError, "no removable"):
         CONTROL.uninstall_service(self.service("i2pd"))
     inspect.assert_not_called()
+    backup.assert_not_called()
+
+  def test_uninstall_checks_remover_before_creating_backup(self):
+    with mock.patch.object(CONTROL, "installed_packages", return_value=["i2pd"]), \
+         mock.patch.object(CONTROL.INSPECTOR, "inspect", return_value={"active": False}), \
+         mock.patch.object(CONTROL.shutil, "which", return_value=None), \
+         mock.patch.object(CONTROL.BACKUPS, "backup") as backup:
+      with self.assertRaisesRegex(RuntimeError, "package remover is unavailable"):
+        CONTROL.uninstall_service(self.service("i2pd"))
     backup.assert_not_called()

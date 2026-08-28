@@ -114,13 +114,15 @@ def package_database_generation():
   except OSError: generation=0
   return generation
 
-def package_snapshot():
+def package_snapshot(required=False, bypass=False):
   """Reuse the expensive package inventory briefly; pacman database changes select a new key."""
   generation=package_database_generation()
   def produce():
     result=run([PACMAN,"-Qq"],5)
-    return {"packages":result.stdout.split() if result and result.returncode == 0 else []}
-  payload=cached_status("packages:"+str(generation),produce,STATUS_CACHE_ROOT/"packages",ttl=15,max_entries=2)
+    available=bool(result and result.returncode == 0)
+    return {"packages":result.stdout.split() if available else [],"available":available}
+  payload=cached_status("packages:"+str(generation),produce,STATUS_CACHE_ROOT/"packages",ttl=15,bypass=bypass,max_entries=2)
+  if required and payload.get("available") is not True: raise RuntimeError("package inventory is unavailable")
   return set(payload.get("packages",[]))
 
 def socket_lines():
@@ -287,7 +289,7 @@ def install_service(service, auto_start=False):
   install_env=aur_environment(service) if service["id"] in AUR_INSTALL_IDS else None
   subprocess.check_call(command, **({"env":install_env} if install_env else {}))
   reset_discovery()
-  if not installed_packages(service): raise RuntimeError("package was not detected after installation")
+  if not installed_packages(service,required=True,bypass=True): raise RuntimeError("package was not detected after installation")
   print("Completed stage: package installed",flush=True)
   if auto_start:
     try:
@@ -298,23 +300,23 @@ def install_service(service, auto_start=False):
     except Exception as error:
       raise RuntimeError("package installed, but automatic start failed: "+str(error)) from error
 
-def installed_packages(service):
+def installed_packages(service, required=False, bypass=False):
   """Return only exact, allowlisted package names from one package snapshot."""
-  if SNAPSHOT.packages is None:
-    SNAPSHOT.packages=package_snapshot()
+  if SNAPSHOT.packages is None or bypass:
+    SNAPSHOT.packages=package_snapshot(required=required,bypass=bypass)
   return [package for package in PACKAGE_HINTS.get(service["id"],[]) if package in SNAPSHOT.packages]
 
 def uninstall_service(service, retention=10):
-  packages=installed_packages(service)
+  packages=installed_packages(service,required=True,bypass=True)
   if not packages: raise RuntimeError("no removable allowlisted package is installed for this service")
   if INSPECTOR.inspect(service,True)["active"]: raise RuntimeError("stop the service before uninstalling it")
-  backup=BACKUPS.backup(service,retention)
   omarchy=shutil.which("omarchy")
   if not omarchy: raise RuntimeError("Omarchy package remover is unavailable")
+  backup=BACKUPS.backup(service,retention)
   if backup: print("Configuration backup: "+backup,flush=True)
   subprocess.check_call(uninstall_command(os.path.realpath(omarchy),packages))
   reset_discovery()
-  if installed_packages(service): raise RuntimeError("package is still installed after removal")
+  if installed_packages(service,required=True,bypass=True): raise RuntimeError("package is still installed after removal")
   print("Completed stage: package removed",flush=True)
 
 def launch_command(service):
@@ -416,7 +418,6 @@ def control(service, action, terminal_auth=False):
     subprocess.Popen(["omarchy-launch-terminal",SUDOEDIT,target],env=editor_env,start_new_session=True); return
   if action in CONTROL_ACTIONS:
     if user_active and system_active:
-      if action=="start": return
       raise RuntimeError("service has multiple systemd scopes active")
     if action=="start" and (user_active or system_active): return
     if user_active or (user_unit and not system_active):
@@ -556,7 +557,9 @@ def main():
     service=service_by_id(sys.argv[2])
     if not service: raise SystemExit("unknown service")
     if service.get("custom"): raise SystemExit("custom services are observation-only")
-    try: print(BACKUPS.restore(service,sys.argv[3]))
+    try:
+      if INSPECTOR.inspect(service,True)["active"]: raise RuntimeError("stop the service before restoring configuration")
+      print(BACKUPS.restore(service,sys.argv[3]))
     except Exception as error: print(str(error),file=sys.stderr); raise SystemExit(1)
     return
   if sys.argv[1]=="open-url" and len(sys.argv)==3:

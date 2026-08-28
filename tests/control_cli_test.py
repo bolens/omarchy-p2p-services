@@ -209,6 +209,7 @@ class ControlCliTests(ControlTestCase):
       config.write_text("changed=true\n")
 
       with mock.patch.object(CONTROL, "BACKUPS", store), \
+           mock.patch.object(CONTROL.INSPECTOR, "inspect", return_value={"active": False}), \
            mock.patch.object(CONTROL, "service_by_id", return_value=service):
         output, errors = self.invoke("restore-backup", "aria2", selected)
 
@@ -216,6 +217,16 @@ class ControlCliTests(ControlTestCase):
       self.assertEqual(errors, "")
       self.assertEqual(config.read_text(), "original=true\n")
       self.assertGreaterEqual(len(store.records("aria2")), 2)
+
+  def test_restore_backup_refuses_active_service_before_mutation(self):
+    service = self.service("aria2")
+    with mock.patch.object(CONTROL, "service_by_id", return_value=service), \
+         mock.patch.object(CONTROL.INSPECTOR, "inspect", return_value={"active": True}), \
+         mock.patch.object(CONTROL.BACKUPS, "restore") as restore:
+      with self.assertRaises(SystemExit) as raised:
+        self.invoke("restore-backup", "aria2", "snapshot")
+    self.assertEqual(raised.exception.code, 1)
+    restore.assert_not_called()
 
   def test_action_failure_preserves_child_exit_code(self):
     service = self.service("aria2")

@@ -85,7 +85,10 @@ ShellRoot {
     if (events.length !== 9 || events[4].delta !== -1 || events[5].delta !== 1) throw new Error("service ordering actions failed: " + JSON.stringify(events))
     if (events[6].kind !== "restore" || events[6].name !== "backup-1" || events[7].kind !== "reset" || events[8].kind !== "uninstall") throw new Error("service maintenance actions failed")
     mockController.currentService = Object.assign({}, mockController.currentService, {active:true})
-    if (uninstall.enabled) throw new Error("running service exposed uninstall action")
+    if (uninstall.enabled || restore.enabled || restore.tooltipText !== "Stop the service before restoring configuration") throw new Error("running service exposed maintenance mutation")
+    var activeEventCount = mockController.events.length
+    restore.clicked()
+    if (mockController.events.length !== activeEventCount) throw new Error("disabled restore action dispatched while service was running")
     mockController.currentService = Object.assign({}, mockController.currentService, {configExists:true,controllable:false})
     Qt.callLater(function() {
       if (configButton.visible) throw new Error("observation-only service exposed config mutation")

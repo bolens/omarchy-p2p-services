@@ -6,7 +6,6 @@ Dropdown {
   id: roleSetting
   required property var controller
   required property string settingKey
-  required property string label
   required property string fallback
   readonly property var allowedRoles: ["bar-active","urgent","accent","foreground","muted"]
   function normalizedRole(role) {

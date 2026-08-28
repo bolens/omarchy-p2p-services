@@ -15,7 +15,7 @@ ShellRoot {
     function saveCategoryIcon(category, icon) { events = events.concat([{category:category,icon:icon}]) }
   }
 
-  P2PAppearanceSettings { id: appearance; controller: mockController }
+  P2PAppearanceSettings { id: appearance; width: 620; controller: mockController }
 
   function descendant(item, name) {
     if (!item) return null
@@ -37,7 +37,14 @@ ShellRoot {
     var groupStyle = descendant(appearance, "groupHeaderStyleDropdown")
     var runningRole = descendant(appearance, "themeRole-runningColorRole")
     var loadingStyle = descendant(appearance, "loadingIndicatorStyleDropdown")
-    if (!presentation || !widgetIcon || !rotation || !layout || !density || !groupStyle || !runningRole || !loadingStyle) throw new Error("appearance controls missing")
+    var barBehaviorGrid = descendant(appearance, "barBehaviorGrid")
+    var barStyleGrid = descendant(appearance, "barStyleGrid")
+    var loadingGrid = descendant(appearance, "loadingIndicatorGrid")
+    var themeGrid = descendant(appearance, "themeRoleGrid")
+    if (!presentation || !widgetIcon || !rotation || !layout || !density || !groupStyle || !runningRole || !loadingStyle || !barBehaviorGrid || !barStyleGrid || !loadingGrid || !themeGrid) throw new Error("appearance controls missing")
+    for (var wideGrid of [barBehaviorGrid, barStyleGrid, loadingGrid, themeGrid])
+      if (!wideGrid.twoColumns || wideGrid.columns !== 2) throw new Error("wide appearance settings did not use two columns")
+    if (runningRole.label !== "Running color") throw new Error("theme role label was not retained")
     layout.changed("grid")
     presentation.changed("category-active-total")
     Qt.callLater(function() {

@@ -395,7 +395,13 @@ def control(service, action, terminal_auth=False):
   system_unit,system_active=PROBE.unit_state(service["units"],False) if action in CONTROL_ACTIONS else ("",False)
   if docker_items and action in CONTROL_ACTIONS:
     if user_active or system_active: raise RuntimeError("service has multiple control backends active")
-    for command in container_action_commands(docker_items,action): subprocess.check_call(command)
+    completed=[]
+    for command in container_action_commands(docker_items,action):
+      try: subprocess.check_call(command)
+      except subprocess.CalledProcessError as error:
+        error.completed_commands=list(completed)
+        raise
+      completed.append(command)
     return
   if action=="open":
     items=PROBE.docker_matches(service)
@@ -582,6 +588,15 @@ def main():
     if not service or not detected(service): raise SystemExit("service not detected")
     try: control(service,sys.argv[3]); verify_action(service,sys.argv[3])
     except subprocess.CalledProcessError as error:
+      command=list(error.cmd) if isinstance(error.cmd,(list,tuple)) else [str(error.cmd)]
+      backend=os.path.basename(str(command[0])) if command else "command"
+      operation=str(command[1]) if len(command)>1 else sys.argv[3]
+      message=backend+" "+operation+" failed with exit code "+str(error.returncode)
+      completed=getattr(error,"completed_commands",[])
+      if completed:
+        labels=[os.path.basename(str(item[0]))+" "+str(item[1]) for item in completed if len(item)>1]
+        if labels: message += "; "+", ".join(labels)+" already completed"
+      print(message,file=sys.stderr)
       raise SystemExit(error.returncode)
     except Exception as error:
       print(str(error),file=sys.stderr); raise SystemExit(1)

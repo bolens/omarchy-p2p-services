@@ -191,6 +191,7 @@ class ControlIntegrationTests(ControlTestCase):
       with self.assertRaises(subprocess.CalledProcessError) as raised:
         CONTROL.control(service, "restart")
     self.assertEqual(raised.exception.returncode, 23)
+    self.assertEqual(raised.exception.completed_commands, [["/usr/bin/docker", "restart", "docker-sync"]])
     self.assertEqual(execute.call_args_list, [
       mock.call(["/usr/bin/docker", "restart", "docker-sync"]),
       mock.call(["/usr/bin/podman", "restart", "podman-sync"]),

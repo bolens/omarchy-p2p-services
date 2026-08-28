@@ -41,7 +41,7 @@ ColumnLayout {
           RowLayout {
             Layout.fillWidth: true
             TextField { id: widgetIconEditor; objectName: "widgetIconEditor"; Layout.fillWidth: true; text: String(page.controller.setting("widgetIcon", "󰒍")); placeholderText: "󰒍"; foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.saveWidgetIcon(text) }
-            Button { text: "Save"; onClicked: page.saveWidgetIcon(widgetIconEditor.text) }
+            Button { objectName: "widgetIconSaveButton"; iconText: "󰆓"; tooltipText: "Save bar icon"; horizontalPadding: Style.spacing.controlGap; onClicked: page.saveWidgetIcon(widgetIconEditor.text) }
           }
 
           P2PSettingsGrid {
@@ -67,7 +67,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Text { Layout.fillWidth: true; text: categoryIconRow.modelData.category; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.body }
                 TextField { id: categoryIconEditor; objectName: "categoryIconEditor"; Layout.preferredWidth: Style.space(72); text: categoryIconRow.modelData.icon; foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.saveCategoryIcon(categoryIconRow.modelData.category, text) }
-                Button { text: "Save"; onClicked: page.controller.saveCategoryIcon(categoryIconRow.modelData.category, categoryIconEditor.text) }
+                Button { iconText: "󰆓"; tooltipText: "Save " + categoryIconRow.modelData.category + " icon"; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.saveCategoryIcon(categoryIconRow.modelData.category, categoryIconEditor.text) }
               }
             }
           }

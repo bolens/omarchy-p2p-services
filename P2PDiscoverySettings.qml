@@ -18,7 +18,7 @@ ColumnLayout {
           RowLayout {
             Layout.fillWidth: true
             TextField { id: consoleHostEditor; objectName: "consoleHostEditor"; Layout.fillWidth: true; placeholderText: "server.home.arpa or 192.168.1.10"; text: String(page.controller.setting("consoleHost", "")); foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.persistKeepingOpen({consoleHost: text.trim()}) }
-            Button { text: "Save"; onClicked: page.controller.persistKeepingOpen({consoleHost: consoleHostEditor.text.trim()}) }
+            Button { objectName: "consoleHostSaveButton"; iconText: "󰆓"; tooltipText: "Save fallback console host"; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.persistKeepingOpen({consoleHost: consoleHostEditor.text.trim()}) }
           }
           }
 
@@ -27,7 +27,7 @@ ColumnLayout {
           RowLayout {
             Layout.fillWidth: true
             TextField { id: serviceAllowlistEditor; objectName: "serviceAllowlistEditor"; Layout.fillWidth: true; placeholderText: "yggdrasil, i2pd, syncthing"; text: Model.enabled(page.controller.setting("enabledServices", []), []).join(", "); foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family }
-            Button { objectName: "serviceAllowlistSaveButton"; text: "Save"; onClicked: { var ids = serviceAllowlistEditor.text.split(",").map(function(value) { return value.trim() }).filter(function(value) { return value !== "" }); page.controller.persistKeepingOpen({enabledServices: ids}) } }
+            Button { objectName: "serviceAllowlistSaveButton"; iconText: "󰆓"; tooltipText: "Save service filter"; horizontalPadding: Style.spacing.controlGap; onClicked: { var ids = serviceAllowlistEditor.text.split(",").map(function(value) { return value.trim() }).filter(function(value) { return value !== "" }); page.controller.persistKeepingOpen({enabledServices: ids}) } }
           }
           }
 
@@ -55,9 +55,9 @@ ColumnLayout {
           }
           RowLayout {
             Layout.fillWidth: true
-            Button { objectName: "settingsExportButton"; text: "Export settings"; enabled: !page.controller.settingsTransferRunning && !page.controller.settingsPersistenceRunning; onClicked: page.controller.exportSettings() }
-            Button { objectName: "settingsImportButton"; text: "Import settings"; enabled: !page.controller.settingsTransferRunning && !page.controller.settingsPersistenceRunning; tooltipText: "Import the previously exported settings file"; onClicked: page.controller.importSettings() }
-            Button { objectName: "settingsUndoButton"; text: "Undo last change"; enabled: !page.controller.settingsTransferRunning && !page.controller.settingsPersistenceRunning && page.controller.settingsUndoAvailable; tooltipText: enabled ? "Restore the previous durable settings snapshot" : "No previous durable settings snapshot is available"; onClicked: page.controller.undoSettings() }
+            Button { objectName: "settingsExportButton"; iconText: "󰈇"; tooltipText: "Export settings"; horizontalPadding: Style.spacing.controlGap; enabled: !page.controller.settingsTransferRunning && !page.controller.settingsPersistenceRunning; onClicked: page.controller.exportSettings() }
+            Button { objectName: "settingsImportButton"; iconText: "󰈆"; tooltipText: "Import the previously exported settings file"; horizontalPadding: Style.spacing.controlGap; enabled: !page.controller.settingsTransferRunning && !page.controller.settingsPersistenceRunning; onClicked: page.controller.importSettings() }
+            Button { objectName: "settingsUndoButton"; iconText: "󰕌"; horizontalPadding: Style.spacing.controlGap; enabled: !page.controller.settingsTransferRunning && !page.controller.settingsPersistenceRunning && page.controller.settingsUndoAvailable; tooltipText: enabled ? "Undo the last settings change" : "No previous durable settings snapshot is available"; onClicked: page.controller.undoSettings() }
             Item { Layout.fillWidth: true }
           }
           }

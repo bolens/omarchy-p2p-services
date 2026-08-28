@@ -68,7 +68,7 @@ import "Model.js" as Model
               font.family: Style.font.family
               onAccepted: editor.controller.persistServiceMap("serviceLabels", editor.controller.editingServiceId, text, true)
             }
-            Button { text: "Save"; onClicked: editor.controller.persistServiceMap("serviceLabels", editor.controller.editingServiceId, serviceLabelEditor.text, true) }
+            Button { objectName: "serviceLabelSaveButton"; iconText: "󰆓"; tooltipText: "Save service label"; horizontalPadding: Style.spacing.controlGap; onClicked: editor.controller.persistServiceMap("serviceLabels", editor.controller.editingServiceId, serviceLabelEditor.text, true) }
           }
           RowLayout {
             Layout.fillWidth: true
@@ -83,7 +83,7 @@ import "Model.js" as Model
               font.family: Style.font.family
               onAccepted: editor.controller.persistServiceMap("serviceIcons", editor.controller.editingServiceId, text, true)
             }
-            Button { text: "Save"; onClicked: editor.controller.persistServiceMap("serviceIcons", editor.controller.editingServiceId, serviceIconEditor.text, true) }
+            Button { objectName: "serviceIconSaveButton"; iconText: "󰆓"; tooltipText: "Save service icon"; horizontalPadding: Style.spacing.controlGap; onClicked: editor.controller.persistServiceMap("serviceIcons", editor.controller.editingServiceId, serviceIconEditor.text, true) }
           }
 
           P2PSectionHeading { title: "Console and visibility"; description: "Choose when the service appears and where its web console opens." }
@@ -122,16 +122,16 @@ import "Model.js" as Model
           P2PSectionHeading { title: "Ordering and backend"; description: "Reorder this card or inspect the detected control source." }
           RowLayout {
             Layout.fillWidth: true
-            Button { text: "Save console URL"; onClicked: editor.controller.saveConsoleUrl(editor.controller.editingServiceId, serviceConsoleEditor.text) }
+            Button { objectName: "serviceConsoleSaveButton"; iconText: "󰆓"; tooltipText: "Save console URL"; horizontalPadding: Style.spacing.controlGap; onClicked: editor.controller.saveConsoleUrl(editor.controller.editingServiceId, serviceConsoleEditor.text) }
             Button { text: "Open configured console"; enabled: editor.controller.hasConsole(editor.current); onClicked: editor.controller.openConsole(editor.current) }
             Item { Layout.fillWidth: true }
           }
 
           RowLayout {
             Layout.fillWidth: true
-            Button { objectName: "serviceMoveUpButton"; text: "Move up"; onClicked: editor.controller.moveService(editor.controller.editingServiceId, -1) }
-            Button { objectName: "serviceMoveDownButton"; text: "Move down"; onClicked: editor.controller.moveService(editor.controller.editingServiceId, 1) }
-            Button { objectName: "serviceConfigButton"; text: "Config"; visible: !!editor.current && editor.current.configExists === true && editor.current.controllable !== false; onClicked: editor.controller.act(editor.current, "config") }
+            Button { objectName: "serviceMoveUpButton"; iconText: "󰁝"; tooltipText: "Move service up"; horizontalPadding: Style.spacing.controlGap; onClicked: editor.controller.moveService(editor.controller.editingServiceId, -1) }
+            Button { objectName: "serviceMoveDownButton"; iconText: "󰁅"; tooltipText: "Move service down"; horizontalPadding: Style.spacing.controlGap; onClicked: editor.controller.moveService(editor.controller.editingServiceId, 1) }
+            Button { objectName: "serviceConfigButton"; iconText: "󰒓"; tooltipText: "Open service configuration"; horizontalPadding: Style.spacing.controlGap; visible: !!editor.current && editor.current.configExists === true && editor.current.controllable !== false; onClicked: editor.controller.act(editor.current, "config") }
             Item { Layout.fillWidth: true }
           }
 

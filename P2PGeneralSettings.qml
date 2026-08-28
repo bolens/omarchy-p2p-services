@@ -44,7 +44,7 @@ ColumnLayout {
                 font.family: Style.font.family
                 onAccepted: page.controller.persistKeepingOpen({defaultSavedView: text.trim()})
               }
-              Button { text: "Save"; onClicked: page.controller.persistKeepingOpen({defaultSavedView: defaultSavedViewEditor.text.trim()}) }
+              Button { objectName: "defaultSavedViewSaveButton"; iconText: "󰆓"; tooltipText: "Save default view"; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.persistKeepingOpen({defaultSavedView: defaultSavedViewEditor.text.trim()}) }
             }
           }
           }

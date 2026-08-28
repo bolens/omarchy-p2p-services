@@ -51,6 +51,9 @@ ShellRoot {
     var transferLoading = descendant(page, "settingsTransferLoadingIndicator")
     if (!host || !allowlist || !allowlistSave || !custom || !customSave || !exportButton || !importButton || !undoButton || !transferLoading)
       throw new Error("discovery settings controls are not addressable")
+    if (allowlistSave.text !== "" || allowlistSave.iconText !== "󰆓" || allowlistSave.tooltipText !== "Save service filter") throw new Error("service filter save action is not a descriptive icon control")
+    if (exportButton.text !== "" || exportButton.tooltipText !== "Export settings" || importButton.text !== "" || importButton.tooltipText.indexOf("Import") !== 0 || undoButton.text !== "" || undoButton.tooltipText.indexOf("Undo") !== 0)
+      throw new Error("settings transfer actions are not descriptive icon controls")
     if (!transferLoading.visible || transferLoading.label !== "IMPORTING SETTINGS") throw new Error("settings transfer loading presentation failed")
     mockController.settingsTransferLoading = false
     if (transferLoading.visible) throw new Error("settings transfer loading presentation did not settle")

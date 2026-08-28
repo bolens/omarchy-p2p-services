@@ -11,7 +11,7 @@ ShellRoot {
       serviceSortMode:"custom", serviceSortDirection:"automatic",
       serviceGroupMode:"none", serviceGroupDirection:"automatic",
       groupCountMode:"active-total", showGroupCounts:true,
-      showGroupIcons:true, savedViews:[], showTrafficStats:true
+      showGroupIcons:true, savedViews:[{name:"Morning",filter:"all",sortMode:"name",groupMode:"none"}], showTrafficStats:true
     })
     property var patches: []
     function setting(key, fallback) { return values[key] === undefined ? fallback : values[key] }
@@ -54,6 +54,11 @@ ShellRoot {
       var expectedColumns = gridName === "groupDisplayGrid" ? 3 : 2
       if (grid.columns !== expectedColumns) throw new Error("services settings grid used the wrong column capacity: " + gridName)
     }
+    var saveView = descendant(settingsPage, "saveCurrentViewButton")
+    var applyView = descendant(settingsPage, "savedViewApplyButton")
+    var removeView = descendant(settingsPage, "savedViewRemoveButton")
+    if (!saveView || !applyView || !removeView || saveView.text !== "" || saveView.tooltipText !== "Save current view" || applyView.text !== "" || applyView.tooltipText !== "Apply Morning" || removeView.text !== "" || removeView.tooltipText !== "Remove Morning")
+      throw new Error("saved-view actions are not descriptive icon controls")
     select("serviceSortModeDropdown", "name")
     select("serviceSortDirectionDropdown", "descending")
     select("serviceGroupModeDropdown", "scope")

@@ -33,7 +33,7 @@ ColumnLayout {
       validator: IntValidator { bottom: field.minimum; top: field.maximum }
       onAccepted: field.save()
     }
-    Button { objectName: "integerSettingSaveButton"; text: "Save"; enabled: editor.acceptableInput; onClicked: field.save() }
+    Button { objectName: "integerSettingSaveButton"; iconText: "󰆓"; tooltipText: "Save " + field.label.toLowerCase(); horizontalPadding: Style.spacing.controlGap; enabled: editor.acceptableInput; onClicked: field.save() }
   }
 
   function save() {

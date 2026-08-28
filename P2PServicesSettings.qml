@@ -93,7 +93,7 @@ ColumnLayout {
           RowLayout {
             Layout.fillWidth: true
             TextField { id: savedViewName; Layout.fillWidth: true; placeholderText: "Saved view name"; foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: { page.controller.saveCurrentView(text); text = "" } }
-            Button { text: "Save current view"; onClicked: { page.controller.saveCurrentView(savedViewName.text); savedViewName.text = "" } }
+            Button { objectName: "saveCurrentViewButton"; iconText: "󰆓"; tooltipText: "Save current view"; horizontalPadding: Style.spacing.controlGap; onClicked: { page.controller.saveCurrentView(savedViewName.text); savedViewName.text = "" } }
           }
           Repeater {
             model: page.controller.setting("savedViews", []) || []
@@ -101,8 +101,8 @@ ColumnLayout {
               required property var modelData
               Layout.fillWidth: true
               Text { Layout.fillWidth: true; text: modelData.name + " · " + modelData.filter + " · " + modelData.sortMode + (modelData.groupMode && modelData.groupMode !== "none" ? " · " + modelData.groupMode + " groups" : ""); textFormat: Text.PlainText; color: Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-              Button { text: "Apply"; onClicked: page.controller.applyView(modelData) }
-              Button { text: "Remove"; onClicked: page.controller.removeSavedView(modelData.name) }
+              Button { objectName: "savedViewApplyButton"; iconText: "󰄬"; tooltipText: "Apply " + modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.applyView(modelData) }
+              Button { objectName: "savedViewRemoveButton"; iconText: "󰆴"; tooltipText: "Remove " + modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.removeSavedView(modelData.name) }
             }
           }
           }

@@ -85,6 +85,7 @@ ShellRoot {
     var editor = descendant(integerSetting, "integerSettingEditor")
     var saveButton = descendant(integerSetting, "integerSettingSaveButton")
     if (!editor || !saveButton) throw new Error("integer editor is not addressable")
+    if (saveButton.text !== "" || saveButton.iconText !== "󰆓" || saveButton.tooltipText !== "Save interval") throw new Error("integer save action is not a descriptive icon control")
     editor.text = "invalid"
     if (saveButton.enabled) throw new Error("invalid integer input left the save action enabled")
     editor.text = "7"

@@ -58,6 +58,7 @@ ShellRoot {
     var afterSettings = descendant(page, "refreshAfterSettingsToggle")
     var afterActions = descendant(page, "refreshAfterActionsToggle")
     if (!cadence || !triggers || !traffic || !eventRefresh || !refreshSeconds || !report || !afterSettings || !afterActions) throw new Error("performance settings controls are not addressable")
+    if (report.text !== "" || report.iconText !== "󰆏" || report.tooltipText !== "Copy privacy-filtered support report") throw new Error("support report action is not a descriptive icon control")
     if (!cadence.twoColumns || !triggers.twoColumns || !traffic.twoColumns) throw new Error("wide performance settings did not pair related controls")
     page.width = Style.space(420)
     mockController.configuredPanelWidth = Style.space(420)

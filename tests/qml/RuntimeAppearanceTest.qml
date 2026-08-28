@@ -31,6 +31,7 @@ ShellRoot {
   Component.onCompleted: Qt.callLater(function() {
     var presentation = descendant(appearance, "barPresentationDropdown")
     var widgetIcon = descendant(appearance, "widgetIconEditor")
+    var widgetIconSave = descendant(appearance, "widgetIconSaveButton")
     var rotation = descendant(appearance, "barTextRotationDropdown")
     var layout = descendant(appearance, "serviceLayoutDropdown")
     var density = descendant(appearance, "cardDensityDropdown")
@@ -41,7 +42,8 @@ ShellRoot {
     var barStyleGrid = descendant(appearance, "barStyleGrid")
     var loadingGrid = descendant(appearance, "loadingIndicatorGrid")
     var themeGrid = descendant(appearance, "themeRoleGrid")
-    if (!presentation || !widgetIcon || !rotation || !layout || !density || !groupStyle || !runningRole || !loadingStyle || !barBehaviorGrid || !barStyleGrid || !loadingGrid || !themeGrid) throw new Error("appearance controls missing")
+    if (!presentation || !widgetIcon || !widgetIconSave || !rotation || !layout || !density || !groupStyle || !runningRole || !loadingStyle || !barBehaviorGrid || !barStyleGrid || !loadingGrid || !themeGrid) throw new Error("appearance controls missing")
+    if (widgetIconSave.text !== "" || widgetIconSave.iconText !== "󰆓" || widgetIconSave.tooltipText !== "Save bar icon") throw new Error("bar icon save action is not a descriptive icon control")
     for (var wideGrid of [barBehaviorGrid, barStyleGrid, loadingGrid, themeGrid])
       if (!wideGrid.twoColumns || wideGrid.columns !== 2) throw new Error("wide appearance settings did not use two columns")
     if (runningRole.label !== "Running color") throw new Error("theme role label was not retained")

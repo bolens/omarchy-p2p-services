@@ -66,8 +66,8 @@ ColumnLayout {
           Text { Layout.fillWidth: true; text: page.controller.monitoringTelemetryText(); textFormat: Text.PlainText; color: page.controller.p2pService && Model.monitoringHealthSeverity(page.controller.p2pService.watcherHealth, page.controller.p2pService.settingsWatcherHealth, page.controller.p2pService.settingsWatcherCode) === "neutral" ? Color.muted : Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
             Layout.fillWidth: true
-            Button { objectName: "copySupportReportButton"; text: "Copy support report"; tooltipText: "Copy a whole-plugin report with privacy filtering forced on"; onClicked: page.controller.copySupportReport() }
-            Button { visible: page.controller.setting("enableEventJournal", false) === true; text: "Clear event journal"; onClicked: page.controller.clearEventJournal() }
+            Button { objectName: "copySupportReportButton"; iconText: "󰆏"; tooltipText: "Copy privacy-filtered support report"; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.copySupportReport() }
+            Button { objectName: "clearEventJournalButton"; visible: page.controller.setting("enableEventJournal", false) === true; iconText: "󰆴"; tooltipText: "Clear event journal"; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.clearEventJournal() }
             Item { Layout.fillWidth: true }
           }
           ColumnLayout {

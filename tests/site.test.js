@@ -54,6 +54,22 @@ for (const safeguard of ["flock -n", "trap cleanup_capture", "settings-patch", "
   assert.ok(capture.includes(safeguard), `capture workflow is missing safeguard: ${safeguard}`);
 assert.match(capture, /privacyFilter[\\"]*:?[\\"]*true/);
 assert.match(capture, /for page in general appearance services performance discovery packages/);
+assert.match(capture, /panel_width >= 420 && panel_width <= 800/, "capture width audit must enforce the supported popup range");
+assert.match(capture, /audit-\$\{page\}-top/);
+assert.match(capture, /audit-\$\{page\}-bottom/);
+assert.match(capture, /audit-appearance-conditional-bottom/);
+assert.match(capture, /audit-services-ungrouped-bottom/);
+assert.match(capture, /audit-bar-category-active-total/);
+assert.match(capture, /audit-bar-category-active-nonzero/);
+assert.match(capture, /capture_audit_bar/);
+assert.match(capture, /audit_dir == \/tmp\//, "retained visual evidence must stay in temporary storage");
+assert.match(capture, /refresh_capture_geometry/);
+assert.match(capture, /wait_for_capture_geometry/);
+assert.match(capture, /stable >= 2/);
+assert.match(capture, /_monitorExtent/);
+assert.match(capture, /open_settings_page\(\)[\s\S]*focus_capture_workspace[\s\S]*openSettings/);
+assert.match(capture, /restored_workspace == "\$original_workspace"/);
+assert.match(capture, /\*\-full\.png/, "retained audit evidence must exclude full-monitor captures");
 assert.match(capture, /update-screenshot-metadata/);
 assert.doesNotMatch(capture, /\bsleep\s+(?:1|2)\b/, "capture workflow must wait on observable IPC state, not fixed delays");
 for (const readiness of ["mainReady", "detailsReady", "editorReady", "panelClosed"])

@@ -8,16 +8,19 @@ capture_workspace=""
 verify_only=false
 report_file=""
 panel_width=600
+audit_dir=""
 side_padding=16
 panel_height=600
 
 usage() {
   cat <<'EOF'
-Usage: scripts/capture-screenshots [--monitor NAME] [--workspace ID] [--verify] [--report FILE]
+Usage: scripts/capture-screenshots [--monitor NAME] [--workspace ID] [--panel-width PX] [--audit-dir DIR] [--verify] [--report FILE]
 
 Capture privacy-filtered live plugin examples on an empty workspace. The
 workflow forces and verifies privacy filtering before capture, strips image
-metadata, and restores settings and the original workspace afterward.
+metadata, and restores settings and the original workspace afterward. Audit
+mode retains settings-page top, bottom, and conditional-state evidence without
+publishing it to the documentation gallery.
 EOF
 }
 
@@ -25,12 +28,21 @@ while (($#)); do
   case "$1" in
     --monitor) monitor=${2:-}; shift 2 ;;
     --workspace) capture_workspace=${2:-}; shift 2 ;;
+    --panel-width) panel_width=${2:-}; shift 2 ;;
+    --audit-dir) audit_dir=${2:-}; shift 2 ;;
     --verify) verify_only=true; shift ;;
     --report) report_file=${2:-}; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+[[ $panel_width =~ ^[0-9]+$ ]] && ((panel_width >= 420 && panel_width <= 800)) \
+  || { printf 'Panel width must be an integer from 420 through 800.\n' >&2; exit 2; }
+if [[ -n $audit_dir ]]; then
+  [[ $audit_dir == /tmp/* ]] || { printf 'Audit output must be below /tmp.\n' >&2; exit 2; }
+  verify_only=true
+fi
 
 for command in qs hyprctl jq grim magick pngquant flock python3 ps; do
   command -v "$command" >/dev/null || { printf 'Missing required command: %s\n' "$command" >&2; exit 1; }
@@ -132,6 +144,7 @@ wait_plugin_state() {
 open_settings_page() {
   local page=$1 reply
   for _attempt in {1..20}; do
+    focus_capture_workspace
     reply=$(qs ipc --pid "$shell_pid" call "$plugin_id" openSettings "$page" 2>/dev/null || true)
     if [[ $reply == ok ]]; then
       for _ready_attempt in {1..40}; do
@@ -189,6 +202,11 @@ restore_desktop() {
     if [[ -f $capture_dir/settings.previous.json ]]; then restore_file "$capture_dir/settings.previous.json" "$previous_file"; else rm -f -- "$previous_file"; fi
     hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $((monitor_x + monitor_width / 2)), y = $((monitor_y + monitor_height / 2)) }))" >/dev/null 2>&1 || true
     hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"$original_workspace\" }))" >/dev/null 2>&1 || true
+    for _restore_attempt in {1..30}; do
+      restored_workspace=$(hyprctl monitors -j | jq -r --arg monitor "$monitor" '.[] | select(.name == $monitor) | .activeWorkspace.id')
+      [[ $restored_workspace == "$original_workspace" ]] && break
+      sleep .1
+    done
     restore_cursor || true
     reload_live_settings 'type == "object"' >/dev/null 2>&1 || true
     restored=true
@@ -205,8 +223,8 @@ trap cleanup_capture EXIT INT TERM
 
 # Durable settings win reconciliation and are pushed reactively to every live
 # monitor instance; no Quickshell restart is needed for capture-time swaps.
-./p2p-control settings-patch '{"privacyFilter":true,"showStopped":true,"serviceLayout":"list","cardDensity":"comfortable","serviceGroupMode":"category","showBackendBadge":true,"serviceSortMode":"name","serviceSortDirection":"automatic"}' >/dev/null
-reload_live_settings '.privacyFilter == true and .serviceLayout == "list" and .cardDensity == "comfortable"'
+./p2p-control settings-patch "{\"privacyFilter\":true,\"popupWidth\":$panel_width,\"showStopped\":true,\"serviceLayout\":\"list\",\"cardDensity\":\"comfortable\",\"serviceGroupMode\":\"category\",\"showBackendBadge\":true,\"serviceSortMode\":\"name\",\"serviceSortDirection\":\"automatic\"}" >/dev/null
+reload_live_settings ".privacyFilter == true and .popupWidth == $panel_width and .serviceLayout == \"list\" and .cardDensity == \"comfortable\""
 initial_shell_pid=$shell_pid
 check_capture_environment
 
@@ -230,7 +248,7 @@ widget_x=""
 widget_width=""
 for _attempt in {1..40}; do
   geometry=$(qs ipc --pid "$shell_pid" call shell debugBarGeometry 2>/dev/null || true)
-  widget_row=$(jq -c --arg id "$plugin_id" --argjson width "$monitor_width" '[.[] | select(.id == $id and .visible and .width > 0)] | sort_by((((.x + (.width / 2)) - ($width / 2)) | fabs)) | .[0]' <<<"${geometry:-[]}" 2>/dev/null || true)
+  widget_row=$(jq -c --arg id "$plugin_id" --argjson width "$monitor_width" '[range(0; length) as $index | select(.[$index].id == "omarchy.clock") | $index] as $starts | [$starts[] as $start | ($starts | index($start)) as $position | ($starts[$position + 1] // length) as $end | .[$start:$end] as $group | ($group | map(select(.id == $id and .visible and .width > 0)) | .[0]) as $widget | select($widget != null) | $widget + {_monitorExtent: ($group | map(.x + .width) | max)}] | sort_by(((._monitorExtent - $width) | fabs)) | .[0]' <<<"${geometry:-[]}" 2>/dev/null || true)
   widget_x=$(jq -r '.x // empty' <<<"${widget_row:-null}")
   widget_width=$(jq -r '.width // empty' <<<"${widget_row:-null}")
   [[ $widget_x =~ ^[0-9]+$ && $widget_width =~ ^[1-9][0-9]*$ ]] && break
@@ -242,6 +260,38 @@ panel_x=$((widget_x + widget_width / 2 - crop_width / 2))
 ((panel_x < 0)) && panel_x=0
 ((panel_x + crop_width <= monitor_width)) || panel_x=$((monitor_width - crop_width))
 
+refresh_capture_geometry() {
+  local geometry row current_x current_width
+  geometry=$(qs ipc --pid "$shell_pid" call shell debugBarGeometry 2>/dev/null || true)
+  row=$(jq -c --arg id "$plugin_id" --argjson width "$monitor_width" '[range(0; length) as $index | select(.[$index].id == "omarchy.clock") | $index] as $starts | [$starts[] as $start | ($starts | index($start)) as $position | ($starts[$position + 1] // length) as $end | .[$start:$end] as $group | ($group | map(select(.id == $id and .visible and .width > 0)) | .[0]) as $widget | select($widget != null) | $widget + {_monitorExtent: ($group | map(.x + .width) | max)}] | sort_by(((._monitorExtent - $width) | fabs)) | .[0]' <<<"${geometry:-[]}" 2>/dev/null || true)
+  current_x=$(jq -r '.x // empty' <<<"${row:-null}")
+  current_width=$(jq -r '.width // empty' <<<"${row:-null}")
+  [[ $current_x =~ ^[0-9]+$ && $current_width =~ ^[1-9][0-9]*$ ]] || return 1
+  widget_x=$current_x
+  widget_width=$current_width
+  panel_x=$((widget_x + widget_width / 2 - crop_width / 2))
+  ((panel_x < 0)) && panel_x=0
+  ((panel_x + crop_width <= monitor_width)) || panel_x=$((monitor_width - crop_width))
+}
+
+wait_for_capture_geometry() {
+  local previous="" current="" stable=0
+  for _geometry_attempt in {1..40}; do
+    refresh_capture_geometry || { sleep .1; continue; }
+    current="$widget_x:$widget_width"
+    if [[ $current == "$previous" ]]; then
+      stable=$((stable + 1))
+      ((stable >= 2)) && return 0
+    else
+      stable=0
+      previous=$current
+    fi
+    sleep .1
+  done
+  printf 'Bar geometry did not settle for capture.\n' >&2
+  return 1
+}
+
 capture_panel() {
   local name=$1
   local height=${2:-$panel_height}
@@ -250,6 +300,7 @@ capture_panel() {
   for _attempt in {1..4}; do
     check_capture_environment
     focus_capture_workspace
+    refresh_capture_geometry || { sleep .25; continue; }
     grim -o "$monitor" "$capture_dir/$name-full.png"
     magick "$capture_dir/$name-full.png" -crop "${crop_width}x${height}+${panel_x}+20" +repage "$capture_dir/$name.png"
     colors=$(magick "$capture_dir/$name.png" -format '%k' info: 2>/dev/null || true)
@@ -260,6 +311,16 @@ capture_panel() {
   done
   printf 'Could not capture populated %s view.\n' "$name" >&2
   return 1
+}
+
+capture_audit_bar() {
+  local name=$1 colors
+  focus_capture_workspace
+  wait_for_capture_geometry
+  grim -o "$monitor" "$capture_dir/$name-full.png"
+  magick "$capture_dir/$name-full.png" -crop "${widget_width}x50+${widget_x}+0" +repage "$capture_dir/$name.png"
+  colors=$(magick "$capture_dir/$name.png" -format '%k' info: 2>/dev/null || true)
+  [[ $colors =~ ^[0-9]+$ ]] && ((colors >= 2)) || { printf 'Could not capture populated %s bar view.\n' "$name" >&2; return 1; }
 }
 
 open_main_view() {
@@ -301,7 +362,61 @@ open_main_view list comfortable
 for page in general appearance services performance discovery packages; do
   open_settings_page "$page"
   if [[ $page == packages ]]; then capture_panel "$page" 400; else capture_panel "$page"; fi
+  if [[ -n $audit_dir ]]; then
+    [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" scrollSettings top 2>/dev/null || true) == ok ]]
+    capture_panel "audit-${page}-top"
+    [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" scrollSettings bottom 2>/dev/null || true) == ok ]]
+    capture_panel "audit-${page}-bottom"
+  fi
 done
+
+if [[ -n $audit_dir ]]; then
+  ./p2p-control settings-patch '{"loadingIndicatorStyle":"glyph"}' >/dev/null
+  reload_live_settings '.loadingIndicatorStyle == "glyph"'
+  open_settings_page appearance
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" scrollSettings top 2>/dev/null || true) == ok ]]
+  capture_panel audit-appearance-conditional-top
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" scrollSettings bottom 2>/dev/null || true) == ok ]]
+  capture_panel audit-appearance-conditional-bottom
+
+  ./p2p-control settings-patch '{"serviceGroupMode":"none"}' >/dev/null
+  reload_live_settings '.serviceGroupMode == "none"'
+  open_settings_page services
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" scrollSettings top 2>/dev/null || true) == ok ]]
+  capture_panel audit-services-ungrouped-top
+  [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" scrollSettings bottom 2>/dev/null || true) == ok ]]
+  capture_panel audit-services-ungrouped-bottom
+
+  ./p2p-control settings-patch '{"barPresentation":"category-active-total","hideZeroCount":false}' >/dev/null
+  reload_live_settings '.barPresentation == "category-active-total" and .hideZeroCount == false'
+  close_panel
+  capture_audit_bar audit-bar-category-active-total
+
+  ./p2p-control settings-patch '{"barPresentation":"category-active","hideZeroCount":true}' >/dev/null
+  reload_live_settings '.barPresentation == "category-active" and .hideZeroCount == true'
+  capture_audit_bar audit-bar-category-active-nonzero
+
+  check_capture_environment
+  mkdir -p "$audit_dir"
+  for image in "$capture_dir"/audit-*.png; do
+    [[ $image == *-full.png ]] && continue
+    output="$audit_dir/${image##*/}"
+    magick "$image" -strip -define png:compression-level=9 "$output"
+  done
+  restore_desktop
+  wait_for_shell
+  scripts/verify-capture-postconditions "$capture_dir" "$settings_file" "$durable_file" "$previous_file" "$monitor" "$original_workspace" "$initial_shell_pid" "$shell_pid"
+  rm -rf -- "$capture_dir"
+  trap - EXIT INT TERM
+  if [[ -n $report_file ]]; then
+    mkdir -p "$(dirname "$report_file")"
+    jq -n --argjson shellPid "$shell_pid" --arg monitor "$monitor" --argjson captureWorkspace "$capture_workspace" \
+      --argjson restoredWorkspace "$original_workspace" \
+      '{version:1,result:"passed",verified:true,published:false,audit:true,privacyFilter:true,shellPid:$shellPid,monitor:$monitor,captureWorkspace:$captureWorkspace,restoredWorkspace:$restoredWorkspace}' >"$report_file"
+  fi
+  printf 'Retained privacy-filtered settings audit from %s workspace %s; restored workspace %s.\n' "$monitor" "$capture_workspace" "$original_workspace"
+  exit 0
+fi
 
 capture_layout() {
   local name=$1 layout=$2 density=$3

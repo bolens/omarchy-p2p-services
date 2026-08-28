@@ -33,6 +33,7 @@ ColumnLayout {
           P2PSettingsGrid {
             id: refreshCadenceGrid
             objectName: "refreshCadenceGrid"
+            responsiveWidth: page.controller.configuredPanelWidth !== undefined ? page.controller.configuredPanelWidth : page.width
             IntegerSetting { controller: page.controller; settingKey: "refreshSeconds"; label: "Open-panel refresh interval, seconds"; minimum: 2; maximum: 60; fallback: 5 }
             IntegerSetting { controller: page.controller; settingKey: "backgroundRefreshSeconds"; label: "Background refresh interval, seconds"; minimum: 15; maximum: 300; fallback: 15 }
             IntegerSetting { Layout.columnSpan: refreshCadenceGrid.twoColumns ? 2 : 1; controller: page.controller; settingKey: "reconcileSeconds"; label: "Full container reconciliation, seconds"; minimum: 30; maximum: 600; fallback: 60; description: "Full scans include stopped containers; normal refreshes inspect running containers only." }
@@ -43,6 +44,7 @@ ColumnLayout {
           P2PSettingsGrid {
           id: refreshTriggerGrid
           objectName: "refreshTriggerGrid"
+          responsiveWidth: page.controller.configuredPanelWidth !== undefined ? page.controller.configuredPanelWidth : page.width
           P2PSettingToggle { controller: page.controller; settingKey: "eventRefresh"; label: "Event-assisted refresh"; fallback: true; description: "React to systemd and container events while retaining periodic polling as a fallback." }
           P2PSettingToggle { controller: page.controller; settingKey: "refreshOnOpen"; label: "Refresh when opened"; fallback: true }
           P2PSettingToggle { objectName: "refreshAfterSettingsToggle"; controller: page.controller; settingKey: "refreshAfterSettings"; label: "After settings changes"; tooltipText: "Refresh after settings changes"; fallback: true }
@@ -54,6 +56,7 @@ ColumnLayout {
           SettingsSurface {
           P2PSettingsGrid {
             objectName: "trafficSamplingGrid"
+            responsiveWidth: page.controller.configuredPanelWidth !== undefined ? page.controller.configuredPanelWidth : page.width
             IntegerSetting { controller: page.controller; settingKey: "trafficSmoothingSeconds"; label: "Traffic smoothing window, seconds"; minimum: 1; maximum: 30; fallback: 3 }
             IntegerSetting { controller: page.controller; settingKey: "trafficMinimumBytesPerSecond"; label: "Minimum visible traffic, B/s"; minimum: 0; maximum: 10485760; fallback: 1024 }
           }

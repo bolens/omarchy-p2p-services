@@ -1,5 +1,6 @@
 import Quickshell
 import QtQuick
+import QtQuick.Layouts
 
 ShellRoot {
   id: root
@@ -38,6 +39,15 @@ ShellRoot {
     Item { implicitWidth: 100; implicitHeight: 20 }
     Item { implicitWidth: 100; implicitHeight: 20 }
   }
+  ColumnLayout {
+    id: narrowGridHost
+    width: 400
+    P2PSettingsGrid {
+      id: constrainedGrid
+      IntegerSetting { controller: mockController; settingKey: "interval"; label: "Open-panel refresh interval, seconds"; minimum: 2; maximum: 60; fallback: 5 }
+      IntegerSetting { controller: mockController; settingKey: "interval"; label: "Background refresh interval, seconds"; minimum: 2; maximum: 60; fallback: 5 }
+    }
+  }
   P2PSettingsGrid {
     id: threeColumnGrid
     width: 600
@@ -61,6 +71,8 @@ ShellRoot {
   Component.onCompleted: Qt.callLater(function() {
     if (!settingsGrid.twoColumns || settingsGrid.columns !== 2) throw new Error("wide settings field grid did not use horizontal space")
     if (!threeColumnGrid.twoColumns || threeColumnGrid.columns !== 3) throw new Error("wide settings field grid did not honor its column capacity")
+    if (constrainedGrid.width > narrowGridHost.width || constrainedGrid.implicitWidth > narrowGridHost.width || constrainedGrid.twoColumns || constrainedGrid.columns !== 1)
+      throw new Error("intrinsic child widths prevented a constrained settings grid from collapsing")
     settingsGrid.width = 400
     threeColumnGrid.width = 400
     if (settingsGrid.twoColumns || settingsGrid.columns !== 1) throw new Error("narrow settings field grid did not collapse")

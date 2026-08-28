@@ -1,5 +1,6 @@
 import Quickshell
 import QtQuick
+import qs.Commons
 
 ShellRoot {
   id: root
@@ -8,6 +9,7 @@ ShellRoot {
     id: mockController
     property string settingsPage: "performance"
     property int consecutiveRefreshFailures: 0
+    property real configuredPanelWidth: Style.space(600)
     property var p2pService: null
     property var eventJournal: []
     property var patches: []
@@ -57,6 +59,13 @@ ShellRoot {
     var afterActions = descendant(page, "refreshAfterActionsToggle")
     if (!cadence || !triggers || !traffic || !eventRefresh || !refreshSeconds || !report || !afterSettings || !afterActions) throw new Error("performance settings controls are not addressable")
     if (!cadence.twoColumns || !triggers.twoColumns || !traffic.twoColumns) throw new Error("wide performance settings did not pair related controls")
+    page.width = Style.space(420)
+    mockController.configuredPanelWidth = Style.space(420)
+    Qt.callLater(function() {
+    if (cadence.twoColumns || cadence.columns !== 1)
+      throw new Error("minimum-width refresh cadence did not collapse within the page")
+    if (triggers.twoColumns) throw new Error("minimum-width refresh trigger grid retained two columns")
+    if (traffic.twoColumns) throw new Error("minimum-width traffic grid retained two columns")
     if (page.sectionY("refresh") < 0 || page.sectionY("diagnostics") <= page.sectionY("refresh")) throw new Error("performance section navigation coordinates failed")
     if (afterSettings.tooltipText !== "Refresh after settings changes" || afterActions.tooltipText !== "Refresh after service actions") throw new Error("condensed refresh labels lost their full tooltips")
     eventRefresh.clicked()
@@ -66,5 +75,6 @@ ShellRoot {
     if (mockController.reports !== 1) throw new Error("support report action failed")
     console.log("P2P_QML_PERFORMANCE_SETTINGS_OK")
     Qt.quit()
+    })
   })
 }

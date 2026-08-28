@@ -1,17 +1,26 @@
 import QtQuick
+import "Model.js" as Model
 
 QtObject {
   property var pending: null
 
   signal applyRequested(var services, bool fullScan)
 
+  function coalesce(services, fullScan) {
+    var rows = Array.isArray(services) ? services : []
+    if (pending && pending.fullScan === true && fullScan !== true)
+      return {services:Model.mergeServiceStatus(pending.services, rows, false),fullScan:true}
+    return {services:rows,fullScan:fullScan === true}
+  }
+
   function receive(services, fullScan, defer) {
+    var next = coalesce(services, fullScan)
     if (defer === true) {
-      pending = {services:Array.isArray(services) ? services : [],fullScan:fullScan === true}
+      pending = next
       return false
     }
     pending = null
-    applyRequested(Array.isArray(services) ? services : [], fullScan === true)
+    applyRequested(next.services, next.fullScan)
     return true
   }
 

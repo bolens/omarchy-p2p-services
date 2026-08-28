@@ -53,6 +53,7 @@ ShellRoot {
     property var services: [{id:"i2p"}]
     property bool durableSettingsLoaded: true
     property bool serviceFiltersExpanded: false
+    property string settingsScrollPosition: ""
     property var durableSettings: ({privacyFilter:true,serviceLayout:"grid"})
     property int mainViewRequests: 0
     function applySettingsPage(page) { requestedPage = page; return "ok" }
@@ -60,6 +61,7 @@ ShellRoot {
     function applyServiceDetails(id) { showingWidgetSettings = false; expandedServiceId = id; return "ok" }
     function applyServiceEditor(id) { showingWidgetSettings = false; editingServiceId = id; return "ok" }
     function applyFiltersExpanded(expanded) { showingWidgetSettings = false; serviceFiltersExpanded = expanded; return "ok" }
+    function applySettingsScroll(position) { settingsScrollPosition = position; return position === "top" || position === "bottom" ? "ok" : "invalid position" }
     function setting(key, fallback) { var values = {serviceLayout:"grid",cardDensity:"compact"}; return values[key] === undefined ? fallback : values[key] }
     function close() { opened = false }
     function open() {}
@@ -105,6 +107,8 @@ ShellRoot {
         throw new Error("settings IPC did not route to the focused monitor instance")
       if (!widget.focusedSettingsReady("packages") || widget.focusedSettingsReady("general"))
         throw new Error("focused settings readiness did not identify the loaded page")
+      if (widget.setSettingsScroll("bottom") !== "ok" || focusedWidgetFixture.settingsScrollPosition !== "bottom")
+        throw new Error("settings scroll did not route to the focused monitor instance")
       if (widget.openMainView() !== "ok" || focusedWidgetFixture.showingWidgetSettings || focusedWidgetFixture.mainViewRequests !== 1)
         throw new Error("main view IPC did not route to the focused monitor instance")
       if (!widget.focusedMainReady("grid", "compact")) throw new Error("focused main view readiness failed")

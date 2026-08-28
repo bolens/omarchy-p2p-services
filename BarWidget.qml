@@ -325,6 +325,18 @@ Panel {
     popupScroll.contentY = 0
     if (page === "packages") refreshCatalog()
   }
+  function applySettingsScroll(position) {
+    var requested = String(position || "")
+    if (requested !== "top" && requested !== "bottom") return "invalid position"
+    if (!showingWidgetSettings) return "settings closed"
+    popupScroll.contentY = requested === "bottom" ? Math.max(0, popupScroll.contentHeight - popupScroll.height) : 0
+    return "ok"
+  }
+  function setSettingsScroll(position) {
+    var target = focusedPanelInstance()
+    if (target && target !== root && typeof target.applySettingsScroll === "function") return target.applySettingsScroll(position)
+    return applySettingsScroll(position)
+  }
   function showSettingsSection(page, section) {
     settingsPage = page
     settingsSection = section
@@ -864,6 +876,7 @@ Panel {
     function filtersReady(): string { return root.focusedFiltersExpanded() ? "true" : "false" }
     function panelClosed(): string { return root.focusedPanelClosed() ? "true" : "false" }
     function openSettings(page: string): string { return root.openSettings(page) }
+    function scrollSettings(position: string): string { return root.setSettingsScroll(position) }
     function settingsReady(page: string): string { return root.focusedSettingsReady(page) ? "true" : "false" }
     function reloadSettings(): string { return root.reloadSettingsAcrossInstances() }
     function settingsSnapshot(): string { return root.focusedSettingsSnapshot() }

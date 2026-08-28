@@ -172,6 +172,21 @@ class ControlIntegrationTests(ControlTestCase):
       CONTROL.control(service, "stop")
       call.assert_called_once_with(["/usr/bin/docker", "stop", "syncthing"])
 
+  def test_multi_runtime_control_order_and_failure_code_are_deterministic(self):
+    service = self.service("syncthing")
+    docker = self.item("docker-sync"); docker.update({"_runtime":"docker", "_runtime_cmd":"/usr/bin/docker"})
+    podman = self.item("podman-sync"); podman.update({"_runtime":"podman", "_runtime_cmd":"/usr/bin/podman"})
+    with mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[podman, docker]), \
+         mock.patch.object(CONTROL.PROBE, "unit_state", return_value=("", False)), \
+         mock.patch.object(CONTROL.subprocess, "check_call", side_effect=[None, subprocess.CalledProcessError(23, ["podman"])]) as execute:
+      with self.assertRaises(subprocess.CalledProcessError) as raised:
+        CONTROL.control(service, "restart")
+    self.assertEqual(raised.exception.returncode, 23)
+    self.assertEqual(execute.call_args_list, [
+      mock.call(["/usr/bin/docker", "restart", "docker-sync"]),
+      mock.call(["/usr/bin/podman", "restart", "podman-sync"]),
+    ])
+
   def test_control_rejects_unknown_action_without_mutating(self):
     with mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[]), \
          mock.patch.object(CONTROL.PROBE, "unit_state", return_value=("", False)), \
@@ -294,6 +309,43 @@ class ControlIntegrationTests(ControlTestCase):
          mock.patch.object(CONTROL.subprocess, "check_call") as execute:
       CONTROL.control(service, "restart")
     execute.assert_called_once_with(["/usr/bin/systemctl", "--user", "restart", "syncthing.service"])
+
+  def test_control_selects_the_active_systemd_scope_and_rejects_two_active_scopes(self):
+    service = self.service("syncthing")
+    for action in ("stop", "restart"):
+      with self.subTest(active_scope="system", action=action), \
+           mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[]), \
+           mock.patch.object(CONTROL.PROBE, "unit_state", side_effect=[("syncthing.service", False), ("syncthing.service", True)]), \
+           mock.patch.object(CONTROL, "privileged_call") as execute:
+        CONTROL.control(service, action, terminal_auth=True)
+      execute.assert_called_once_with(["/usr/bin/systemctl", action, "syncthing.service"], True)
+
+    with mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[]), \
+         mock.patch.object(CONTROL.PROBE, "unit_state", side_effect=[("syncthing.service", False), ("syncthing.service", True)]), \
+         mock.patch.object(CONTROL.subprocess, "check_call") as user_execute, \
+         mock.patch.object(CONTROL, "privileged_call") as system_execute:
+      CONTROL.control(service, "start", terminal_auth=True)
+    user_execute.assert_not_called(); system_execute.assert_not_called()
+
+    for action in ("stop", "restart"):
+      with self.subTest(active_scope="both", action=action), \
+           mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[]), \
+           mock.patch.object(CONTROL.PROBE, "unit_state", side_effect=[("syncthing.service", True), ("syncthing.service", True)]), \
+           mock.patch.object(CONTROL.subprocess, "check_call") as user_execute, \
+           mock.patch.object(CONTROL, "privileged_call") as system_execute:
+        with self.assertRaisesRegex(RuntimeError, "multiple systemd scopes"):
+          CONTROL.control(service, action, terminal_auth=True)
+      user_execute.assert_not_called(); system_execute.assert_not_called()
+
+  def test_control_rejects_mixed_container_and_active_systemd_ownership(self):
+    service = self.service("syncthing")
+    container = self.item("syncthing"); container.update({"_runtime":"docker", "_runtime_cmd":"/usr/bin/docker"})
+    with mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[container]), \
+         mock.patch.object(CONTROL.PROBE, "unit_state", side_effect=[("syncthing.service", True), ("", False)]), \
+         mock.patch.object(CONTROL.subprocess, "check_call") as execute:
+      with self.assertRaisesRegex(RuntimeError, "multiple control backends"):
+        CONTROL.control(service, "restart")
+    execute.assert_not_called()
 
   def test_repeated_start_and_stop_are_noops_at_desired_systemd_state(self):
     service = self.service("syncthing")

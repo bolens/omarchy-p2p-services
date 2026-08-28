@@ -385,10 +385,12 @@ def control(service, action, terminal_auth=False):
   if service.get("controllable") is False and action in CONTROL_ACTIONS.union({"config"}):
     raise RuntimeError("custom services are observation-only")
   docker_items=PROBE.docker_matches(service)
+  user_unit,user_active=PROBE.unit_state(service["units"],True) if action in CONTROL_ACTIONS else ("",False)
+  system_unit,system_active=PROBE.unit_state(service["units"],False) if action in CONTROL_ACTIONS else ("",False)
   if docker_items and action in CONTROL_ACTIONS:
+    if user_active or system_active: raise RuntimeError("service has multiple control backends active")
     for command in container_action_commands(docker_items,action): subprocess.check_call(command)
     return
-  user_unit,user_active=PROBE.unit_state(service["units"],True); system_unit,system_active=PROBE.unit_state(service["units"],False)
   if action=="open":
     items=PROBE.docker_matches(service)
     routes=PROBE.proxy_candidates(items)
@@ -409,7 +411,11 @@ def control(service, action, terminal_auth=False):
     editor_env.update(SUDO_EDITOR=editor,VISUAL=editor,EDITOR=editor)
     subprocess.Popen(["omarchy-launch-terminal",SUDOEDIT,target],env=editor_env,start_new_session=True); return
   if action in CONTROL_ACTIONS:
-    if user_unit:
+    if user_active and system_active:
+      if action=="start": return
+      raise RuntimeError("service has multiple systemd scopes active")
+    if action=="start" and (user_active or system_active): return
+    if user_active or (user_unit and not system_active):
       if (action == "start" and user_active) or (action == "stop" and not user_active): return
       subprocess.check_call(systemd_action_command(SYSTEMCTL,user_unit,True,action)); return
     if system_unit:

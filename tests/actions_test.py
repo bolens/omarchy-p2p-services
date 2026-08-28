@@ -24,6 +24,12 @@ class ActionPlanTests(unittest.TestCase):
     self.assertEqual(container_action_commands([zeta,alpha],"restart"),expected)
     self.assertEqual(container_action_commands([alpha,zeta],"restart"),expected)
 
+  def test_container_commands_are_deterministic_across_runtimes(self):
+    docker = {"Name":"/docker-sync","_runtime":"docker","_runtime_cmd":"/usr/bin/docker","State":{"Running":True}}
+    podman = {"Name":"/podman-sync","_runtime":"podman","_runtime_cmd":"/usr/bin/podman","State":{"Running":True}}
+    expected = [["/usr/bin/docker","restart","docker-sync"],["/usr/bin/podman","restart","podman-sync"]]
+    self.assertEqual(container_action_commands([podman,docker],"restart"),expected)
+
   def test_systemd_command_preserves_scope(self):
     self.assertEqual(systemd_action_command("/usr/bin/systemctl","sync.service",True,"stop"),["/usr/bin/systemctl","--user","stop","sync.service"])
     self.assertEqual(systemd_action_command("/usr/bin/systemctl","sync.service",False,"open"),[])

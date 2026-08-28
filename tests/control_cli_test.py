@@ -226,6 +226,18 @@ class ControlCliTests(ControlTestCase):
         self.invoke("action", "aria2", "start")
     self.assertEqual(raised.exception.code, 17)
 
+  def test_every_control_action_runs_postcondition_verification(self):
+    service = self.service("aria2")
+    for action in ("start", "stop", "restart"):
+      with self.subTest(action=action), \
+           mock.patch.object(CONTROL, "service_by_id", return_value=service), \
+           mock.patch.object(CONTROL, "detected", return_value=True), \
+           mock.patch.object(CONTROL, "control") as control, \
+           mock.patch.object(CONTROL, "verify_action") as verify:
+        self.invoke("action", "aria2", action)
+      control.assert_called_once_with(service, action)
+      verify.assert_called_once_with(service, action)
+
   def test_invalid_uninstall_retention_is_a_clean_failure_before_mutation(self):
     service = self.service("aria2")
     with mock.patch.object(CONTROL, "service_by_id", return_value=service), \

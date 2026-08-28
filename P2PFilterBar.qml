@@ -12,29 +12,35 @@ ColumnLayout {
   Layout.fillWidth: true
   spacing: Style.spacing.sm
   readonly property int primaryFilterCount: controller.errorCount > 0 ? 4 : 3
-  readonly property bool primaryFiltersWide: width >= Style.space(360)
   readonly property string serviceLayout: String(controller.setting("serviceLayout", "list"))
   readonly property string cardDensity: String(controller.setting("cardDensity", "comfortable"))
   function toggleLayout() { controller.persistKeepingOpen({serviceLayout: serviceLayout === "grid" ? "list" : "grid"}) }
   function cycleDensity() {
     controller.persistKeepingOpen({cardDensity: cardDensity === "comfortable" ? "compact" : (cardDensity === "compact" ? "minimal" : "comfortable")})
   }
-  GridLayout {
-    objectName: "primaryFilterGrid"
+  Item {
+    id: filterToolbar
+    objectName: "filterToolbar"
     Layout.fillWidth: true
-    columns: filterBar.primaryFiltersWide ? filterBar.primaryFilterCount : 2
-    columnSpacing: Style.spacing.sm
-    rowSpacing: Style.spacing.sm
-    P2PFilterPill { objectName: "primaryFilterPill"; Layout.fillWidth: true; controller: filterBar.controller; label: "All " + filterBar.controller.services.length; value: "all" }
-    P2PFilterPill { objectName: "primaryFilterPill"; Layout.fillWidth: true; controller: filterBar.controller; label: "Running " + filterBar.controller.activeCount; value: "running" }
-    P2PFilterPill { objectName: "primaryFilterPill"; Layout.fillWidth: true; controller: filterBar.controller; label: "Stopped " + filterBar.controller.stoppedCount; value: "stopped" }
-    P2PFilterPill { objectName: "primaryFilterPill"; Layout.fillWidth: true; controller: filterBar.controller; label: "Issues " + filterBar.controller.errorCount; value: "issues"; visible: filterBar.controller.errorCount > 0 }
-  }
-  Flow {
-    id: filterActions
-    objectName: "filterActionRow"
-    Layout.fillWidth: true
-    spacing: Style.spacing.sm
+    readonly property bool singleRow: width >= primaryFilters.width + filterActions.width + Style.spacing.sm
+    Layout.preferredHeight: singleRow ? Math.max(primaryFilters.height, filterActions.height) : primaryFilters.height + Style.spacing.sm + filterActions.height
+    Row {
+      id: primaryFilters
+      objectName: "primaryFilterFlow"
+      x: 0
+      y: 0
+      spacing: Style.spacing.sm
+      P2PFilterPill { objectName: "primaryFilterPill"; controller: filterBar.controller; label: "All services"; value: "all"; icon: "󰒍"; count: String(filterBar.controller.services.length) }
+      P2PFilterPill { objectName: "primaryFilterPill"; controller: filterBar.controller; label: "Running services"; value: "running"; icon: "󰐊"; count: String(filterBar.controller.activeCount) }
+      P2PFilterPill { objectName: "primaryFilterPill"; controller: filterBar.controller; label: "Stopped services"; value: "stopped"; icon: "󰓛"; count: String(filterBar.controller.stoppedCount) }
+      P2PFilterPill { objectName: "primaryFilterPill"; controller: filterBar.controller; label: "Services needing attention"; value: "issues"; icon: "󰅚"; count: String(filterBar.controller.errorCount); visible: filterBar.controller.errorCount > 0 }
+    }
+    Row {
+      id: filterActions
+      objectName: "filterActionRow"
+      x: Math.max(0, filterToolbar.width - width)
+      y: filterToolbar.singleRow ? 0 : primaryFilters.height + Style.spacing.sm
+      spacing: Style.spacing.sm
   Button {
     objectName: "serviceLayoutToggle"
     width: implicitWidth
@@ -50,12 +56,22 @@ ColumnLayout {
     objectName: "cardDensityToggle"
     width: implicitWidth
     height: implicitHeight
-    text: filterBar.cardDensity.charAt(0).toUpperCase() + filterBar.cardDensity.slice(1)
+    iconText: filterBar.cardDensity === "comfortable" ? "▤" : (filterBar.cardDensity === "compact" ? "☷" : "⋯")
     tooltipText: "Density: " + filterBar.cardDensity.charAt(0).toUpperCase() + filterBar.cardDensity.slice(1) + ". Switch to " + (filterBar.cardDensity === "comfortable" ? "compact" : (filterBar.cardDensity === "compact" ? "minimal" : "comfortable"))
     active: filterBar.cardDensity !== "comfortable"
     selected: active
     horizontalPadding: Style.spacing.controlGap
     onClicked: filterBar.cycleDensity()
+  }
+  Button {
+    objectName: "serviceGroupsCollapseToggle"
+    width: implicitWidth
+    height: implicitHeight
+    visible: filterBar.controller.serviceGroupsVisible === true
+    iconText: filterBar.controller.allServiceGroupsCollapsed === true ? "▾" : "▴"
+    tooltipText: filterBar.controller.allServiceGroupsCollapsed === true ? "Expand all service groups" : "Collapse all service groups"
+    horizontalPadding: Style.spacing.controlGap
+    onClicked: filterBar.controller.setAllServiceGroupsCollapsed(filterBar.controller.allServiceGroupsCollapsed !== true)
   }
   P2PIndicatorPill {
     objectName: "activeBackendFilterPill"
@@ -89,6 +105,7 @@ ColumnLayout {
       font.pixelSize: Style.font.caption
       font.weight: Font.Bold
       font.letterSpacing: 0.8
+    }
     }
   }
   }

@@ -193,11 +193,24 @@ Panel {
     return !previous || visibleServiceIndexes.groupById[previous.id] !== groupName
   }
   readonly property var visibleServiceIndexes: Model.serviceIndexes(visibleServices, Model.enabled(setting("favoriteServices", []), []), String(setting("serviceGroupMode", "none")))
+  readonly property var visibleServiceGroupNames: Object.keys(visibleServiceIndexes.groups || {})
+  readonly property bool serviceGroupsVisible: visibleServiceGroupNames.length > 0
+  readonly property bool allServiceGroupsCollapsed: serviceGroupsVisible && visibleServiceGroupNames.every(function(label) { return isGroupCollapsed(label) })
   function groupCountText(label) { return Model.indexedGroupCountText(visibleServiceIndexes, label, String(setting("groupCountMode", "active-total"))) }
   function groupIcon(entry) { return Model.groupIcon(entry, String(setting("serviceGroupMode", "none")), isFavorite(entry.id), setting("categoryIcons", {}) || {}) }
   function isGroupCollapsed(label) { return collapsedServiceGroups[label] === true }
   function toggleGroup(label) {
     var next = Object.assign({}, collapsedServiceGroups); next[label] = next[label] !== true; collapsedServiceGroups = next
+    if (setting("persistCollapsedGroups", true) === true) persistQuietly({collapsedServiceGroups:next})
+  }
+  function setAllServiceGroupsCollapsed(collapsed) {
+    if (!serviceGroupsVisible) return
+    var next = Object.assign({}, collapsedServiceGroups)
+    visibleServiceGroupNames.forEach(function(label) {
+      if (collapsed === true) next[label] = true
+      else delete next[label]
+    })
+    collapsedServiceGroups = next
     if (setting("persistCollapsedGroups", true) === true) persistQuietly({collapsedServiceGroups:next})
   }
   function applyView(view) {

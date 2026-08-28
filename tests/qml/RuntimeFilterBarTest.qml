@@ -16,10 +16,13 @@ ShellRoot {
     property var visibleServices: [{},{},{}]
     property int backendActivations: 0
     property var values: ({serviceLayout:"list",cardDensity:"comfortable"})
+    property bool serviceGroupsVisible: true
+    property bool allServiceGroupsCollapsed: false
     property var events: []
     function filterByBackend(_backend) { backendActivations += 1; backendFilter = "" }
     function setting(key, fallback) { return values[key] === undefined ? fallback : values[key] }
     function persistKeepingOpen(patch) { events = events.concat([patch]); values = Object.assign({}, values, patch) }
+    function setAllServiceGroupsCollapsed(collapsed) { allServiceGroupsCollapsed = collapsed; events = events.concat([{allGroupsCollapsed:collapsed}]) }
   }
 
   P2PFilterBar { id: filterBar; width: 620; controller: mockController }
@@ -41,20 +44,34 @@ ShellRoot {
     var primary = descendant(filterBar, "primaryFilterPill")
     var layout = descendant(filterBar, "serviceLayoutToggle")
     var density = descendant(filterBar, "cardDensityToggle")
-    var primaryGrid = descendant(filterBar, "primaryFilterGrid")
-    if (!backend || !count || !primary || !layout || !density || !primaryGrid || count.text !== "3 SHOWN") throw new Error("filter controls are not addressable")
-    if (filterBar.primaryFilterCount !== 4 || !filterBar.primaryFiltersWide || primaryGrid.columns !== 4 || primary.width <= primary.minimumPillWidth) throw new Error("wide primary filters did not fill their row evenly")
+    var groups = descendant(filterBar, "serviceGroupsCollapseToggle")
+    var primaryFlow = descendant(filterBar, "primaryFilterFlow")
+    var actions = descendant(filterBar, "filterActionRow")
+    var toolbar = descendant(filterBar, "filterToolbar")
+    if (!backend || !count || !primary || !layout || !density || !groups || !primaryFlow || !actions || !toolbar || count.text !== "3 SHOWN") throw new Error("filter controls are not addressable")
+    if (primaryFlow.height < primary.height || toolbar.height < primaryFlow.height || actions.y + actions.height > toolbar.height + 0.01) throw new Error("filter toolbar clips its controls")
+    if (primaryFlow.y !== actions.y) throw new Error("wide filter toolbar did not use one row")
+    if (Math.abs(actions.x + actions.width - toolbar.width) > 0.01 || primaryFlow.x !== 0) throw new Error("filter toolbar did not split left and right control groups")
+    if (!groups.visible || groups.iconText !== "▴" || groups.tooltipText !== "Collapse all service groups") throw new Error("expanded groups did not expose collapse-all control")
+    groups.clicked()
+    if (!mockController.allServiceGroupsCollapsed || groups.iconText !== "▾" || groups.tooltipText !== "Expand all service groups") throw new Error("collapse-all control did not become expand-all")
+    groups.clicked()
+    if (mockController.allServiceGroupsCollapsed) throw new Error("expand-all control did not restore groups")
+    mockController.serviceGroupsVisible = false
+    if (groups.visible) throw new Error("group control remained visible without service groups")
+    mockController.serviceGroupsVisible = true
+    if (filterBar.primaryFilterCount !== 4 || primary.text !== "12" || primary.iconText !== "󰒍" || primary.tooltipText !== "All services (12)" || primary.width > filterBar.width / 3) throw new Error("primary filters were not rendered as compact icon-count controls")
     primary.clicked()
     if (mockController.serviceFilter !== "all") throw new Error("primary service filter action failed")
     layout.clicked()
     if (!layout.active || layout.tooltipText !== "Switch to single-column list") throw new Error("layout toggle did not reflect grid mode")
     density.clicked()
-    if (density.text !== "Compact" || density.tooltipText.indexOf("minimal") < 0) throw new Error("density toggle did not reflect compact mode")
+    if (density.text !== "" || density.iconText !== "☷" || density.tooltipText.indexOf("minimal") < 0) throw new Error("density toggle did not reflect compact mode")
     density.clicked()
-    if (density.text !== "Minimal" || density.tooltipText.indexOf("comfortable") < 0) throw new Error("density toggle did not reflect minimal mode")
+    if (density.iconText !== "⋯" || density.tooltipText.indexOf("comfortable") < 0) throw new Error("density toggle did not reflect minimal mode")
     density.clicked()
-    if (density.text !== "Comfortable" || density.tooltipText.indexOf("compact") < 0) throw new Error("density toggle did not return to comfortable mode")
-    if (mockController.events.length !== 4 || mockController.events[0].serviceLayout !== "grid") throw new Error("layout toggle event failed")
+    if (density.iconText !== "▤" || density.tooltipText.indexOf("compact") < 0) throw new Error("density toggle did not return to comfortable mode")
+    if (mockController.events.length !== 6 || mockController.events[2].serviceLayout !== "grid") throw new Error("layout toggle event failed")
     if (mockController.values.cardDensity !== "comfortable") throw new Error("density toggle did not cycle all modes")
     backend.activate()
     if (mockController.backendActivations !== 1 || mockController.backendFilter !== "") throw new Error("backend filter pill did not remain actionable")
@@ -64,11 +81,9 @@ ShellRoot {
     mockController.searchQuery = ""
     mockController.errorCount = 0
     Qt.callLater(function() {
-      if (filterBar.primaryFilterCount !== 3 || primaryGrid.columns !== 3) throw new Error("cleared issue count did not reclaim its wide-grid column")
+      if (filterBar.primaryFilterCount !== 3) throw new Error("cleared issue count did not remove its compact filter")
     mockController.backendFilter = "docker"
-    filterBar.width = 150
     Qt.callLater(function() {
-      if (filterBar.primaryFiltersWide || primaryGrid.columns !== 2) throw new Error("narrow primary filters did not switch to two columns")
       console.log("P2P_QML_FILTER_BAR_OK")
       Qt.quit()
     })

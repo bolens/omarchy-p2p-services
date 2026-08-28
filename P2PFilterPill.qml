@@ -5,8 +5,12 @@ Button {
   required property var controller
   required property string label
   required property string value
-  readonly property real minimumPillWidth: label.length * Style.font.bodySmall * 0.62 + Style.spacing.controlPaddingX * 2
-  text: label
+  property string icon: ""
+  property string count: ""
+  readonly property real minimumPillWidth: Math.max(implicitHeight, count.length * Style.font.bodySmall * 0.62 + Style.spacing.controlPaddingX * 2 + (icon ? Style.font.bodySmall : 0))
+  text: count
+  iconText: icon
+  tooltipText: label + (count ? " (" + count + ")" : "")
   active: controller.serviceFilter === value
   selected: active
   bordered: true

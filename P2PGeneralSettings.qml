@@ -20,8 +20,8 @@ ColumnLayout {
           Toggle { objectName: "privacyFilterToggle"; Layout.fillWidth: true; label: "Privacy filter"; description: "Redact endpoints, process IDs, paths, and console URLs before they reach the widget."; checked: page.controller.privacyFilter; foreground: Color.popups.text; accent: checked ? Color.bar.active : Color.urgent; fontFamily: Style.font.family; onClicked: page.controller.togglePrivacyFilter() }
           Toggle { objectName: "showStoppedToggle"; Layout.fillWidth: true; label: "Show stopped services"; checked: page.controller.showStopped; foreground: Color.popups.text; accent: Color.bar.active; fontFamily: Style.font.family; onClicked: page.controller.persistKeepingOpen({showStopped: !checked}) }
           P2PSettingToggle { controller: page.controller; settingKey: "showCount"; label: "Show active count in bar"; fallback: true }
-          P2PSettingToggle { controller: page.controller; settingKey: "autoStartAfterInstall"; label: "Start services after install"; fallback: false; description: "Start and verify every package-managed service immediately after Omarchy installs it." }
-          P2PSettingToggle { controller: page.controller; settingKey: "notifyOnControlChanges"; label: "Service action notifications"; fallback: true; description: "Notify when start, stop, or restart succeeds, is cancelled, or fails." }
+          P2PSettingToggle { objectName: "autoStartAfterInstallToggle"; controller: page.controller; settingKey: "autoStartAfterInstall"; label: "Start after install"; tooltipText: "Start services after install"; fallback: false; description: "Start and verify every package-managed service immediately after Omarchy installs it." }
+          P2PSettingToggle { objectName: "actionNotificationsToggle"; controller: page.controller; settingKey: "notifyOnControlChanges"; label: "Action notifications"; tooltipText: "Service action notifications"; fallback: true; description: "Notify when start, stop, or restart succeeds, is cancelled, or fails." }
           P2PSettingToggle { controller: page.controller; settingKey: "showTrafficStats"; label: "Live transfer speeds"; fallback: true; description: "Show aggregate container receive and transmit rates while traffic is active." }
           }
           P2PSettingsGrid {
@@ -59,11 +59,12 @@ ColumnLayout {
           P2PSettingToggle { controller: page.controller; settingKey: "notifyRecovery"; label: "Service recovery"; fallback: false }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyUnhealthy"; label: "Unhealthy services"; fallback: true }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyRestartEvents"; label: "Restart threshold"; fallback: true }
-          P2PSettingToggle { controller: page.controller; settingKey: "enableEventJournal"; label: "Local event journal"; fallback: false; description: "Keep a bounded, privacy-filtered history of service changes and action outcomes." }
           }
           P2PSettingsGrid {
+            objectName: "notificationValueGrid"
             IntegerSetting { controller: page.controller; settingKey: "notificationCooldownSeconds"; label: "Notification cooldown, seconds"; minimum: 0; maximum: 300; fallback: 30 }
             IntegerSetting { controller: page.controller; settingKey: "restartWarningThreshold"; label: "Restart warning threshold"; minimum: 1; maximum: 100; fallback: 3 }
+            P2PSettingToggle { controller: page.controller; settingKey: "enableEventJournal"; label: "Local event journal"; fallback: false; description: "Keep a bounded, privacy-filtered history of service changes and action outcomes." }
             IntegerSetting { controller: page.controller; settingKey: "eventJournalLimit"; label: "Visible journal entries"; minimum: 5; maximum: 100; fallback: 25 }
           }
           }

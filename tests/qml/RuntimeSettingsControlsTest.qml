@@ -38,6 +38,14 @@ ShellRoot {
     Item { implicitWidth: 100; implicitHeight: 20 }
     Item { implicitWidth: 100; implicitHeight: 20 }
   }
+  P2PSettingsGrid {
+    id: threeColumnGrid
+    width: 600
+    wideColumns: 3
+    Item { implicitWidth: 100; implicitHeight: 20 }
+    Item { implicitWidth: 100; implicitHeight: 20 }
+    Item { implicitWidth: 100; implicitHeight: 20 }
+  }
 
   function descendant(item, name) {
     if (!item) return null
@@ -52,8 +60,11 @@ ShellRoot {
 
   Component.onCompleted: Qt.callLater(function() {
     if (!settingsGrid.twoColumns || settingsGrid.columns !== 2) throw new Error("wide settings field grid did not use horizontal space")
+    if (!threeColumnGrid.twoColumns || threeColumnGrid.columns !== 3) throw new Error("wide settings field grid did not honor its column capacity")
     settingsGrid.width = 400
+    threeColumnGrid.width = 400
     if (settingsGrid.twoColumns || settingsGrid.columns !== 1) throw new Error("narrow settings field grid did not collapse")
+    if (threeColumnGrid.twoColumns || threeColumnGrid.columns !== 1) throw new Error("narrow three-column grid did not collapse")
     if (settingToggle.checked) throw new Error("toggle did not reflect stored false value")
     settingToggle.clicked()
     if (mockController.patches.length !== 1 || mockController.patches[0].enabled !== true || !settingToggle.checked)

@@ -51,6 +51,8 @@ ShellRoot {
     for (var gridName of ["serviceSortGrid", "servicePriorityGrid", "serviceGroupingGrid", "groupDisplayGrid"]) {
       var grid = descendant(settingsPage, gridName)
       if (!grid || !grid.twoColumns) throw new Error("wide services settings grid missing: " + gridName)
+      var expectedColumns = gridName === "groupDisplayGrid" ? 3 : 2
+      if (grid.columns !== expectedColumns) throw new Error("services settings grid used the wrong column capacity: " + gridName)
     }
     select("serviceSortModeDropdown", "name")
     select("serviceSortDirectionDropdown", "descending")

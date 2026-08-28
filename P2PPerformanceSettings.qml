@@ -45,8 +45,8 @@ ColumnLayout {
           objectName: "refreshTriggerGrid"
           P2PSettingToggle { controller: page.controller; settingKey: "eventRefresh"; label: "Event-assisted refresh"; fallback: true; description: "React to systemd and container events while retaining periodic polling as a fallback." }
           P2PSettingToggle { controller: page.controller; settingKey: "refreshOnOpen"; label: "Refresh when opened"; fallback: true }
-          P2PSettingToggle { controller: page.controller; settingKey: "refreshAfterSettings"; label: "Refresh after settings changes"; fallback: true }
-          P2PSettingToggle { controller: page.controller; settingKey: "refreshAfterActions"; label: "Refresh after service actions"; fallback: true }
+          P2PSettingToggle { objectName: "refreshAfterSettingsToggle"; controller: page.controller; settingKey: "refreshAfterSettings"; label: "After settings changes"; tooltipText: "Refresh after settings changes"; fallback: true }
+          P2PSettingToggle { objectName: "refreshAfterActionsToggle"; controller: page.controller; settingKey: "refreshAfterActions"; label: "After service actions"; tooltipText: "Refresh after service actions"; fallback: true }
           IntegerSetting { Layout.columnSpan: refreshTriggerGrid.twoColumns ? 2 : 1; controller: page.controller; settingKey: "staleWarningSeconds"; label: "Stale warning threshold, seconds"; minimum: 15; maximum: 600; fallback: 60 }
           }
           }

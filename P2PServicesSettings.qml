@@ -40,10 +40,11 @@ ColumnLayout {
           }
           }
           P2PSettingsGrid {
+          id: servicePriorityGrid
           objectName: "servicePriorityGrid"
           P2PSettingToggle { controller: page.controller; settingKey: "favoritesFirst"; label: "Favorites first"; fallback: true; description: "Keep favorite services pinned above the selected sort order." }
           P2PSettingToggle { controller: page.controller; settingKey: "runningFirst"; label: "Running services first"; fallback: false; description: "Keep running services above stopped services independently of sorting." }
-          P2PSettingToggle { controller: page.controller; settingKey: "stableLiveSort"; label: "Stabilize live sorting"; fallback: true; description: "Hold card positions briefly after refreshes and during scrolling or actions." }
+          P2PSettingToggle { Layout.columnSpan: servicePriorityGrid.twoColumns ? 2 : 1; controller: page.controller; settingKey: "stableLiveSort"; label: "Stabilize live sorting"; fallback: true; description: "Hold card positions briefly after refreshes and during scrolling or actions." }
           }
           P2PSettingsGrid {
           objectName: "serviceGroupingGrid"
@@ -69,6 +70,7 @@ ColumnLayout {
           }
           P2PSettingsGrid {
           objectName: "groupDisplayGrid"
+          wideColumns: 3
           P2PSettingToggle { visible: page.controller.setting("serviceGroupMode", "none") !== "none"; controller: page.controller; settingKey: "showGroupIcons"; label: "Group icons"; fallback: true }
           P2PSettingToggle { visible: page.controller.setting("serviceGroupMode", "none") !== "none"; controller: page.controller; settingKey: "showGroupCounts"; label: "Group counts"; fallback: true }
           Dropdown {

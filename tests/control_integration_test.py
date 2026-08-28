@@ -197,8 +197,29 @@ class ControlIntegrationTests(ControlTestCase):
          mock.patch.object(CONTROL.PROBE, "pids_for", return_value=[42]) as pids, \
          mock.patch.object(CONTROL, "terminate_matching_process", return_value=True) as terminate:
       CONTROL.control(service, "stop")
-    pids.assert_called_once_with(service["processes"], current_user_only=True)
+    self.assertEqual(pids.call_args_list, [mock.call(service["processes"]), mock.call(service["processes"], current_user_only=True)])
     terminate.assert_called_once_with(42, service["processes"])
+
+  def test_external_process_control_never_duplicates_or_signals_unowned_processes(self):
+    service = self.service("nicotine")
+    for action in ("stop", "restart"):
+      with self.subTest(action=action), \
+           mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[]), \
+           mock.patch.object(CONTROL.PROBE, "unit_state", return_value=("", False)), \
+           mock.patch.object(CONTROL.PROBE, "pids_for", side_effect=lambda _names, current_user_only=False: [] if current_user_only else [42]), \
+           mock.patch.object(CONTROL, "terminate_matching_process") as terminate, \
+           mock.patch.object(CONTROL.subprocess, "Popen") as launch:
+        with self.assertRaisesRegex(RuntimeError, "not owned by the current user"):
+          CONTROL.control(service, action)
+      terminate.assert_not_called()
+      launch.assert_not_called()
+
+    with mock.patch.object(CONTROL.PROBE, "docker_matches", return_value=[]), \
+         mock.patch.object(CONTROL.PROBE, "unit_state", return_value=("", False)), \
+         mock.patch.object(CONTROL.PROBE, "pids_for", return_value=[42]), \
+         mock.patch.object(CONTROL.subprocess, "Popen") as launch:
+      CONTROL.control(service, "start")
+    launch.assert_not_called()
 
   def test_process_termination_revalidates_identity_and_uses_pidfd(self):
     with tempfile.TemporaryDirectory() as directory:

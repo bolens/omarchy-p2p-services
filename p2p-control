@@ -420,7 +420,11 @@ def control(service, action, terminal_auth=False):
         privileged_call([SYSTEMCTL,"start",system_unit],terminal_auth); return
       if action in ("start","restart"): prepare_service_start(service,system_unit,terminal_auth)
       privileged_call([SYSTEMCTL,action,system_unit],terminal_auth); return
+    all_pids=PROBE.pids_for(service["processes"])
     pids=PROBE.pids_for(service["processes"], current_user_only=True)
+    if action=="start" and all_pids: return
+    if action in ("stop","restart") and set(all_pids)-set(pids):
+      raise RuntimeError("service process is not owned by the current user")
     if action in ("stop","restart"):
       terminating=[pid for pid in pids if terminate_matching_process(pid,service["processes"])]
       if action=="stop": return

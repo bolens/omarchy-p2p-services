@@ -729,3 +729,14 @@ class ControlIntegrationTests(ControlTestCase):
       with self.assertRaisesRegex(RuntimeError, "package remover is unavailable"):
         CONTROL.uninstall_service(self.service("i2pd"))
     backup.assert_not_called()
+
+  def test_uninstall_rechecks_service_after_backup_before_removal(self):
+    with mock.patch.object(CONTROL, "installed_packages", return_value=["i2pd"]), \
+         mock.patch.object(CONTROL.INSPECTOR, "inspect", side_effect=[{"active": False}, {"active": True}]) as inspect, \
+         mock.patch.object(CONTROL.shutil, "which", return_value="/usr/bin/omarchy"), \
+         mock.patch.object(CONTROL.BACKUPS, "backup", return_value="/backup/i2pd"), \
+         mock.patch.object(CONTROL.subprocess, "check_call") as remove:
+      with self.assertRaisesRegex(RuntimeError, "started while its configuration was being backed up"):
+        CONTROL.uninstall_service(self.service("i2pd"))
+    self.assertEqual(inspect.call_count, 2)
+    remove.assert_not_called()

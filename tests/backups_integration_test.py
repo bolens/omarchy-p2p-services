@@ -175,6 +175,23 @@ class BackupsIntegrationTests(ControlTestCase):
       self.assertEqual((config/"settings.ini").read_text(), "current\n")
       self.assertEqual(list(root.glob("daemon-config.restore-*")), [])
 
+  def test_restore_guard_runs_after_safety_backup_before_mutation(self):
+    with tempfile.TemporaryDirectory() as directory:
+      root = pathlib.Path(directory)
+      config = root/"service.conf"
+      config.write_text("backup-version\n")
+      store = ConfigBackupStore(root, lambda *_args: [])
+      service = {"id": "daemon", "config": str(config)}
+      selected = pathlib.Path(store.backup(service)).name
+      config.write_text("current-version\n")
+
+      with self.assertRaisesRegex(RuntimeError, "service started during restore preparation"):
+        store.restore(service, selected, lambda: (_ for _ in ()).throw(RuntimeError("service started during restore preparation")))
+
+      self.assertEqual(config.read_text(), "current-version\n")
+      self.assertGreaterEqual(len(store.records("daemon")), 2)
+      self.assertEqual(list(root.glob("service.conf.restore-*")), [])
+
   def test_failed_restore_commit_rolls_back_displaced_configuration(self):
     with tempfile.TemporaryDirectory() as directory:
       root = pathlib.Path(directory)

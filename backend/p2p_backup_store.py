@@ -75,7 +75,7 @@ class ConfigBackupStore:
     fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
     return lock
 
-  def restore(self, service, backup_name=""):
+  def restore(self, service, backup_name="", before_commit=None):
     records = self.records(service["id"])
     if not records: raise RuntimeError("no configuration backup is available")
     selected = backup_name or records[0]["name"]
@@ -87,6 +87,7 @@ class ConfigBackupStore:
     source_is_dir = source.is_dir() and not source.is_symlink()
     mode = (destination.stat().st_mode & 0o7777) if destination.exists() else 0o600
     if destination.exists() or destination.is_symlink(): self.backup(service, preserve=(selected,))
+    if before_commit is not None: before_commit()
     privileged = self.restore_planner(service, source, destination, mode, source_is_dir)
     if privileged:
       subprocess.check_call(privileged)

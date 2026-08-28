@@ -314,6 +314,8 @@ def uninstall_service(service, retention=10):
   if not omarchy: raise RuntimeError("Omarchy package remover is unavailable")
   backup=BACKUPS.backup(service,retention)
   if backup: print("Configuration backup: "+backup,flush=True)
+  if INSPECTOR.inspect(service,True)["active"]:
+    raise RuntimeError("service started while its configuration was being backed up; stop it and retry uninstall")
   subprocess.check_call(uninstall_command(os.path.realpath(omarchy),packages))
   reset_discovery()
   if installed_packages(service,required=True,bypass=True): raise RuntimeError("package is still installed after removal")
@@ -564,8 +566,10 @@ def main():
     if not service: raise SystemExit("unknown service")
     if service.get("custom"): raise SystemExit("custom services are observation-only")
     try:
-      if INSPECTOR.inspect(service,True)["active"]: raise RuntimeError("stop the service before restoring configuration")
-      print(BACKUPS.restore(service,sys.argv[3]))
+      def require_stopped():
+        if INSPECTOR.inspect(service,True)["active"]: raise RuntimeError("stop the service before restoring configuration")
+      require_stopped()
+      print(BACKUPS.restore(service,sys.argv[3],require_stopped))
     except Exception as error: print(str(error),file=sys.stderr); raise SystemExit(1)
     return
   if sys.argv[1]=="open-url" and len(sys.argv)==3:

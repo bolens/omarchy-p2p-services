@@ -228,6 +228,17 @@ class ControlCliTests(ControlTestCase):
     self.assertEqual(raised.exception.code, 1)
     restore.assert_not_called()
 
+  def test_restore_backup_rechecks_service_at_commit_boundary(self):
+    service = self.service("aria2")
+    with mock.patch.object(CONTROL, "service_by_id", return_value=service), \
+         mock.patch.object(CONTROL.INSPECTOR, "inspect", side_effect=[{"active": False}, {"active": True}]) as inspect, \
+         mock.patch.object(CONTROL.BACKUPS, "restore", side_effect=lambda _service, _name, guard: guard()) as restore:
+      with self.assertRaises(SystemExit) as raised:
+        self.invoke("restore-backup", "aria2", "snapshot")
+    self.assertEqual(raised.exception.code, 1)
+    self.assertEqual(inspect.call_count, 2)
+    restore.assert_called_once()
+
   def test_action_failure_preserves_child_exit_code(self):
     service = self.service("aria2")
     with mock.patch.object(CONTROL, "service_by_id", return_value=service), \

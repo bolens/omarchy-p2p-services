@@ -19,6 +19,11 @@ class SettingsIntegrationTests(ControlTestCase):
         self.assertLessEqual(entry["min"], entry["defaultValue"])
         self.assertGreaterEqual(entry["max"], entry["defaultValue"])
 
+  def test_every_manifest_default_survives_durable_validation(self):
+    defaults = __import__("json").loads((ROOT / "manifest.json").read_text())["barWidget"]["defaults"]
+    cleaned = CONTROL.sanitize_settings(defaults)
+    self.assertEqual(set(defaults), set(cleaned) - {"_p2pSettingsVersion", "_p2pRevision", "_p2pUpdatedAt"})
+
   def test_manifest_organization_options_match_runtime_validation(self):
     manifest = __import__("json").loads((ROOT / "manifest.json").read_text())
     schema = {entry["key"]: entry for entry in manifest["barWidget"]["schema"]}
@@ -128,6 +133,21 @@ class SettingsIntegrationTests(ControlTestCase):
     self.assertEqual(cleaned["barForegroundColorRole"], "muted")
     self.assertEqual(cleaned["barActiveColorRole"], "accent")
     self.assertTrue(cleaned["barDimWhenIdle"])
+
+  def test_settings_schema_bounds_loading_indicator_customization(self):
+    cleaned = CONTROL.sanitize_settings({
+      "showLoadingIndicators": False,
+      "loadingIndicatorStyle": "glyph",
+      "loadingIndicatorGlyph": "  LOAD  ",
+      "loadingIndicatorSpeed": 9999,
+    })
+    self.assertFalse(cleaned["showLoadingIndicators"])
+    self.assertEqual(cleaned["loadingIndicatorStyle"], "glyph")
+    self.assertEqual(cleaned["loadingIndicatorGlyph"], "LOAD")
+    self.assertEqual(cleaned["loadingIndicatorSpeed"], 1000)
+    fallback = CONTROL.sanitize_settings({"loadingIndicatorStyle": "flash", "loadingIndicatorGlyph": "  "})
+    self.assertEqual(fallback["loadingIndicatorStyle"], "spinner")
+    self.assertEqual(fallback["loadingIndicatorGlyph"], ">")
 
   def test_settings_reconciliation_uses_highest_revision(self):
     shell = {"showCount": False, "_p2pRevision": 4}

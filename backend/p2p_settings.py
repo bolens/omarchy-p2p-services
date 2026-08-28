@@ -19,6 +19,7 @@ BOOLEAN_KEYS = {key: PLUGIN_DEFAULTS[key] for key in (
   "notifyUnexpectedStops", "notifyRecovery", "notifyUnhealthy",
   "notifyRestartEvents", "barDimWhenIdle",
   "showGroupIcons", "enableEventJournal",
+  "showLoadingIndicators",
 )}
 INTEGER_KEYS = {
   "refreshSeconds": (2, 60), "backgroundRefreshSeconds": (15, 300),
@@ -30,6 +31,7 @@ INTEGER_KEYS = {
   "barHorizontalMargin": (0, 24), "barVerticalPadding": (0, 16),
   "barFixedWidth": (0, 240),
   "eventJournalLimit": (5, 100),
+  "loadingIndicatorSpeed": (60, 1000),
 }
 INTEGER_KEYS = {key: (bounds[0], bounds[1], PLUGIN_DEFAULTS[key]) for key, bounds in INTEGER_KEYS.items()}
 STRING_KEYS = {key: PLUGIN_DEFAULTS[key] for key in ("widgetIcon", "consoleHost", "defaultSavedView")}
@@ -49,6 +51,7 @@ CARD_DENSITIES = {"comfortable", "compact", "minimal"}
 SERVICE_LAYOUTS = {"list", "grid"}
 BAR_PRESENTATIONS = {"icon", "active", "active-total", "health", "category-active", "category-active-total"}
 BAR_TEXT_ROTATIONS = {"normal", "clockwise", "counterclockwise"}
+LOADING_INDICATOR_STYLES = {"spinner", "dots", "bar", "glyph"}
 THEME_ROLES = {"bar-active", "urgent", "accent", "foreground", "muted"}
 GROUP_HEADER_STYLES = {"surfaced", "dense"}
 NOTIFICATION_POLICIES = {"inherit", "always", "failures", "silent"}
@@ -102,6 +105,10 @@ def sanitize_settings(data):
   if "serviceLayout" in source: clean["serviceLayout"] = source["serviceLayout"] if source["serviceLayout"] in SERVICE_LAYOUTS else PLUGIN_DEFAULTS["serviceLayout"]
   if "barPresentation" in source: clean["barPresentation"] = source["barPresentation"] if source["barPresentation"] in BAR_PRESENTATIONS else PLUGIN_DEFAULTS["barPresentation"]
   if "barTextRotation" in source: clean["barTextRotation"] = source["barTextRotation"] if source["barTextRotation"] in BAR_TEXT_ROTATIONS else PLUGIN_DEFAULTS["barTextRotation"]
+  if "loadingIndicatorStyle" in source: clean["loadingIndicatorStyle"] = source["loadingIndicatorStyle"] if source["loadingIndicatorStyle"] in LOADING_INDICATOR_STYLES else PLUGIN_DEFAULTS["loadingIndicatorStyle"]
+  if "loadingIndicatorGlyph" in source:
+    glyph = str(source["loadingIndicatorGlyph"] or "").strip()[:4]
+    clean["loadingIndicatorGlyph"] = glyph or PLUGIN_DEFAULTS["loadingIndicatorGlyph"]
   if "defaultView" in source: clean["defaultView"] = source["defaultView"] if source["defaultView"] in VIEW_FILTERS else PLUGIN_DEFAULTS["defaultView"]
   if "groupHeaderStyle" in source: clean["groupHeaderStyle"] = source["groupHeaderStyle"] if source["groupHeaderStyle"] in GROUP_HEADER_STYLES else PLUGIN_DEFAULTS["groupHeaderStyle"]
   for role_key in ("runningColorRole","stoppedColorRole","errorColorRole","favoriteColorRole","activityColorRole","barForegroundColorRole","barActiveColorRole"):

@@ -85,8 +85,15 @@ Panel {
   readonly property bool intrinsicMainWidth: editingServiceId === "" && !showingWidgetSettings && expandedServiceId === "" && serviceList.contentWidthHint > 0
   readonly property real configuredPanelWidth: Style.space(Math.max(420, Math.min(800, Number(setting("popupWidth", 600)) || 600)))
   readonly property real configuredPanelHeight: Style.space(Math.max(360, Math.min(900, Number(setting("popupMaxHeight", 600)) || 600)))
+  property int panelContentRevision: 0
+  readonly property real panelChromeHeight: popupHeaderChrome.implicitHeight + popupFooterChrome.implicitHeight + Style.spacing.md * 2
+  readonly property real panelViewportHeight: {
+    var revision = panelContentRevision
+    return Math.min(Math.max(0, configuredPanelHeight - panelChromeHeight), Math.max(Style.space(180), popupScroll.contentHeight))
+  }
+  readonly property real desiredPanelHeight: panelChromeHeight + panelViewportHeight
   readonly property real scrollbarGutter: popupScrollBar.visible ? popupScrollBar.implicitWidth + Style.spacing.xs : 0
-  readonly property real desiredPanelWidth: intrinsicMainWidth ? Math.min(configuredPanelWidth, serviceList.contentWidthHint + scrollbarGutter) : configuredPanelWidth
+  readonly property real desiredPanelWidth: configuredPanelWidth
   readonly property int pollIntervalMilliseconds: (opened ? refreshSeconds : Math.max(backgroundRefreshSeconds, refreshSeconds)) * 1000 * Model.refreshBackoff(consecutiveRefreshFailures)
   readonly property var visibleServices: {
     var revision = organizationState.revision
@@ -899,7 +906,7 @@ Panel {
     open: root.opened
     focusTarget: keyCatcher
     contentWidth: fittedContentWidth(root.desiredPanelWidth)
-    contentHeight: fittedContentHeight(root.configuredPanelHeight, root.configuredPanelHeight)
+    contentHeight: fittedContentHeight(root.desiredPanelHeight, root.configuredPanelHeight)
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -922,7 +929,7 @@ Panel {
       Item {
         id: popupLayout
         anchors.fill: parent
-        implicitHeight: root.configuredPanelHeight
+        implicitHeight: root.desiredPanelHeight
 
         ColumnLayout {
           id: popupHeaderChrome
@@ -1071,7 +1078,12 @@ Panel {
           Layout.fillWidth: true
           source: root.settingsSurfaceSource
           sourceComponent: String(root.settingsSurfaceSource) === "" ? defaultSettingsSurface : null
-          onLoaded: { root.settingsErrorText = ""; root.finishSettingsLoading(); Qt.callLater(root.scrollToSettingsSection) }
+          onLoaded: {
+            root.settingsErrorText = ""
+            root.finishSettingsLoading()
+            Qt.callLater(root.scrollToSettingsSection)
+            Qt.callLater(function() { root.panelContentRevision += 1 })
+          }
           onStatusChanged: if (status === Loader.Error) {
             settingsLoadingState.cancel()
             root.settingsErrorText = "Unable to load P2P settings interface"

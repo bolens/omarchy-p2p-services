@@ -10,6 +10,8 @@ assert.match(bar, /configuredPanelHeight:[\s\S]*?popupMaxHeight", 600[\s\S]*?con
 assert.match(read("scripts/capture-screenshots"), /capture_panel panel[\s\S]*?audit-main\.png/, "visual audits must retain the main fixed-chrome viewport")
 const settingsPanel = read("P2PSettingsPanel.qml")
 assert.match(bar, /P2PSettingsNavigation[\s\S]*?Flickable\s*\{[\s\S]*?id:\s*popupScroll[\s\S]*?P2PSettingsReset/, "settings navigation and reset actions must remain outside the scroll viewport")
+assert.match(bar, /id:\s*popupScroll[\s\S]*?implicitHeight:\s*0[\s\S]*?Layout\.fillHeight:\s*true[\s\S]*?Layout\.preferredHeight:\s*0/, "long settings pages must not contribute their implicit height to the fixed panel layout")
+assert.match(bar, /id:\s*popupLayout[\s\S]*?implicitHeight:\s*root\.configuredPanelHeight/, "the panel layout must report the same stable height as its outer frame")
 assert.match(bar, /popupLayout\.width < Style\.space\(440\)[\s\S]*?wrapMode:\s*Text\.WordWrap/, "the fixed main footer must use responsive copy and stay within narrow panels")
 assert.doesNotMatch(settingsPanel, /P2PSettingsNavigation|P2PSettingsReset/, "the settings scroll body must contain only page content")
 const indicatorPill = read("P2PIndicatorPill.qml")

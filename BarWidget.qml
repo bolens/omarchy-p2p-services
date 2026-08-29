@@ -922,6 +922,7 @@ Panel {
       ColumnLayout {
         id: popupLayout
         anchors.fill: parent
+        implicitHeight: root.configuredPanelHeight
         spacing: Style.spacing.md
 
         P2PHeader {
@@ -944,9 +945,11 @@ Panel {
 
         Flickable {
         id: popupScroll
+        implicitHeight: 0
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.minimumHeight: Style.space(180)
+        Layout.preferredHeight: 0
         contentWidth: content.width
         contentHeight: content.implicitHeight
         clip: true

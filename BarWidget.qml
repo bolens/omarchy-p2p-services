@@ -898,7 +898,7 @@ Panel {
     open: root.opened
     focusTarget: keyCatcher
     contentWidth: fittedContentWidth(root.desiredPanelWidth)
-    contentHeight: fittedContentHeight(content.implicitHeight, Style.space(Math.max(360, Math.min(900, Number(root.setting("popupMaxHeight", 600)) || 600))))
+    contentHeight: fittedContentHeight(popupLayout.implicitHeight, Style.space(Math.max(360, Math.min(900, Number(root.setting("popupMaxHeight", 600)) || 600))))
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -918,9 +918,28 @@ Panel {
       }
       onTabRequested: function(direction) { if (bar && typeof bar.switchPanelFrom === "function") bar.switchPanelFrom(root, direction) }
 
-      Flickable {
-        id: popupScroll
+      ColumnLayout {
+        id: popupLayout
         anchors.fill: parent
+        spacing: Style.spacing.md
+
+        P2PHeader {
+          visible: root.editingServiceId === "" && !root.showingWidgetSettings
+          controller: root
+          Layout.fillWidth: true
+        }
+
+        PanelSeparator {
+          visible: root.editingServiceId === "" && !root.showingWidgetSettings
+          Layout.fillWidth: true
+          foreground: root.bar ? root.bar.foreground : Color.popups.text
+        }
+
+        Flickable {
+        id: popupScroll
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumHeight: Style.space(180)
         contentWidth: content.width
         contentHeight: content.implicitHeight
         clip: true
@@ -936,18 +955,6 @@ Panel {
           id: content
           width: Math.max(1, popupScroll.width - root.scrollbarGutter)
           spacing: Style.spacing.md
-
-        P2PHeader {
-          visible: root.editingServiceId === "" && !root.showingWidgetSettings
-          controller: root
-          Layout.fillWidth: true
-        }
-
-        PanelSeparator {
-          visible: root.editingServiceId === "" && !root.showingWidgetSettings
-          Layout.fillWidth: true
-          foreground: root.bar ? root.bar.foreground : Color.popups.text
-        }
 
         RowLayout {
           objectName: "serviceSearchRow"
@@ -1033,22 +1040,6 @@ Panel {
 
         P2PServiceList { id: serviceList; controller: root; Layout.fillWidth: true }
 
-        PanelSeparator {
-          visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
-          Layout.fillWidth: true
-          foreground: root.bar ? root.bar.foreground : Color.popups.text
-        }
-        Text {
-          visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
-          Layout.fillWidth: true
-          text: "j/k navigate · enter details · r refresh · s settings\nCard middle: customize · right: details"
-          textFormat: Text.PlainText
-          color: Color.muted
-          horizontalAlignment: Text.AlignHCenter
-          font.family: Style.font.family
-          font.pixelSize: Style.font.caption
-        }
-
         Loader {
           id: settingsPageLoader
           active: root.showingWidgetSettings
@@ -1081,6 +1072,23 @@ Panel {
           Layout.fillWidth: true
         }
       }
+      }
+
+        PanelSeparator {
+          visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
+          Layout.fillWidth: true
+          foreground: root.bar ? root.bar.foreground : Color.popups.text
+        }
+        Text {
+          visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
+          Layout.fillWidth: true
+          text: "j/k navigate · enter details · r refresh · s settings\nCard middle: customize · right: details"
+          textFormat: Text.PlainText
+          color: Color.muted
+          horizontalAlignment: Text.AlignHCenter
+          font.family: Style.font.family
+          font.pixelSize: Style.font.caption
+        }
       }
     }
   }

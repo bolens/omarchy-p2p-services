@@ -113,6 +113,7 @@ ShellRoot {
         throw new Error("main view IPC did not route to the focused monitor instance")
       if (!widget.focusedMainReady("grid", "compact")) throw new Error("focused main view readiness failed")
       if (widget.scrollbarGutter < 0 || widget.desiredPanelWidth <= 0) throw new Error("panel scrollbar gutter sizing failed")
+      if (Math.abs(widget.configuredPanelHeight - 600) > 0.01) throw new Error("configured panel height collapsed after fixed chrome layout")
       widget.expandedServiceId = "syncthing"
       if (widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.configuredPanelWidth) throw new Error("expanded details retained narrow intrinsic panel width")
       widget.expandedServiceId = ""
@@ -210,11 +211,10 @@ ShellRoot {
       root.settingsLoadDeadline = Date.now() + 2000
       root.stage = 1
       } else if (root.stage === 1) {
-      if (!widget.settingsSurfaceLoaded) {
-        if (Date.now() >= root.settingsLoadDeadline) throw new Error("lazy settings surface failed to load")
+      if (!widget.settingsSurfaceLoaded || widget.settingsIndicatorVisible) {
+        if (Date.now() >= root.settingsLoadDeadline) throw new Error("lazy settings surface or minimum loading presentation did not settle")
         return
       }
-      if (widget.settingsIndicatorVisible) throw new Error("settings loading presentation did not settle")
       if (widget.settingsSaveStatus !== "saved") throw new Error("durable settings save status did not complete: " + widget.settingsSaveStatus)
       widget.helper = PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/loading-helper"))
       widget.showSettingsPage("packages")

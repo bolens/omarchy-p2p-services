@@ -84,6 +84,7 @@ Panel {
   readonly property int reconcileSeconds: Math.max(30, Math.min(600, Number(setting("reconcileSeconds", 60)) || 60))
   readonly property bool intrinsicMainWidth: editingServiceId === "" && !showingWidgetSettings && expandedServiceId === "" && serviceList.contentWidthHint > 0
   readonly property real configuredPanelWidth: Style.space(Math.max(420, Math.min(800, Number(setting("popupWidth", 600)) || 600)))
+  readonly property real configuredPanelHeight: Style.space(Math.max(360, Math.min(900, Number(setting("popupMaxHeight", 600)) || 600)))
   readonly property real scrollbarGutter: popupScrollBar.visible ? popupScrollBar.implicitWidth + Style.spacing.xs : 0
   readonly property real desiredPanelWidth: intrinsicMainWidth ? Math.min(configuredPanelWidth, serviceList.contentWidthHint + scrollbarGutter) : configuredPanelWidth
   readonly property int pollIntervalMilliseconds: (opened ? refreshSeconds : Math.max(backgroundRefreshSeconds, refreshSeconds)) * 1000 * Model.refreshBackoff(consecutiveRefreshFailures)
@@ -898,7 +899,7 @@ Panel {
     open: root.opened
     focusTarget: keyCatcher
     contentWidth: fittedContentWidth(root.desiredPanelWidth)
-    contentHeight: fittedContentHeight(popupLayout.implicitHeight, Style.space(Math.max(360, Math.min(900, Number(root.setting("popupMaxHeight", 600)) || 600))))
+    contentHeight: fittedContentHeight(root.configuredPanelHeight, root.configuredPanelHeight)
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -929,8 +930,14 @@ Panel {
           Layout.fillWidth: true
         }
 
+        P2PSettingsNavigation {
+          visible: root.showingWidgetSettings
+          controller: root
+          Layout.fillWidth: true
+        }
+
         PanelSeparator {
-          visible: root.editingServiceId === "" && !root.showingWidgetSettings
+          visible: root.editingServiceId === ""
           Layout.fillWidth: true
           foreground: root.bar ? root.bar.foreground : Color.popups.text
         }
@@ -1075,19 +1082,27 @@ Panel {
       }
 
         PanelSeparator {
-          visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
+          visible: root.editingServiceId === "" && (root.showingWidgetSettings || root.services.length > 0)
           Layout.fillWidth: true
           foreground: root.bar ? root.bar.foreground : Color.popups.text
         }
         Text {
           visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
           Layout.fillWidth: true
-          text: "j/k navigate · enter details · r refresh · s settings\nCard middle: customize · right: details"
+          text: popupLayout.width < Style.space(440)
+            ? "j/k move · enter details · r refresh · s settings\nMiddle customize · right details"
+            : "j/k navigate · enter details · r refresh · s settings\nCard middle: customize · right: details"
           textFormat: Text.PlainText
           color: Color.muted
           horizontalAlignment: Text.AlignHCenter
+          wrapMode: Text.WordWrap
           font.family: Style.font.family
           font.pixelSize: Style.font.caption
+        }
+        P2PSettingsReset {
+          visible: root.showingWidgetSettings
+          controller: root
+          Layout.fillWidth: true
         }
       }
     }

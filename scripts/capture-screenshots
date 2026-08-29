@@ -358,6 +358,7 @@ close_panel() {
 
 open_main_view
 capture_panel panel
+if [[ -n $audit_dir ]]; then install -m 0644 "$capture_dir/panel.png" "$capture_dir/audit-main.png"; fi
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
 open_service_details i2p
 capture_panel details "$panel_height" panel

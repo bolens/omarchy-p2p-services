@@ -10,7 +10,6 @@ ColumnLayout {
   Layout.fillWidth: true
   spacing: Style.spacing.md
 
-  P2PSettingsNavigation { controller: panel.controller }
   function sectionY(section) {
     var pages = [generalPage, appearancePage, servicesPage, performancePage, discoveryPage, packagesPage]
     for (var index = 0; index < pages.length; index++) {
@@ -27,6 +26,4 @@ ColumnLayout {
   P2PDiscoverySettings { id: discoveryPage; controller: panel.controller }
   P2PPackagesSettings { id: packagesPage; controller: panel.controller }
 
-  PanelSeparator { Layout.fillWidth: true; foreground: panel.controller.bar ? panel.controller.bar.foreground : Color.popups.text }
-  P2PSettingsReset { controller: panel.controller }
 }

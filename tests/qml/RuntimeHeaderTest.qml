@@ -44,6 +44,9 @@ ShellRoot {
     var iconSurface = descendant(header, "headerIconSurface")
     var icon = descendant(header, "headerIcon")
     if (!settings || !refresh || !statusChips || !activeStatus || !stoppedStatus || !issueStatus || !compactSummary || !iconSurface || !icon) throw new Error("header controls are not addressable")
+    header.width = 400
+    if (statusChips.visible || !compactSummary.visible || iconSurface.visible) throw new Error("narrow header did not switch to compact status")
+    header.width = 600
     if (!statusChips.visible || compactSummary.visible || activeStatus.text !== "2 ACTIVE" || stoppedStatus.text !== "3 STOPPED" || !issueStatus.visible || icon.text !== "H")
       throw new Error("expanded header status presentation failed")
     mockController.values = Object.assign({}, mockController.values, {compactHeader:true})

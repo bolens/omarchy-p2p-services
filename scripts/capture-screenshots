@@ -303,6 +303,9 @@ capture_panel() {
     check_capture_environment
     focus_capture_workspace
     refresh_capture_geometry || { sleep .25; continue; }
+    # IPC readiness confirms QML state, not compositor presentation. Let the
+    # selected panel frame settle before retaining visual evidence.
+    sleep .3
     grim -o "$monitor" "$capture_dir/$name-full.png"
     magick "$capture_dir/$name-full.png" -crop "${crop_width}x${height}+${panel_x}+20" +repage "$capture_dir/$name.png"
     colors=$(magick "$capture_dir/$name.png" -format '%k' info: 2>/dev/null || true)

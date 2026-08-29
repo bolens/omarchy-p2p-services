@@ -919,11 +919,17 @@ Panel {
       }
       onTabRequested: function(direction) { if (bar && typeof bar.switchPanelFrom === "function") bar.switchPanelFrom(root, direction) }
 
-      ColumnLayout {
+      Item {
         id: popupLayout
         anchors.fill: parent
         implicitHeight: root.configuredPanelHeight
-        spacing: Style.spacing.md
+
+        ColumnLayout {
+          id: popupHeaderChrome
+          anchors.top: parent.top
+          anchors.left: parent.left
+          anchors.right: parent.right
+          spacing: Style.spacing.md
 
         P2PHeader {
           visible: root.editingServiceId === "" && !root.showingWidgetSettings
@@ -942,14 +948,21 @@ Panel {
           Layout.fillWidth: true
           foreground: root.bar ? root.bar.foreground : Color.popups.text
         }
+        }
+
+        Item {
+        id: popupScrollFrame
+        implicitHeight: 0
+        anchors.top: popupHeaderChrome.bottom
+        anchors.bottom: popupFooterChrome.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.topMargin: Style.spacing.md
+        anchors.bottomMargin: Style.spacing.md
 
         Flickable {
         id: popupScroll
-        implicitHeight: 0
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.minimumHeight: Style.space(180)
-        Layout.preferredHeight: 0
+        anchors.fill: parent
         contentWidth: content.width
         contentHeight: content.implicitHeight
         clip: true
@@ -1083,6 +1096,14 @@ Panel {
         }
       }
       }
+      }
+
+        ColumnLayout {
+          id: popupFooterChrome
+          anchors.bottom: parent.bottom
+          anchors.left: parent.left
+          anchors.right: parent.right
+          spacing: Style.spacing.md
 
         PanelSeparator {
           visible: root.editingServiceId === "" && (root.showingWidgetSettings || root.services.length > 0)
@@ -1106,6 +1127,7 @@ Panel {
           visible: root.showingWidgetSettings
           controller: root
           Layout.fillWidth: true
+        }
         }
       }
     }

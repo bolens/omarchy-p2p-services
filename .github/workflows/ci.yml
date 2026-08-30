@@ -106,6 +106,8 @@ jobs:
         with:
           args: >-
             --no-progress
+            --exclude-path '(^|/)node_modules/'
+            --exclude-path '(^|/)_site/'
             --accept 200,204,206,429
             --exclude '^https://github\.com/bolens/omarchy-p2p-services/(compare|releases/tag)/'
             './**/*.md'

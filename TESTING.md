@@ -8,8 +8,9 @@ tests/run_all.sh
 
 This runs focused Python catalog/registry, snapshot, action, package, settings
 storage, network validation, metrics parsing, cache, backup, cross-process
-contention, filesystem-failure, and integration tests; JavaScript model/contracts tests; Python compile
-checks; QML lint and formatting checks; and `omarchy plugin validate`.
+contention, filesystem-failure, and integration tests. It then runs JavaScript
+model and contract tests, Python compile checks, QML lint and formatting checks,
+and `omarchy plugin validate`.
 It also enforces security boundaries, release metadata, local documentation
 links, preview presence, and GitHub issue-form structure.
 
@@ -36,6 +37,12 @@ privacy boundaries, and plugin-load smoke paths. `tests/run_qml_runtime.sh` is
 the canonical harness inventory; adding or removing a runtime test there avoids
 maintaining a second enumerated list in documentation. Headless validation
 reports an explicit skip instead of implying runtime behavior was exercised.
+
+The required CI checks use Omarchy v4.0.1. The weekly compatibility workflow
+runs portable behavior and QML import checks against v4.0.1 and the current
+`quattro` branch. A `quattro` failure reports upcoming incompatibility without
+blocking supported-version changes. Repository CI also runs Actionlint, link
+checks, and a Lighthouse audit that requires an accessibility score of 1.00.
 
 ## Clean archive validation
 

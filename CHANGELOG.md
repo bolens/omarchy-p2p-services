@@ -5,6 +5,8 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-30
+
 ### Added
 
 - Added first-class discovery, lifecycle controls, logs, configuration access,
@@ -59,5 +61,6 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/bolens/omarchy-p2p-services/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bolens/omarchy-p2p-services/releases/tag/v0.1.0

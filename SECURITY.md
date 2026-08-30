@@ -33,7 +33,8 @@ contract that enforces that behavior.
 
 Run the full matrix in [TESTING.md](TESTING.md), inspect process launches and
 privileged paths, keep GitHub Actions SHA-pinned with least privilege, validate
-a clean `git archive`, and scan tracked files for credentials and private data.
+a clean `git archive`, verify its artifact attestation, and scan tracked files
+for credentials and private data.
 
 Marketplace validation is compatibility and baseline review, not a security
 audit or certification.

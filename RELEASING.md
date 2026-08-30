@@ -1,7 +1,8 @@
 # Releasing
 
 Releases are immutable, SemVer-tagged snapshots. GitHub Actions validates the
-tag, creates a source archive and SHA-256 checksum, and publishes both.
+tag and publishes a source archive, a SHA-256 checksum, and a provenance
+attestation.
 
 ## Prepare and validate
 
@@ -26,6 +27,13 @@ git push origin "v$version"
 The Release workflow rejects tags that do not match the manifest version.
 After it completes, verify the release assets and checksum, then install the
 public repository on a clean Omarchy environment.
+
+Verify the archive provenance before installation:
+
+```sh
+gh attestation verify "p2p-services-$version.tar.gz" \
+  --repo bolens/omarchy-p2p-services
+```
 
 ## Omarchy Plugins listing
 

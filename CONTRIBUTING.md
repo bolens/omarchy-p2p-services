@@ -13,6 +13,10 @@ Clone the repository and install the checkout through Omarchy when testing live
 integration. Do not test control or removal behavior against services whose
 configuration you cannot restore.
 
+Run `npm run hooks:install` once after cloning. The pre-commit hook validates
+the staged release payload and runs the deterministic suite. Graphical and
+live-system checks remain explicit.
+
 Run the validation matrix in [TESTING.md](TESTING.md). Add tests for behavior,
 parsing, process handling, privacy, and privilege boundaries. Never include
 credentials, private endpoints, usernames, paths, or unredacted diagnostics.

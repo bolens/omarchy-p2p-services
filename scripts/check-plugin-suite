@@ -57,7 +57,7 @@ for repo in "${repositories[@]}"; do
   reject_text "$repo" .github/workflows/ci.yml 'runs-on: ubuntu-latest' "CI runner is not pinned"
   reject_text "$repo" .github/workflows/release.yml 'runs-on: ubuntu-latest' "release runner is not pinned"
   require_text "$repo" .github/workflows/ci.yml 'node-version: 24.19.0' "CI Node.js version drifted"
-  require_text "$repo" .github/workflows/release.yml '977bb373ede98d70efdf65b84cb5f73e068dcc2a' "release provenance action is not pinned"
+  require_text "$repo" .github/workflows/release.yml '4d101475d8b20a2381f78447822ac1eab6504dd8' "release provenance action is not pinned"
   require_text "$repo" .github/workflows/compatibility.yml '13f18b2cb7286fb54f87daf571a031aa6af3d8f0' "supported Omarchy ref drifted"
   require_text "$repo" .github/workflows/compatibility.yml 'omarchy-ref: quattro' "Omarchy canary is missing"
   require_text "$repo" .github/workflows/ci.yml 'PRIVATE KEY|gh[pousr]_' "credential-pattern archive check is missing"

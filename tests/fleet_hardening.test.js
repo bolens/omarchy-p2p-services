@@ -46,6 +46,8 @@ assert.ok(fs.statSync("scripts/check-plugin-suite").mode & 0o100)
 assert.match(testRunner, /scripts\/check-plugin-suite/)
 assert.match(suiteChecker, /command -v rg/)
 assert.match(suiteChecker, /grep -Fq/)
+assert.match(suiteChecker, /isolated compatibility workspace is missing/)
+assert.match(suiteChecker, /generated-file archive check is missing/)
 
 assert.ok(fs.statSync("scripts/capture-screenshots").mode & 0o100)
 assert.match(capture, /trap .*?(cleanup|restore)/)

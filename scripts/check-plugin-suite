@@ -61,7 +61,13 @@ for repo in "${repositories[@]}"; do
   require_text "$repo" .github/workflows/compatibility.yml '13f18b2cb7286fb54f87daf571a031aa6af3d8f0' "supported Omarchy ref drifted"
   require_text "$repo" .github/workflows/compatibility.yml 'omarchy-ref: quattro' "Omarchy canary is missing"
   require_text "$repo" .github/workflows/ci.yml 'PRIVATE KEY|gh[pousr]_' "credential-pattern archive check is missing"
+  require_text "$repo" .github/workflows/ci.yml '__pycache__|node_modules|\.pytest_cache' "generated-file archive check is missing"
   require_text "$repo" .github/workflows/ci.yml 'accessibility.score' "exact accessibility gate is missing"
+  if [[ $name != omarchy-p2p-services ]]; then
+    require_text "$repo" .github/workflows/compatibility.yml "\$GITHUB_WORKSPACE:/source:ro" "isolated compatibility workspace is missing"
+    require_text "$repo" .github/workflows/compatibility.yml '--tmpfs /workspace:' "isolated compatibility workspace is missing"
+    require_text "$repo" .github/workflows/compatibility.yml 'cp -a /source/. /workspace' "isolated compatibility workspace is missing"
+  fi
 
   checkout_count=$(count_matches 'uses: actions/checkout@' "$repo/.github/workflows")
   credential_guard_count=$(count_matches 'persist-credentials: false' "$repo/.github/workflows")

@@ -90,6 +90,7 @@ ColumnLayout {
           SettingsSurface {
           visible: page.controller.settingsPage === "appearance"
           P2PSettingToggle { controller: page.controller; settingKey: "showLoadingIndicators"; label: "Show loading indicators"; fallback: true; description: "Use compact terminal-style placeholders instead of presenting unfinished content as empty." }
+          P2PSettingToggle { controller: page.controller; settingKey: "animateLoadingIndicators"; label: "Animate indicators"; fallback: true; description: "Disable motion while keeping loading status visible." }
           P2PSettingsGrid {
             id: loadingIndicatorGrid
             objectName: "loadingIndicatorGrid"

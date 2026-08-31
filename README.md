@@ -38,6 +38,8 @@ Contributors: [contributing guide](CONTRIBUTING.md) ·
   transfer, and an optional metadata-only event journal.
 - Shared, cached snapshots and event-assisted refresh designed to keep idle CPU
   and process activity bounded.
+- Keyboard-focusable controls, named assistive actions, and an option to stop
+  loading-indicator motion without hiding loading state.
 
 The [website and user guide](https://bolens.github.io/omarchy-p2p-services/)
 is the main source for supported services, controls, configuration, privacy and

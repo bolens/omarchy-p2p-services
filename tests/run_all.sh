@@ -36,8 +36,8 @@ if [[ $portable == true ]]; then
 fi
 
 shell_root="$(find_omarchy_shell_root)"
-qmllint -I "$shell_root" -I . BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml
-qmlformat -n BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
+qmllint -I "$shell_root" -I . Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml
+qmlformat -n Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
 omarchy plugin validate .
 
 runtime_mode=${P2P_RUNTIME_TESTS:-auto}

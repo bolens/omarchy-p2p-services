@@ -5,6 +5,25 @@ const root = path.join(__dirname, "..")
 const read = name => fs.readFileSync(path.join(root, name), "utf8")
 const manifest = JSON.parse(read("manifest.json"))
 const bar = read("BarWidget.qml")
+const button = read("Button.qml")
+const widgetButton = read("WidgetButton.qml")
+const groupHeader = read("P2PGroupHeader.qml")
+const appearanceSettings = read("P2PAppearanceSettings.qml")
+assert.match(button, /focusable:\s*true[\s\S]*Accessible\.role:\s*Accessible\.Button[\s\S]*Accessible\.onPressAction/,
+  "local buttons must be keyboard-focusable and expose an assistive press action")
+assert.match(button, /function triggerAccessiblePress\(\)[\s\S]*if \(!enabled\) return false/,
+  "assistive activation must honor disabled button state")
+assert.match(widgetButton, /activeFocusOnTab:[\s\S]*Keys\.onSpacePressed:[\s\S]*Accessible\.name:[\s\S]*Accessible\.onPressAction/,
+  "P2P bar targets must support keyboard and assistive activation")
+assert.match(groupHeader, /activeFocusOnTab:\s*true[\s\S]*Keys\.onSpacePressed:[\s\S]*Accessible\.name:/,
+  "collapsible service groups must be keyboard and assistive-technology operable")
+assert.equal(manifest.barWidget.defaults.animateLoadingIndicators, true)
+assert.match(appearanceSettings, /settingKey:\s*"animateLoadingIndicators"/,
+  "loading motion must have a visible reduced-motion control")
+assert.match(bar, /running:\s*root\.statusLoading[\s\S]*animateLoadingIndicators/,
+  "disabling loading motion must also stop the bar frame timer")
+assert.match(bar, /fixedWidth:\s*root\.bar && root\.bar\.vertical \? root\.bar\.barSize/,
+  "a horizontal fixed-width preference must not overflow a left or right bar")
 assert.match(bar, /Item\s*\{[\s\S]*?id:\s*popupLayout[\s\S]*?P2PHeader[\s\S]*?Flickable\s*\{[\s\S]*?id:\s*popupScroll[\s\S]*?popupLayout\.width < Style\.space\(440\)/, "the main header and footer must remain outside the scrollable content viewport")
 assert.match(bar, /configuredPanelHeight:[\s\S]*?popupMaxHeight", 600[\s\S]*?panelViewportHeight:[\s\S]*?panelContentRevision[\s\S]*?popupScroll\.contentHeight[\s\S]*?desiredPanelHeight:[\s\S]*?contentHeight:\s*fittedContentHeight\(root\.desiredPanelHeight, root\.configuredPanelHeight\)/, "panel height must follow content up to the configured cap without collapsing its viewport")
 assert.match(bar, /id:\s*settingsPageLoader[\s\S]*?onLoaded:[\s\S]*?Qt\.callLater\(function\(\) \{ root\.panelContentRevision \+= 1 \}\)/, "lazy settings pages must publish their completed content height to the outer panel")

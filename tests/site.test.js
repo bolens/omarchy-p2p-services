@@ -68,6 +68,8 @@ assert.match(capture, /wait_for_capture_geometry/);
 assert.match(capture, /stable >= 2/);
 assert.match(capture, /_monitorExtent/);
 assert.match(capture, /open_settings_page\(\)[\s\S]*focus_capture_workspace[\s\S]*openSettings/);
+assert.match(capture, /collapsedServiceGroups\\\":\{\}/,
+  "visual capture must not inherit hidden service groups from user settings");
 assert.match(capture, /restored_workspace == "\$original_workspace"/);
 assert.match(capture, /\*\-full\.png/, "retained audit evidence must exclude full-monitor captures");
 assert.match(capture, /update-screenshot-metadata/);

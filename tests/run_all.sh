@@ -38,7 +38,12 @@ fi
 shell_root="$(find_omarchy_shell_root)"
 qmllint -I "$shell_root" -I . Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml
 qmlformat -n Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
-omarchy plugin validate .
+validation_dir=$(mktemp -d)
+trap 'rm -rf -- "$validation_dir"' EXIT
+git archive HEAD | tar -x -C "$validation_dir"
+omarchy plugin validate "$validation_dir"
+rm -rf -- "$validation_dir"
+trap - EXIT
 
 runtime_mode=${P2P_RUNTIME_TESTS:-auto}
 case "$runtime_mode" in

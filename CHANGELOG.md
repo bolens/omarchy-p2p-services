@@ -5,9 +5,25 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-31
+
 ### Changed
 
 - Align dependency and Node.js metadata with the maintained plugin suite.
+- Validate staged release payloads before commits and add a read-only live IPC
+  contract probe.
+- Give the main service view a deterministic compact width while keeping every
+  settings page at the same configured width.
+
+### Fixed
+
+- Restore visible service-card navigation for `j`/`k` and arrow keys when groups
+  are collapsed; keyboard traversal reveals each destination group without
+  overwriting saved collapse preferences.
+- Reconcile persisted collapsed-group state when live widgets reload durable
+  settings.
+- Reset hidden service groups during visual audits and retain privacy-filtered
+  failure crops for diagnosis.
 
 ## [0.2.0] - 2026-08-30
 
@@ -65,6 +81,7 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bolens/omarchy-p2p-services/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bolens/omarchy-p2p-services/releases/tag/v0.1.0

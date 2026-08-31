@@ -31,7 +31,7 @@ assert.match(compatibility, /13f18b2cb7286fb54f87daf571a031aa6af3d8f0/)
 assert.match(compatibility, /omarchy-ref:\s*quattro/)
 assert.match(compatibility, /workflow_dispatch:/)
 
-assert.match(release, /actions\/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a/)
+assert.match(release, /actions\/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8/)
 assert.match(release, /id-token:\s*write/)
 assert.match(release, /attestations:\s*write/)
 assert.match(release, /validate:[\s\S]*?checks:\s*write/)

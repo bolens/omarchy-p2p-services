@@ -864,7 +864,8 @@ Panel {
     fontSize: Number(root.setting("barFontSize", 14))
     horizontalMargin: Number(root.setting("barHorizontalMargin", 8))
     verticalPadding: Number(root.setting("barVerticalPadding", 6))
-    fixedWidth: Number(root.setting("barFixedWidth", 0)) > 0 ? Number(root.setting("barFixedWidth", 0)) : -1
+    fixedWidth: root.bar && root.bar.vertical ? root.bar.barSize
+      : (Number(root.setting("barFixedWidth", 0)) > 0 ? Number(root.setting("barFixedWidth", 0)) : -1)
     textRotation: root.barRotation()
     foreground: root.themeColor(String(root.setting("barForegroundColorRole", "foreground")), root.bar ? root.bar.barForeground : Color.foreground)
     tooltipText: root.tooltip()
@@ -1045,7 +1046,7 @@ Panel {
           id: serviceLoadingIndicator
           objectName: "serviceLoadingIndicator"
           running: root.setting("showLoadingIndicators", true) === true && root.statusIndicatorVisible && root.services.length === 0 && root.visibleErrorText === "" && root.editingServiceId === "" && !root.showingWidgetSettings
-          animationEnabled: root.opened
+          animationEnabled: root.opened && root.setting("animateLoadingIndicators", true) === true
           label: "DISCOVERING P2P SERVICES"
           style: String(root.setting("loadingIndicatorStyle", "spinner"))
           glyph: String(root.setting("loadingIndicatorGlyph", ">"))
@@ -1093,7 +1094,7 @@ Panel {
         P2PLoadingIndicator {
           objectName: "settingsLoadingIndicator"
           running: root.settingsIndicatorVisible
-          animationEnabled: root.opened
+          animationEnabled: root.opened && root.setting("animateLoadingIndicators", true) === true
           label: "LOADING SETTINGS MODULES"
           style: String(root.setting("loadingIndicatorStyle", "spinner"))
           glyph: String(root.setting("loadingIndicatorGlyph", ">"))
@@ -1149,7 +1150,7 @@ Panel {
   Timer { interval: root.pollIntervalMilliseconds; running: true; repeat: true; onTriggered: { if (!popupScroll.moving) root.refresh(false, false) } }
   Timer {
     interval: Math.max(60, Number(root.setting("loadingIndicatorSpeed", 140)) || 140)
-    running: root.statusLoading && root.setting("showLoadingIndicators", true) === true
+    running: root.statusLoading && root.setting("showLoadingIndicators", true) === true && root.setting("animateLoadingIndicators", true) === true
     repeat: true
     onTriggered: root.barLoadingFrameIndex += 1
   }

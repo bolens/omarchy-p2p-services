@@ -152,7 +152,7 @@ Rectangle {
         P2PLoadingIndicator {
           objectName: "serviceActionLoadingIndicator"
           running: controller.pendingService === entry.id
-          animationEnabled: card.visible && controller.opened !== false
+          animationEnabled: card.visible && controller.opened !== false && controller.setting("animateLoadingIndicators", true) === true
           compact: true
           label: controller.serviceActionLabel(entry.id)
           style: String(controller.setting("loadingIndicatorStyle", "spinner"))

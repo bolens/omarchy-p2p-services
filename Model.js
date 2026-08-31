@@ -5,7 +5,7 @@ function settingsDefaults() {
     privacyFilter:true, showStopped:true, showCount:true,
     refreshSeconds:5, backgroundRefreshSeconds:15, reconcileSeconds:60,
     widgetIcon:"󰒍", popupMaxHeight:600, consoleHost:"",
-    showLoadingIndicators:true, loadingIndicatorStyle:"spinner",
+    showLoadingIndicators:true, animateLoadingIndicators:true, loadingIndicatorStyle:"spinner",
     loadingIndicatorGlyph:">", loadingIndicatorSpeed:140,
     notifyOnControlChanges:true, autoStartAfterInstall:false,
     showTrafficStats:true, compactCards:false,

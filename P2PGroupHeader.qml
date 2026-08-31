@@ -19,6 +19,14 @@ Rectangle {
   color: Util.alpha(Color.muted, controller.setting("groupHeaderStyle", "surfaced") === "dense" ? 0 : 0.045)
   border.width: controller.setting("groupHeaderStyle", "surfaced") === "dense" ? 0 : 1
   border.color: Util.alpha(Color.muted, 0.13)
+  activeFocusOnTab: true
+  Keys.onReturnPressed: header.activate()
+  Keys.onEnterPressed: header.activate()
+  Keys.onSpacePressed: header.activate()
+  Accessible.role: Accessible.Button
+  Accessible.name: groupName + ", " + (controller.isGroupCollapsed(groupName) ? "collapsed" : "expanded")
+  Accessible.description: "Toggle this service group"
+  Accessible.onPressAction: header.activate()
 
   function activate() { controller.toggleGroup(groupName) }
 

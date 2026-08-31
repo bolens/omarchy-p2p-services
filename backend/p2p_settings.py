@@ -19,7 +19,7 @@ BOOLEAN_KEYS = {key: PLUGIN_DEFAULTS[key] for key in (
   "notifyUnexpectedStops", "notifyRecovery", "notifyUnhealthy",
   "notifyRestartEvents", "barDimWhenIdle",
   "showGroupIcons", "enableEventJournal",
-  "showLoadingIndicators",
+  "showLoadingIndicators", "animateLoadingIndicators",
 )}
 INTEGER_KEYS = {
   "refreshSeconds": (2, 60), "backgroundRefreshSeconds": (15, 300),

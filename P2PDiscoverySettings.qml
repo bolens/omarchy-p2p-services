@@ -46,7 +46,7 @@ ColumnLayout {
           P2PLoadingIndicator {
             objectName: "settingsTransferLoadingIndicator"
             running: page.controller.settingsTransferLoading
-            animationEnabled: page.controller.settingsPage === "discovery"
+            animationEnabled: page.controller.settingsPage === "discovery" && page.controller.setting("animateLoadingIndicators", true) === true
             label: page.controller.settingsTransferLabel()
             style: String(page.controller.setting("loadingIndicatorStyle", "spinner"))
             glyph: String(page.controller.setting("loadingIndicatorGlyph", ">"))

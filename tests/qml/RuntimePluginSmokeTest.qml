@@ -129,6 +129,9 @@ ShellRoot {
       if (widget.reloadSettingsAcrossInstances() !== "ok" || reloadWidgetFixture.reloads !== 1)
         throw new Error("durable settings reload was not broadcast to live instances")
       barMock.routeReloadFixture = false
+      widget.collapsedServiceGroups = ({RUNNING:true})
+      widget.applyReconciledSettings({eventRefresh:false,persistCollapsedGroups:true,collapsedServiceGroups:{}})
+      if (widget.collapsedServiceGroups.RUNNING === true) throw new Error("reconciled settings retained stale collapsed groups")
       if (widget.statusLoading) throw new Error("initial service loading state did not settle")
       widget.services = [{id:"container",name:"Container",backend:"docker",active:true,hasError:false},{id:"unit",name:"Unit",backend:"systemd",active:true,hasError:false}]
       widget.serviceFiltersExpanded = true

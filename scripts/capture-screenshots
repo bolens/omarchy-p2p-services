@@ -225,8 +225,8 @@ trap cleanup_capture EXIT INT TERM
 
 # Durable settings win reconciliation and are pushed reactively to every live
 # monitor instance; no Quickshell restart is needed for capture-time swaps.
-./p2p-control settings-patch "{\"privacyFilter\":true,\"popupWidth\":$panel_width,\"showStopped\":true,\"serviceLayout\":\"list\",\"cardDensity\":\"comfortable\",\"serviceGroupMode\":\"category\",\"showBackendBadge\":true,\"serviceSortMode\":\"name\",\"serviceSortDirection\":\"automatic\"}" >/dev/null
-reload_live_settings ".privacyFilter == true and .popupWidth == $panel_width and .serviceLayout == \"list\" and .cardDensity == \"comfortable\""
+./p2p-control settings-patch "{\"privacyFilter\":true,\"popupWidth\":$panel_width,\"showStopped\":true,\"serviceLayout\":\"list\",\"cardDensity\":\"comfortable\",\"serviceGroupMode\":\"category\",\"collapsedServiceGroups\":{},\"showBackendBadge\":true,\"serviceSortMode\":\"name\",\"serviceSortDirection\":\"automatic\"}" >/dev/null
+reload_live_settings ".privacyFilter == true and .popupWidth == $panel_width and .serviceLayout == \"list\" and .cardDensity == \"comfortable\" and .collapsedServiceGroups == {}"
 initial_shell_pid=$shell_pid
 check_capture_environment
 
@@ -314,6 +314,13 @@ capture_panel() {
     fi
     sleep .5
   done
+  if [[ -n $audit_dir ]]; then
+    mkdir -p "$audit_dir"
+    install -m 0600 "$capture_dir/$name.png" "$audit_dir/failed-$name.png"
+    if [[ -n $distinct_from ]]; then
+      install -m 0600 "$capture_dir/$distinct_from.png" "$audit_dir/failed-$distinct_from.png"
+    fi
+  fi
   printf 'Could not capture populated %s view.\n' "$name" >&2
   return 1
 }
@@ -363,9 +370,9 @@ open_main_view
 capture_panel panel
 if [[ -n $audit_dir ]]; then install -m 0644 "$capture_dir/panel.png" "$capture_dir/audit-main.png"; fi
 [[ $(qs ipc --pid "$shell_pid" call "$plugin_id" privacyEnabled) == true ]] || { printf 'Live widget privacy verification failed.\n' >&2; exit 1; }
-open_service_details i2p
+open_service_details yggdrasil
 capture_panel details "$panel_height" panel
-open_service_editor i2p
+open_service_editor yggdrasil
 capture_panel editor
 open_main_view list comfortable
 for page in general appearance services performance discovery packages; do

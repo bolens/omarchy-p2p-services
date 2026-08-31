@@ -520,6 +520,13 @@ Panel {
       && target.settingsIndicatorVisible !== true
   }
   function reloadDurableSettings() { settingsStore.load(settings) }
+  function applyReconciledSettings(merged) {
+    settings = merged
+    if (bar && bar.shell && typeof bar.shell.updateEntryInline === "function") bar.shell.updateEntryInline(moduleName, merged)
+    if (setting("persistCollapsedGroups", true) === true) collapsedServiceGroups = setting("collapsedServiceGroups", {}) || {}
+    applyInitialView()
+    Qt.callLater(reloadIfSharedSettingsAdvanced)
+  }
   function reloadIfSharedSettingsAdvanced() {
     if (!p2pService || !durableSettingsLoaded || settingsStore.busy) return false
     var localRevision = Number(durableSettings._p2pRevision) || 0
@@ -1216,12 +1223,7 @@ Panel {
     id: settingsStore
     helper: root.helper
     moduleName: root.moduleName
-    onReconciled: function(merged) {
-      root.settings = merged
-      if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function") root.bar.shell.updateEntryInline(root.moduleName, merged)
-      root.applyInitialView()
-      Qt.callLater(root.reloadIfSharedSettingsAdvanced)
-    }
+    onReconciled: function(merged) { root.applyReconciledSettings(merged) }
     onUpdated: function(merged) {
       root.settings = merged
       if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function") root.bar.shell.updateEntryInline(root.moduleName, merged)

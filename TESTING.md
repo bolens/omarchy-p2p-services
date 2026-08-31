@@ -57,6 +57,8 @@ omarchy plugin validate "$validation_dir"
 After control, discovery, settings, or layout changes, install the checkout,
 restart Omarchy Shell, inspect its logs, and exercise only actions that can be
 safely reversed. Keep private mode enabled when collecting report material.
+Run `npm run verify:live` for read-only IPC discovery, payload, version, and
+invalid-input checks against an installed plugin.
 
 ## Refreshing screenshots
 

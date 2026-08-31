@@ -46,7 +46,7 @@ jobs:
           .omarchy/bin/omarchy-plugin-validate "$RUNNER_TEMP/plugin"
 
       - name: Check shell helpers
-        run: shellcheck scripts/build-site.sh scripts/capture-preview scripts/capture-screenshots scripts/capture-plugin-fingerprint scripts/check-plugin-suite scripts/publish-screenshot-assets scripts/prune-capture-recovery scripts/restore-capture-state scripts/verify-capture-postconditions tests/run_all.sh tests/run_qml_runtime.sh
+        run: shellcheck scripts/build-site.sh scripts/capture-preview scripts/capture-screenshots scripts/capture-plugin-fingerprint scripts/check-plugin-suite scripts/publish-screenshot-assets scripts/prune-capture-recovery scripts/restore-capture-state scripts/verify-capture-postconditions scripts/verify-live tests/run_all.sh tests/run_qml_runtime.sh
 
       - name: Run portable validation
         run: tests/run_all.sh --portable

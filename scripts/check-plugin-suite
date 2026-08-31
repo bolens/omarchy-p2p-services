@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+suite_root=$(cd -- "$script_dir/../.." && pwd)
+expected=(
+  omarchy-app-drawer
+  omarchy-multi-monitor-workspaces
+  omarchy-p2p-services
+  omarchy-privacy-devices
+)
+
+if (( $# > 0 )); then
+  repositories=("$@")
+else
+  repositories=()
+  for name in "${expected[@]}"; do repositories+=("$suite_root/$name"); done
+fi
+
+failures=0
+fail() { printf '%s: %s\n' "$1" "$2" >&2; failures=$((failures + 1)); }
+require_text() {
+  local repo=$1 file=$2 text=$3 message=$4
+  rg -q --fixed-strings -- "$text" "$repo/$file" || fail "$(basename "$repo")" "$message"
+}
+reject_text() {
+  local repo=$1 file=$2 text=$3 message=$4
+  if rg -q --fixed-strings -- "$text" "$repo/$file"; then fail "$(basename "$repo")" "$message"; fi
+}
+
+for repo in "${repositories[@]}"; do
+  name=$(basename "$repo")
+  [[ -d $repo/.git ]] || { fail "$name" "repository is missing"; continue; }
+  for file in .github/workflows/ci.yml .github/workflows/release.yml \
+    .github/workflows/compatibility.yml .github/dependabot.yml package.json; do
+    [[ -f $repo/$file ]] || fail "$name" "missing $file"
+  done
+
+  require_text "$repo" .github/workflows/ci.yml 'cancel-in-progress: true' "CI does not cancel superseded runs"
+  require_text "$repo" .github/workflows/release.yml 'cancel-in-progress: false' "release serialization is missing"
+  reject_text "$repo" .github/workflows/ci.yml 'runs-on: ubuntu-latest' "CI runner is not pinned"
+  reject_text "$repo" .github/workflows/release.yml 'runs-on: ubuntu-latest' "release runner is not pinned"
+  require_text "$repo" .github/workflows/ci.yml 'node-version: 24.19.0' "CI Node.js version drifted"
+  require_text "$repo" .github/workflows/release.yml '977bb373ede98d70efdf65b84cb5f73e068dcc2a' "release provenance action is not pinned"
+  require_text "$repo" .github/workflows/compatibility.yml '13f18b2cb7286fb54f87daf571a031aa6af3d8f0' "supported Omarchy ref drifted"
+  require_text "$repo" .github/workflows/compatibility.yml 'omarchy-ref: quattro' "Omarchy canary is missing"
+  require_text "$repo" .github/workflows/ci.yml 'PRIVATE KEY|gh[pousr]_' "credential-pattern archive check is missing"
+  require_text "$repo" .github/workflows/ci.yml 'accessibility.score' "exact accessibility gate is missing"
+
+  checkout_count=$(rg -o 'uses: actions/checkout@' "$repo/.github/workflows" | wc -l)
+  credential_guard_count=$(rg -o 'persist-credentials: false' "$repo/.github/workflows" | wc -l)
+  (( credential_guard_count >= checkout_count )) || fail "$name" "one or more checkouts persist credentials"
+
+  [[ $(jq -r '.engines.node // ""' "$repo/package.json") == '>=24.19.0' ]] || fail "$name" "Node.js engine drifted"
+  [[ $(jq -r '.packageManager // ""' "$repo/package.json") == 'npm@11.19.0' ]] || fail "$name" "npm version drifted"
+  [[ $(rg -c 'interval: weekly' "$repo/.github/dependabot.yml") -eq 2 ]] || fail "$name" "Dependabot schedule drifted"
+done
+
+(( failures == 0 )) || exit 1
+printf 'Plugin suite policy passed for %s repositories.\n' "${#repositories[@]}"

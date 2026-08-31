@@ -5,6 +5,10 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+### Changed
+
+- Align dependency and Node.js metadata with the maintained plugin suite.
+
 ## [0.2.0] - 2026-08-30
 
 ### Added

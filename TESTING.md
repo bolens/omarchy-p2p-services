@@ -77,3 +77,15 @@ in both durable and shell settings, reconciles and verifies the private state,
 captures tightly cropped images, strips PNG metadata, and restores the exact
 prior settings and workspace. It refuses to capture if either privacy check
 fails. Review every image before committing it as an additional safeguard.
+
+## Plugin suite policy
+
+Run the shared policy checker from the P2P Services checkout to compare all
+four sibling repositories:
+
+```sh
+scripts/check-plugin-suite
+```
+
+Pass one or more repository paths to check a smaller set. The canonical test
+runner checks the current repository automatically.

@@ -26,6 +26,7 @@ node tests/capture_fingerprint.test.js
 node tests/capture_monitor.test.js
 node tests/capture_safety.test.js
 node tests/fleet_hardening.test.js
+scripts/check-plugin-suite "$plugin_dir"
 ruby scripts/validate-issue-forms.rb
 "$python_bin" -m py_compile p2p-control backend/*.py scripts/update-screenshot-metadata
 

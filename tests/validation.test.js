@@ -12,6 +12,8 @@ assert.match(runner, /tests\/run_qml_runtime\.sh/);
 assert.match(runner, /Runtime QML tests skipped/);
 assert.match(runner, /--portable/);
 assert.match(workflow, /tests\/run_all\.sh --portable/);
+assert.match(runner, /git archive HEAD \| tar -x -C "\$validation_dir"/);
+assert.match(runner, /omarchy plugin validate "\$validation_dir"/);
 assert.doesNotMatch(workflow, /node tests\/model\.test\.js/);
 assert.match(workflow, /group: ci-\$\{\{ github\.event\.pull_request\.number \|\| github\.ref \}\}/);
 assert.match(workflow, /actions\/setup-node@[0-9a-f]{40}[^\n]*# v[0-9]+\.[0-9]+\.[0-9]+/);

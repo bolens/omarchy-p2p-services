@@ -27,7 +27,8 @@ assert.match(bar, /fixedWidth:\s*root\.bar && root\.bar\.vertical \? root\.bar\.
 assert.match(bar, /Item\s*\{[\s\S]*?id:\s*popupLayout[\s\S]*?P2PHeader[\s\S]*?Flickable\s*\{[\s\S]*?id:\s*popupScroll[\s\S]*?popupLayout\.width < Style\.space\(440\)/, "the main header and footer must remain outside the scrollable content viewport")
 assert.match(bar, /configuredPanelHeight:[\s\S]*?popupMaxHeight", 600[\s\S]*?panelViewportHeight:[\s\S]*?panelContentRevision[\s\S]*?popupScroll\.contentHeight[\s\S]*?desiredPanelHeight:[\s\S]*?contentHeight:\s*fittedContentHeight\(root\.desiredPanelHeight, root\.configuredPanelHeight\)/, "panel height must follow content up to the configured cap without collapsing its viewport")
 assert.match(bar, /id:\s*settingsPageLoader[\s\S]*?onLoaded:[\s\S]*?Qt\.callLater\(function\(\) \{ root\.panelContentRevision \+= 1 \}\)/, "lazy settings pages must publish their completed content height to the outer panel")
-assert.match(bar, /desiredPanelWidth:\s*configuredPanelWidth/, "all P2P views must retain the configured width while their height adapts")
+assert.match(bar, /mainPanelWidth:\s*Style\.space\(360\)[\s\S]*?desiredPanelWidth:\s*intrinsicMainWidth \? mainPanelWidth : configuredPanelWidth/,
+  "the main view must stay compact while settings, editors, and details retain the configured width")
 assert.match(read("scripts/capture-screenshots"), /capture_panel panel[\s\S]*?audit-main\.png/, "visual audits must retain the main fixed-chrome viewport")
 const settingsPanel = read("P2PSettingsPanel.qml")
 assert.match(bar, /P2PSettingsNavigation[\s\S]*?Flickable\s*\{[\s\S]*?id:\s*popupScroll[\s\S]*?P2PSettingsReset/, "settings navigation and reset actions must remain outside the scroll viewport")

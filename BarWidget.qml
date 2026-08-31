@@ -82,7 +82,8 @@ Panel {
   readonly property int refreshSeconds: Math.max(2, Math.min(60, Number(setting("refreshSeconds", 5)) || 5))
   readonly property int backgroundRefreshSeconds: Math.max(15, Math.min(300, Number(setting("backgroundRefreshSeconds", 15)) || 15))
   readonly property int reconcileSeconds: Math.max(30, Math.min(600, Number(setting("reconcileSeconds", 60)) || 60))
-  readonly property bool intrinsicMainWidth: editingServiceId === "" && !showingWidgetSettings && expandedServiceId === "" && serviceList.contentWidthHint > 0
+  readonly property bool intrinsicMainWidth: editingServiceId === "" && !showingWidgetSettings && expandedServiceId === ""
+  readonly property real mainPanelWidth: Style.space(360)
   readonly property real configuredPanelWidth: Style.space(Math.max(420, Math.min(800, Number(setting("popupWidth", 600)) || 600)))
   readonly property real configuredPanelHeight: Style.space(Math.max(360, Math.min(900, Number(setting("popupMaxHeight", 600)) || 600)))
   property int panelContentRevision: 0
@@ -93,7 +94,7 @@ Panel {
   }
   readonly property real desiredPanelHeight: panelChromeHeight + panelViewportHeight
   readonly property real scrollbarGutter: popupScrollBar.visible ? popupScrollBar.implicitWidth + Style.spacing.xs : 0
-  readonly property real desiredPanelWidth: configuredPanelWidth
+  readonly property real desiredPanelWidth: intrinsicMainWidth ? mainPanelWidth : configuredPanelWidth
   readonly property int pollIntervalMilliseconds: (opened ? refreshSeconds : Math.max(backgroundRefreshSeconds, refreshSeconds)) * 1000 * Model.refreshBackoff(consecutiveRefreshFailures)
   readonly property var visibleServices: {
     var revision = organizationState.revision
@@ -267,12 +268,22 @@ Panel {
   function selectableServices() {
     return visibleServices.filter(function(entry) { return !isGroupCollapsed(groupLabelFor(entry)) })
   }
+  function revealServiceForKeyboard(entry) {
+    if (!entry) return
+    var label = groupLabelFor(entry)
+    if (!label || !isGroupCollapsed(label)) return
+    var next = Object.assign({}, collapsedServiceGroups)
+    delete next[label]
+    collapsedServiceGroups = next
+  }
   function moveServiceSelection(delta) {
-    var rows = selectableServices()
+    var rows = visibleServices
     if (!rows.length) { selectedServiceId = ""; return }
     var index = rows.findIndex(function(entry) { return entry.id === selectedServiceId })
     index = Model.nextSelectionIndex(rows.length, index, delta)
-    var nextId = rows[index].id
+    var nextEntry = rows[index]
+    revealServiceForKeyboard(nextEntry)
+    var nextId = nextEntry.id
     selectedServiceId = nextId
     Qt.callLater(function() { ensureServiceVisible(nextId) })
   }
@@ -1134,8 +1145,8 @@ Panel {
           visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
           Layout.fillWidth: true
           text: popupLayout.width < Style.space(440)
-            ? "j/k move · enter details · r refresh · s settings\nMiddle customize · right details"
-            : "j/k navigate · enter details · r refresh · s settings\nCard middle: customize · right: details"
+            ? "↑/↓ or j/k move · enter details · r refresh · s settings\nMiddle customize · right details"
+            : "↑/↓ or j/k navigate · enter details · r refresh · s settings\nCard middle: customize · right: details"
           textFormat: Text.PlainText
           color: Color.muted
           horizontalAlignment: Text.AlignHCenter

@@ -114,6 +114,14 @@ ShellRoot {
       if (!widget.focusedMainReady("grid", "compact")) throw new Error("focused main view readiness failed")
       if (widget.scrollbarGutter < 0 || widget.desiredPanelWidth <= 0) throw new Error("panel scrollbar gutter sizing failed")
       if (Math.abs(widget.configuredPanelHeight - 600) > 0.01) throw new Error("configured panel height collapsed after fixed chrome layout")
+      if (!widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.mainPanelWidth || widget.mainPanelWidth >= widget.configuredPanelWidth)
+        throw new Error("main service view did not use its deterministic compact width")
+      widget.showingWidgetSettings = true
+      var settingsWidth = widget.desiredPanelWidth
+      widget.settingsPage = "packages"
+      if (settingsWidth !== widget.configuredPanelWidth || widget.desiredPanelWidth !== settingsWidth)
+        throw new Error("settings pages did not retain a consistent configured width")
+      widget.showingWidgetSettings = false
       widget.expandedServiceId = "syncthing"
       if (widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.configuredPanelWidth) throw new Error("expanded details retained narrow intrinsic panel width")
       widget.expandedServiceId = ""
@@ -195,8 +203,21 @@ ShellRoot {
       if (widget.allServiceGroupsCollapsed || widget.collapsedServiceGroups.HIDDEN !== true) throw new Error("non-persistent expand-all did not update transient visible state")
       if (root.updates !== disabledPersistenceUpdates) throw new Error("disabled collapsed-group persistence wrote settings")
       widget.setAllServiceGroupsCollapsed(true)
+      widget.selectedServiceId = ""
+      widget.moveServiceSelection(1)
+      if (widget.selectedServiceId !== "running" || widget.collapsedServiceGroups.RUNNING === true)
+        throw new Error("down/j navigation did not reveal the first collapsed service group")
+      widget.moveServiceSelection(1)
+      if (widget.selectedServiceId !== "stopped" || widget.collapsedServiceGroups.STOPPED === true)
+        throw new Error("down/j navigation did not reveal the next collapsed service group")
+      widget.selectedServiceId = ""
+      widget.collapsedServiceGroups = ({RUNNING:true,STOPPED:true,HIDDEN:true})
+      widget.moveServiceSelection(-1)
+      if (widget.selectedServiceId !== "stopped" || widget.collapsedServiceGroups.STOPPED === true)
+        throw new Error("up/k navigation did not reveal the last collapsed service group")
+      widget.expandedServiceId = ""
       widget.activateServiceSelection()
-      if (widget.selectedServiceId !== "") throw new Error("all-collapsed service activation failed")
+      if (widget.expandedServiceId !== "stopped") throw new Error("revealed service activation failed")
       widget.notificationLastAt = ({})
       widget.handleServiceTransitions([{id:"running",active:true,hasError:false}], [{id:"running",name:"Running",active:true,hasError:true}])
       if (Object.keys(widget.notificationLastAt).length !== 0) throw new Error("disabled notification consumed cooldown")

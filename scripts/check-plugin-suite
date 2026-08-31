@@ -19,13 +19,29 @@ fi
 
 failures=0
 fail() { printf '%s: %s\n' "$1" "$2" >&2; failures=$((failures + 1)); }
+has_fixed_text() {
+  local text=$1 path=$2
+  if command -v rg >/dev/null 2>&1; then
+    rg -q --fixed-strings -- "$text" "$path"
+  else
+    grep -Fq -- "$text" "$path"
+  fi
+}
+count_matches() {
+  local pattern=$1 path=$2
+  if command -v rg >/dev/null 2>&1; then
+    rg -o -- "$pattern" "$path" | wc -l
+  else
+    grep -ERho -- "$pattern" "$path" | wc -l
+  fi
+}
 require_text() {
   local repo=$1 file=$2 text=$3 message=$4
-  rg -q --fixed-strings -- "$text" "$repo/$file" || fail "$(basename "$repo")" "$message"
+  has_fixed_text "$text" "$repo/$file" || fail "$(basename "$repo")" "$message"
 }
 reject_text() {
   local repo=$1 file=$2 text=$3 message=$4
-  if rg -q --fixed-strings -- "$text" "$repo/$file"; then fail "$(basename "$repo")" "$message"; fi
+  if has_fixed_text "$text" "$repo/$file"; then fail "$(basename "$repo")" "$message"; fi
 }
 
 for repo in "${repositories[@]}"; do
@@ -47,13 +63,13 @@ for repo in "${repositories[@]}"; do
   require_text "$repo" .github/workflows/ci.yml 'PRIVATE KEY|gh[pousr]_' "credential-pattern archive check is missing"
   require_text "$repo" .github/workflows/ci.yml 'accessibility.score' "exact accessibility gate is missing"
 
-  checkout_count=$(rg -o 'uses: actions/checkout@' "$repo/.github/workflows" | wc -l)
-  credential_guard_count=$(rg -o 'persist-credentials: false' "$repo/.github/workflows" | wc -l)
+  checkout_count=$(count_matches 'uses: actions/checkout@' "$repo/.github/workflows")
+  credential_guard_count=$(count_matches 'persist-credentials: false' "$repo/.github/workflows")
   (( credential_guard_count >= checkout_count )) || fail "$name" "one or more checkouts persist credentials"
 
   [[ $(jq -r '.engines.node // ""' "$repo/package.json") == '>=24.19.0' ]] || fail "$name" "Node.js engine drifted"
   [[ $(jq -r '.packageManager // ""' "$repo/package.json") == 'npm@11.19.0' ]] || fail "$name" "npm version drifted"
-  [[ $(rg -c 'interval: weekly' "$repo/.github/dependabot.yml") -eq 2 ]] || fail "$name" "Dependabot schedule drifted"
+  [[ $(count_matches 'interval: weekly' "$repo/.github/dependabot.yml") -eq 2 ]] || fail "$name" "Dependabot schedule drifted"
 done
 
 (( failures == 0 )) || exit 1

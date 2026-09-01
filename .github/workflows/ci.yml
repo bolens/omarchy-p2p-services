@@ -147,10 +147,13 @@ jobs:
     steps:
       - name: Require selected plugin checks
         env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
           SELECTED: ${{ needs.changes.outputs.plugin }}
           FAST_RESULT: ${{ needs.plugin-fast.result }}
           QML_RESULT: ${{ needs.plugin-qml.result }}
         run: |
+          [[ "$CHANGES_RESULT" == success ]]
+          [[ "$SELECTED" == true || "$SELECTED" == false ]]
           [[ "$SELECTED" != true ]] || { [[ "$FAST_RESULT" == success ]] && [[ "$QML_RESULT" == success ]]; }
 
   repository-checks:
@@ -220,7 +223,10 @@ jobs:
     steps:
       - name: Require selected repository checks
         env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
           SELECTED: ${{ needs.changes.outputs.repository }}
           REPOSITORY_RESULT: ${{ needs.repository-checks.result }}
         run: |
+          [[ "$CHANGES_RESULT" == success ]]
+          [[ "$SELECTED" == true || "$SELECTED" == false ]]
           [[ "$SELECTED" != true ]] || [[ "$REPOSITORY_RESULT" == success ]]

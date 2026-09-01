@@ -13,6 +13,8 @@ assert.match(runner, /P2P_RUNTIME_TESTS/);
 assert.match(runner, /tests\/run_qml_runtime\.sh/);
 assert.match(runner, /Runtime QML tests skipped/);
 assert.match(runner, /--portable/);
+assert.match(runner, /QMLLINT:-\/usr\/lib\/qt6\/bin\/qmllint/);
+assert.match(runner, /QMLFORMAT:-\/usr\/lib\/qt6\/bin\/qmlformat/);
 assert.match(workflow, /tests\/run_all\.sh --portable/);
 assert.match(runner, /git archive HEAD \| tar -x -C "\$validation_dir"/);
 assert.match(runner, /omarchy plugin validate "\$validation_dir"/);

@@ -36,8 +36,12 @@ if [[ $portable == true ]]; then
 fi
 
 shell_root="$(find_omarchy_shell_root)"
-qmllint -I "$shell_root" -I . Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml
-qmlformat -n Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
+qmllint_bin=${QMLLINT:-/usr/lib/qt6/bin/qmllint}
+qmlformat_bin=${QMLFORMAT:-/usr/lib/qt6/bin/qmlformat}
+[[ -x $qmllint_bin ]] || { printf 'Qt 6 qmllint not found: %s\n' "$qmllint_bin" >&2; exit 1; }
+[[ -x $qmlformat_bin ]] || { printf 'Qt 6 qmlformat not found: %s\n' "$qmlformat_bin" >&2; exit 1; }
+"$qmllint_bin" -I "$shell_root" -I . Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml
+"$qmlformat_bin" -n Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
 validation_dir=$(mktemp -d)
 trap 'rm -rf -- "$validation_dir"' EXIT
 git archive HEAD | tar -x -C "$validation_dir"

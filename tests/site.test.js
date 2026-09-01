@@ -5,6 +5,8 @@ const path = require("node:path");
 const { dimensions } = require("./png");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "docs/index.html"), "utf8");
+const themeCss = fs.readFileSync(path.join(root, "docs/theme.css"), "utf8");
+const themeJs = fs.readFileSync(path.join(root, "docs/theme.js"), "utf8");
 const notFound = fs.readFileSync(path.join(root, "docs/404.html"), "utf8");
 function cssBlock(source, marker) {
   const start = source.indexOf(marker);
@@ -30,6 +32,12 @@ assert.match(html, /name="twitter:card" content="summary_large_image"/);
 assert.match(html, /type="application\/ld\+json"/);
 assert.match(html, /"softwareVersion":"__PLUGIN_VERSION__"/);
 assert.match(html, /prefers-reduced-motion/);
+assert.match(html, /prefers-color-scheme: light/);
+assert.match(html, /\? "github-light" : "p2p"/);
+for (const theme of ["github-light", "catppuccin-latte", "solarized-light"])
+  assert.match(html, new RegExp(`value="${theme}"`), `missing ${theme} option`);
+assert.match(themeCss, /\[data-theme="github-light"\]\{color-scheme:light/);
+assert.match(themeJs, /localStorage\.setItem/);
 const mobileCss = cssBlock(html, "@media(max-width:800px)");
 assert.match(mobileCss, /grid-template-columns:minmax\(0,1fr\)/);
 assert.match(mobileCss, /\.showcase>\*\{min-width:0\}/);
@@ -47,6 +55,7 @@ for (const tabContract of ["aria-controls", "aria-labelledby", "tabIndex", "hist
   assert.ok(html.includes(tabContract), `accessible tabs are missing ${tabContract}`);
 assert.match(notFound, /<html lang="en">/);
 assert.match(notFound, /name="robots" content="noindex"/);
+assert.match(notFound, /prefers-color-scheme:light/);
 assert.equal((html.match(/<div class="showcase" data-showcase>/g) || []).length, 2);
 assert.equal((html.match(/role="tablist"/g) || []).length, 2);
 assert.equal((html.match(/<button class="tab" role="tab"/g) || []).length, 11);

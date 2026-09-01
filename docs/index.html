@@ -1,11 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-default-theme="p2p" data-theme-storage="p2p-services-site-theme">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>P2P Services · Omarchy Shell plugin</title>
   <meta name="description" content="Discover, inspect, and control local P2P clients and overlay networks from Omarchy Shell.">
   <meta name="theme-color" content="#08111f">
+  <script>
+    try {
+      const requested = new URLSearchParams(location.search).get("theme");
+      const saved = localStorage.getItem("p2p-services-site-theme");
+      const preferred = matchMedia("(prefers-color-scheme: light)").matches ? "github-light" : "p2p";
+      document.documentElement.dataset.theme = requested || saved || preferred;
+    } catch { document.documentElement.dataset.theme = "p2p"; }
+  </script>
   <meta property="og:title" content="P2P Services for Omarchy">
   <meta property="og:description" content="One privacy-aware control surface for local P2P and overlay-network services.">
   <meta property="og:image" content="https://bolens.github.io/omarchy-p2p-services/social-card.png">
@@ -36,10 +44,11 @@
     @media(max-width:800px){header{position:static}header nav{flex-wrap:wrap;gap:.6rem 1rem}header nav .brand{width:100%}header nav span{display:none}header nav a:not(.brand){display:inline;font-size:.78rem}.hero{grid-template-columns:minmax(0,1fr);padding:4rem 0}.network{display:none}.stats,.features,.guide,.install,.showcase{grid-template-columns:minmax(0,1fr)}.hero>*,.stats>*,.features>*,.guide>*,.install>*,.showcase>*{min-width:0}.guide article.wide{grid-column:auto}.showcase-copy{position:static}.tabs{max-width:100%;flex-direction:row;overflow:auto}.tab{white-space:nowrap}.stage,.shot{min-width:0;width:100%}.shot{max-width:640px}.hero h1{font-size:4rem}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<header><nav><a class="brand" href="#"><b>◈</b> P2P SERVICES</a><span></span><a href="#interface">Interface</a><a href="#guide">Guide</a><a href="#install">Install</a><a href="https://github.com/bolens/omarchy-p2p-services">GitHub ↗</a></nav></header>
+<header><nav><a class="brand" href="#"><b>◈</b> P2P SERVICES</a><span></span><a href="#interface">Interface</a><a href="#guide">Guide</a><a href="#install">Install</a><a href="https://github.com/bolens/omarchy-p2p-services">GitHub ↗</a><label class="theme-picker"><span>Theme</span><select data-theme-select aria-label="Site color theme"><option value="p2p">P2P</option><option value="tokyo-night">Tokyo Night</option><option value="catppuccin">Catppuccin</option><option value="gruvbox">Gruvbox</option><option value="nord">Nord</option><option value="github-dark">GitHub Dark</option><option value="github-light">GitHub Light</option><option value="catppuccin-latte">Catppuccin Latte</option><option value="solarized-light">Solarized Light</option></select></label></nav></header>
 <main id="main">
   <section class="hero">
     <div><p class="eyebrow">Omarchy Shell plugin · v__PLUGIN_VERSION__</p><h1>Your peers.<em>One surface.</em></h1><p class="lead">Discover, organize, inspect, and control local P2P clients and overlay-network daemons without turning your desktop into a dashboard.</p><div class="actions"><a class="button primary" href="#install">Install plugin</a><a class="button" href="#interface">See it live</a></div></div>
@@ -72,6 +81,7 @@
 omarchy restart shell</code></pre></div></div></section>
 </main>
 <footer>P2P Services is an independent community plugin for Omarchy · <a href="#guide">User guide</a> · <a href="https://github.com/bolens/omarchy-p2p-services/blob/main/SUPPORT.md">Support</a> · <a href="https://github.com/bolens/omarchy-p2p-services">Source</a></footer>
+<script src="theme.js"></script>
 <script>
   document.documentElement.classList.add("enhanced");
   document.querySelectorAll("[data-showcase]").forEach(showcase => {

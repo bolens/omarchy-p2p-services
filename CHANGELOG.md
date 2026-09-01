@@ -9,7 +9,7 @@ All notable changes to P2P Services are documented here. This project follows
 
 ### Fixed
 
-- Delegate pull-request read permission to the reusable validation workflow so
+- Delegate `pull-requests: read` to the reusable validation workflow so
   tag-triggered releases can start after CI path filtering was introduced.
 
 ## [0.3.2] - 2026-09-01

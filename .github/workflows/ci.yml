@@ -73,7 +73,7 @@ jobs:
             --volume "$GITHUB_WORKSPACE:/workspace:ro" \
             --workdir /workspace \
             archlinux@sha256:4bf33b21a715aac0b48ce6e9eaed4782a898eae96f88f5da3635572129c2584a \
-            bash -lc 'pacman -Syu --noconfirm quickshell qt6-declarative >/dev/null && /usr/lib/qt6/bin/qmllint -I .omarchy/shell -I . BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml'
+            bash -lc 'pacman -Syu --noconfirm quickshell qt6-declarative >/dev/null && /usr/lib/qt6/bin/qmllint -I .omarchy/shell -I . -i qmldir -i .omarchy/shell/Commons/qmldir -i .omarchy/shell/Ui/qmldir BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml'
 
   repository:
     name: Repository

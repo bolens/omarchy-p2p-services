@@ -1,7 +1,7 @@
 name: Service detection problem
 description: Report a missing or incorrectly classified P2P service.
 title: "[Detection]: "
-labels: [detection]
+labels: [bug, detection, needs-triage]
 body:
   - type: input
     id: service

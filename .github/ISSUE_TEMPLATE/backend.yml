@@ -1,7 +1,7 @@
 name: Backend, package, or action problem
 description: Report systemd, container, package, proxy, installation, or service-control failures.
 title: "[Backend]: "
-labels: [bug, backend]
+labels: [bug, backend, needs-triage]
 body:
   - type: markdown
     attributes:

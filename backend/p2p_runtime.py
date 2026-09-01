@@ -8,7 +8,20 @@ import re
 import shutil
 
 from backend.p2p_metrics import parse_netio
+from backend.p2p_lifecycle import classify_container_event, classify_systemd_restart_log, select_restart_kind
 from backend.p2p_validation import safe_console_host
+
+
+def parse_json_records(text):
+  """Accept a JSON object, array, or newline-delimited object stream."""
+  content=str(text or "").strip()
+  if not content: return []
+  try: decoded=json.loads(content)
+  except (TypeError,ValueError,json.JSONDecodeError):
+    decoded=[json.loads(line) for line in content.splitlines() if line.strip()]
+  records=decoded if isinstance(decoded,list) else [decoded]
+  if not all(isinstance(record,dict) for record in records): raise ValueError("JSON records must be objects")
+  return records
 
 
 class RuntimeProbe:
@@ -25,8 +38,12 @@ class RuntimeProbe:
     """Return one process snapshot shared by detection, PID, and uptime queries."""
     if self.snapshot.process_rows is not None: return self.snapshot.process_rows
     result=self.run([self.ps,"-eo","uid=,pid=,etimes=,comm=,args="],3)
+    if not result or result.returncode != 0:
+      self.snapshot.warning("process_snapshot_unavailable")
+      self.snapshot.process_rows=[]
+      return self.snapshot.process_rows
     rows=[]
-    for line in ([] if not result else result.stdout.splitlines()):
+    for line in result.stdout.splitlines():
       fields=line.strip().split(None,4)
       if len(fields)<4 or not all(value.isdigit() for value in fields[:3]): continue
       uid,pid,etimes,comm=int(fields[0]),int(fields[1]),int(fields[2]),fields[3]
@@ -59,6 +76,8 @@ class RuntimeProbe:
     properties="Id,LoadState,ActiveState,SubState,Result,ExecMainStatus,MainPID,ActiveEnterTimestampMonotonic,ActiveStateChangeTimestamp,NRestarts"
     result=self.run(prefix+["show"]+units+["--property="+properties,"--no-pager"],8) if units else None
     records={}; current={}
+    if units and (not result or result.returncode != 0):
+      self.snapshot.warning("systemd_snapshot_unavailable",scope="user" if user else "system")
     for line in ([] if not result else result.stdout.splitlines())+[""]:
       if not line.strip():
         unit=current.get("Id","")
@@ -90,7 +109,10 @@ class RuntimeProbe:
     if not unit: return 0
     values=self.unit_snapshot(user).get(unit,{})
     try:
-      entered=int(values.get("ActiveEnterTimestampMonotonic","0")); boot=float(pathlib.Path("/proc/uptime").read_text().split()[0])*1000000
+      entered=int(values.get("ActiveEnterTimestampMonotonic","0"))
+      if self.snapshot.boot_uptime_microseconds is None:
+        self.snapshot.boot_uptime_microseconds=float(pathlib.Path("/proc/uptime").read_text().split()[0])*1000000
+      boot=self.snapshot.boot_uptime_microseconds
       return max(0,int((boot-entered)/1000000)) if values.get("ActiveState") == "active" and entered else 0
     except (OSError,ValueError,IndexError): return 0
   
@@ -113,6 +135,101 @@ class RuntimeProbe:
       if state.get("OOMKilled"): reasons.append("container OOM-killed")
       if state.get("Error"): reasons.append(str(state.get("Error"))[:160])
     return restart_count,transition,"; ".join(dict.fromkeys(reasons))
+
+  def service_restart_kind(self, unit, user, docker_items, restart_count):
+    """Classify the latest automatic restart without exposing journal content."""
+    if restart_count <= 0: return ""
+    recent_items=[]
+    for item in docker_items:
+      state=item.get("State",{})
+      latest=str(state.get("StartedAt") or state.get("FinishedAt") or "").replace("Z","+00:00")
+      try: age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(latest).astimezone(datetime.timezone.utc)).total_seconds()
+      except (TypeError,ValueError): age=301
+      if age > 300: continue
+      recent_items.append((item,latest))
+      if state.get("OOMKilled") or state.get("Error") or state.get("ExitCode") not in (None,0,"0"):
+        return "crash"
+    event_kinds=[]
+    until=datetime.datetime.now(datetime.timezone.utc).isoformat()
+    for item,latest in recent_items:
+      if int(item.get("RestartCount",0) or 0) <= 0: continue
+      command=item.get("_runtime_cmd")
+      name=str(item.get("Name","")).lstrip("/")
+      if not command or not name: continue
+      cache_key=(item.get("_runtime"),name,int(item.get("RestartCount",0) or 0),latest)
+      if cache_key not in self.snapshot.lifecycle_kinds:
+        output_format="{{json .}}" if item.get("_runtime") == "docker" else "json"
+        result=self.run([command,"events","--since","5m","--until",until,"--filter","container="+name,"--format",output_format],4)
+        kinds=[]
+        if not result or result.returncode != 0:
+          self.snapshot.warning("container_events_unavailable",runtime=str(item.get("_runtime") or "container"))
+        else:
+          invalid=False
+          for line in result.stdout.splitlines():
+            if not line.strip(): continue
+            try: classification=classify_container_event(json.loads(line))
+            except (TypeError,ValueError,json.JSONDecodeError): classification=None; invalid=True
+            if classification: kinds.append(classification[0])
+          if invalid: self.snapshot.warning("container_events_invalid",runtime=str(item.get("_runtime") or "container"))
+        self.snapshot.lifecycle_kinds[cache_key]=select_restart_kind(kinds)
+      event_kinds.append(self.snapshot.lifecycle_kinds[cache_key])
+    if "oom" in event_kinds or "crash" in event_kinds: return "crash"
+    if "update" in event_kinds: return "update"
+    if not unit: return "restart"
+    uptime=self.unit_uptime(unit,user)
+    if uptime > 300: return "restart"
+    cache_key=("systemd",user,unit,restart_count)
+    if cache_key in self.snapshot.lifecycle_kinds: return self.snapshot.lifecycle_kinds[cache_key]
+    journalctl=os.path.join(os.path.dirname(self.systemctl),"journalctl")
+    command=[journalctl] + (["--user"] if user else []) + ["--unit",unit,"--lines=80","--no-pager","--output=cat"]
+    result=self.run(command,4)
+    if not result or result.returncode != 0:
+      self.snapshot.warning("systemd_journal_unavailable",scope="user" if user else "system")
+      return "restart"
+    lines=result.stdout.splitlines()
+    markers=[index for index,line in enumerate(lines) if "scheduled restart job" in line.lower()]
+    if markers:
+      end=markers[-1]+1
+      start=markers[-2]+1 if len(markers)>1 else max(0,end-40)
+      text="\n".join(lines[start:end]).lower()
+    else:
+      text="\n".join(lines[-40:]).lower()
+    kind=classify_systemd_restart_log(text)
+    self.snapshot.lifecycle_kinds[cache_key]=kind
+    return kind
+
+  def service_stop_kind(self, unit, user, process_names, active):
+    """Return a confirmed stop cause; absence of evidence stays unclassified."""
+    if active: return "", ""
+    if unit:
+      values=self.unit_snapshot(user).get(unit,{})
+      result=str(values.get("Result","") or "")
+      status=str(values.get("ExecMainStatus","0") or "0")
+      if result not in ("","success") or status not in ("","0"):
+        return "crash", "systemd-failure"
+      return "", ""
+    if self.snapshot.recent_coredumps is None:
+      coredumpctl=os.path.join(os.path.dirname(self.systemctl),"coredumpctl")
+      result=self.run([coredumpctl,"list","--json=short","--since=-2min","--no-pager"],4)
+      stderr=str(getattr(result,"stderr","") or "") if result else ""
+      no_records=bool(result and result.returncode == 1 and "no coredumps found" in stderr.lower() and "failed" not in stderr.lower())
+      if no_records:
+        self.snapshot.recent_coredumps=[]
+      elif not result or result.returncode != 0:
+        self.snapshot.warning("coredump_snapshot_unavailable")
+        self.snapshot.recent_coredumps=[]
+      else:
+        try:
+          self.snapshot.recent_coredumps=parse_json_records(result.stdout)
+        except (TypeError,ValueError,json.JSONDecodeError):
+          self.snapshot.warning("coredump_snapshot_invalid")
+          self.snapshot.recent_coredumps=[]
+    wanted={str(name) for name in process_names}
+    for record in self.snapshot.recent_coredumps:
+      executable=str(record.get("exe") or record.get("EXE") or record.get("COREDUMP_EXE") or "")
+      command=str(record.get("comm") or record.get("COMM") or record.get("COREDUMP_COMM") or "")
+      if os.path.basename(executable) in wanted or command in wanted: return "crash", "core-dump"
+    return "", ""
   
   def container_uptime(self, item):
     if not item.get("State",{}).get("Running"): return 0
@@ -130,15 +247,22 @@ class RuntimeProbe:
       if not executable: continue
       executable=os.path.realpath(executable)
       listed=self.run([executable,"ps","-aq" if self.snapshot.all_containers else "-q"],4)
+      if not listed or listed.returncode != 0:
+        self.snapshot.warning("container_list_unavailable",runtime=runtime)
+        continue
       ids=listed.stdout.split() if listed and listed.returncode == 0 else []
       if not ids: continue
       inspected=self.run([executable,"inspect"]+ids,10)
-      if not inspected or inspected.returncode != 0: continue
+      if not inspected or inspected.returncode != 0:
+        self.snapshot.warning("container_inspect_unavailable",runtime=runtime)
+        continue
       try:
         found=json.loads(inspected.stdout)
+        if not isinstance(found,list): raise ValueError("container inspection is not a list")
         for item in found: item["_runtime"]=runtime; item["_runtime_cmd"]=executable
         self.snapshot.containers += found
-      except Exception: pass
+      except (TypeError,ValueError,json.JSONDecodeError):
+        self.snapshot.warning("container_inspect_invalid",runtime=runtime)
     self.snapshot.containers.sort(key=lambda item:(item.get("_runtime","docker"),str(item.get("Name","")).lstrip("/")))
     return self.snapshot.containers
   
@@ -155,10 +279,14 @@ class RuntimeProbe:
     for (runtime,command),names in groups.items():
       args=[command,"stats","--no-stream"] + (["--format","{{json .}}"] if runtime=="docker" else ["--format","json"]) + names
       result=self.run(args,15)
-      if not result or result.returncode != 0: continue
+      if not result or result.returncode != 0:
+        self.snapshot.warning("container_stats_unavailable",runtime=runtime)
+        continue
       try:
         records=json.loads(result.stdout) if result.stdout.lstrip().startswith("[") else [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
-      except (ValueError,TypeError): continue
+      except (ValueError,TypeError,json.JSONDecodeError):
+        self.snapshot.warning("container_stats_invalid",runtime=runtime)
+        continue
       for record in records:
         name=str(record.get("Name") or record.get("Container") or record.get("name") or "").lstrip("/")
         netio=record.get("NetIO") or record.get("NetInput") or record.get("netio") or ""

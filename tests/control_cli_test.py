@@ -356,12 +356,42 @@ class ControlCliTests(ControlTestCase):
     self.assertEqual(errors, "")
     self.assertEqual([call.args[0] for call in launch.call_args_list], [
       ["/usr/bin/busctl", "monitor", "org.freedesktop.systemd1"],
-      ["/usr/bin/docker", "events", "--filter", "type=container"],
+      ["/usr/bin/docker", "events", "--filter", "type=container", "--format", "{{json .}}"],
     ])
     self.assertEqual(selector.unregistered, [processes[0].stdout])
     self.assertTrue(selector.closed)
     self.assertTrue(all(process.terminated for process in processes))
     self.assertEqual(signal_calls[-1], (CONTROL.signal.SIGTERM, previous_handler))
+
+  def test_watch_normalizes_docker_lifecycle_events(self):
+    raw = json.dumps({"Action":"die","time":100,"Actor":{"Attributes":{"name":"aria2","image":"aria2","exitCode":"9"}}}) + "\n"
+    class Stream:
+      def readline(self): return raw
+    class Process:
+      stdout = Stream()
+      def poll(self): return None
+      def terminate(self): pass
+    class Selector:
+      def __init__(self): self.calls = 0
+      def register(self, *_args): pass
+      def unregister(self, *_args): pass
+      def close(self): pass
+      def select(self, timeout=None):
+        self.calls += 1
+        if self.calls == 1: return [(types.SimpleNamespace(fileobj=Process.stdout), None)]
+        raise KeyboardInterrupt()
+    previous_handler = object()
+    with mock.patch.object(CONTROL.shutil, "which", side_effect=lambda name: "/usr/bin/docker" if name == "docker" else None), \
+         mock.patch.object(CONTROL.os.path, "realpath", side_effect=lambda path: path), \
+         mock.patch.object(CONTROL.subprocess, "Popen", return_value=Process()), \
+         mock.patch.object(CONTROL.selectors, "DefaultSelector", return_value=Selector()), \
+         mock.patch.object(CONTROL.signal, "signal", return_value=previous_handler), \
+         mock.patch.object(CONTROL.time, "monotonic", return_value=10.0):
+      output, _errors = self.invoke("watch")
+    messages = [json.loads(line) for line in output.splitlines()]
+    self.assertEqual(messages[1]["serviceId"], "aria2")
+    self.assertEqual(messages[1]["lifecycleKind"], "crash")
+    self.assertNotIn("exitCode", messages[1])
 
   def test_copy_diagnostics_defaults_private_and_requires_explicit_unsafe(self):
     service = self.service("aria2")

@@ -14,6 +14,7 @@ class SnapshotContextTests(unittest.TestCase):
     self.assertIsNone(context.process_by_pid)
     self.assertIsNone(context.socket_by_pid)
     self.assertIsNone(context.container_matches)
+    self.assertIsNone(context.boot_uptime_microseconds)
     self.assertEqual(context.diagnostics[0]["code"],"partial_probe")
 
 

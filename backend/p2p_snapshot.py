@@ -18,6 +18,9 @@ class SnapshotContext:
     self.socket_lines = None
     self.socket_by_pid = None
     self.unit_snapshots = {}
+    self.recent_coredumps = None
+    self.lifecycle_kinds = {}
+    self.boot_uptime_microseconds = None
     self.proxy_files = {}
     self.all_containers = all_containers
 

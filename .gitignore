@@ -6,4 +6,5 @@ node_modules/
 *.tar.gz
 *.tar.gz.sha256
 _site/
+.audit/
 npm-debug.log*

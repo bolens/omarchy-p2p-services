@@ -28,6 +28,10 @@
   Python defaults are read from `manifest.json`.
 - `backend/p2p_validation.py` is the shared security boundary for user-controlled HTTP
   URLs and console hosts. `p2p_metrics.py` owns pure container-counter parsing.
+- `backend/p2p_lifecycle.py` converts Docker, Podman, and bounded systemd journal
+  evidence into privacy-safe lifecycle classifications and selects the cause of
+  the latest restart sequence. The shared service retains container evidence for
+  30 seconds so a later start event cannot hide the crash that caused it.
 - `p2p_support.py` projects whole-plugin diagnostics into aggregate-only reports.
   `p2p_event_store.py` persists a bounded journal whose schema cannot carry
   service names or arbitrary detail.
@@ -72,6 +76,11 @@ points and sibling imports relative to the installed plugin directory.
   application.
 - `SnapshotContext` is the only owner of mutable discovery caches; adding a
   probe must extend its reset boundary.
+- `RuntimeProbe` reports process, socket, coredump, lifecycle-history, and
+  runtime snapshot failures through privacy-safe diagnostic codes. Diagnostics
+  contain only bounded codes and allowlisted runtime or systemd scopes, never
+  command output. The snapshot caches the boot clock used by all systemd uptime
+  calculations.
 - `RuntimeProbe`, `ServiceInspector`, `SettingsStore`, and `ConfigBackupStore`
   receive their collaborators or storage roots so tests can exercise them
   without implicit live-state dependencies.
@@ -87,6 +96,9 @@ points and sibling imports relative to the installed plugin directory.
   data reaches the UI.
 - Support reports force the private projection; event journal records accept
   only allowlisted kinds, bounded counts, and timestamps.
+- Lifecycle notifications require backend evidence. systemd uses exit state and
+  recent journal records, containers use runtime events, and process-only
+  services require a matching recent core dump. Unknown restarts stay neutral.
 - Service, package, unit, executable, and privileged actions are allowlisted.
 - Service categories flow from the canonical registry through status projection
   into search, grouping, and category bar segments; the UI does not maintain a

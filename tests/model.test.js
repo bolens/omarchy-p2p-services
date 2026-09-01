@@ -189,6 +189,11 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.transitionNotifications([
   {kind:"updated",count:1,title:"P2P service updated",body:"Freenet updated and restarted"},
   {kind:"crashed",count:1,title:"P2P service crashed",body:"Daemon crashed and restarted"}
 ]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.transitionNotifications([
+  {id:"syncthing",label:"Syncthing",kind:"replaced"}
+]))), [
+  {kind:"replaced",count:1,title:"P2P container replaced",body:"Syncthing container was replaced"}
+]);
 assert.deepEqual(JSON.parse(JSON.stringify(context.serviceTransitions(
   [{id:"process",active:true,restartCount:0},{id:"container",active:true,restartCount:0}],
   [{id:"process",active:false,restartCount:0,stopKind:"crash",stopCause:"core-dump"},{id:"container",active:true,restartCount:1,restartKind:"crash",restartCause:"oom"}], 3

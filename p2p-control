@@ -220,7 +220,7 @@ def watch_events():
     for source,command in commands:
       try:
         process=subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
-        processes.append(process); sources[id(process.stdout)]=source; selector.register(process.stdout,selectors.EVENT_READ)
+        processes.append(process); sources[process.stdout]=source; selector.register(process.stdout,selectors.EVENT_READ)
       except OSError: pass
     last_emit=0.0; last_heartbeat=0.0
     print(json.dumps(watch_event_payload(),separators=(",",":")),flush=True)
@@ -234,11 +234,13 @@ def watch_events():
         if not line:
           try: selector.unregister(key.fileobj)
           except (KeyError,ValueError): pass
+          sources.pop(key.fileobj,None)
+          key.fileobj.close()
           continue
         now=time.monotonic()
         lifecycle=None
-        if sources.get(id(key.fileobj)) in ("docker","podman"):
-          try: lifecycle=normalize_container_event(sources[id(key.fileobj)],json.loads(line),all_services(),DOCKER_ALIASES)
+        if sources.get(key.fileobj) in ("docker","podman"):
+          try: lifecycle=normalize_container_event(sources[key.fileobj],json.loads(line),all_services(),DOCKER_ALIASES)
           except (TypeError,ValueError,json.JSONDecodeError): lifecycle=None
         if lifecycle or now-last_emit >= 1.0:
           print(json.dumps(watch_event_payload("changed",lifecycle=lifecycle),separators=(",",":")),flush=True); last_emit=now

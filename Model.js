@@ -724,26 +724,26 @@ function transitionNotifications(changes) {
     groups[change.kind].push(change)
   })
   var copy = {
-    stopped:["P2P services stopped", "stopped unexpectedly"],
-    unhealthy:["P2P services need attention", "became unhealthy"],
-    recovered:["P2P services recovered", "are healthy again"],
-    updated:["P2P services updated", "updated and restarted"],
-    replaced:["P2P containers replaced", "were replaced"],
-    crashed:["P2P services crashed", "crashed and restarted"],
-    restarts:["P2P restart thresholds", "crossed the restart threshold"]
+    stopped:{one:"P2P service stopped",many:"P2P services stopped",body:"stopped unexpectedly"},
+    unhealthy:{one:"P2P service needs attention",many:"P2P services need attention",body:"became unhealthy"},
+    recovered:{one:"P2P service recovered",many:"P2P services recovered",body:"are healthy again"},
+    updated:{one:"P2P service updated",many:"P2P services updated",body:"updated and restarted"},
+    replaced:{one:"P2P container replaced",many:"P2P containers replaced",body:"were replaced"},
+    crashed:{one:"P2P service crashed",many:"P2P services crashed",body:"crashed and restarted"},
+    restarts:{one:"P2P restart threshold",many:"P2P restart thresholds",body:"crossed the restart threshold"}
   }
   return order.filter(function(kind) { return groups[kind] && groups[kind].length }).map(function(kind) {
     var entries = groups[kind], labels = entries.map(function(entry) { return String(entry.label || entry.id || "Service") })
     if (entries.length === 1) {
-      var entry = entries[0], suffix = copy[kind][1]
+      var entry = entries[0], suffix = copy[kind].body
       if (kind === "recovered") suffix = "is healthy again"
       if (kind === "updated") suffix = (Number(entry.count) || 0) > 0 ? "updated and restarted" : "updated"
       if (kind === "replaced") suffix = "container was replaced"
       if (kind === "crashed") suffix = entry.cause === "oom" ? "ran out of memory and restarted" : (Number(entry.count) || 0) > 0 ? "crashed and restarted" : "crashed"
       if (kind === "restarts") suffix = "has restarted " + (Number(entry.count) || 0) + " times"
-      return {kind:kind,count:1,title:copy[kind][0].replace("services", "service").replace("thresholds", "threshold"),body:labels[0] + " " + suffix}
+      return {kind:kind,count:1,title:copy[kind].one,body:labels[0] + " " + suffix}
     }
-    return {kind:kind,count:entries.length,title:copy[kind][0],body:labels.slice(0, 3).join(", ") + (labels.length > 3 ? " and " + (labels.length - 3) + " more" : "") + " · " + copy[kind][1]}
+    return {kind:kind,count:entries.length,title:copy[kind].many,body:labels.slice(0, 3).join(", ") + (labels.length > 3 ? " and " + (labels.length - 3) + " more" : "") + " · " + copy[kind].body}
   })
 }
 

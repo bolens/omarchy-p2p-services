@@ -5,6 +5,17 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "docs/index.html"), "utf8");
 const notFound = fs.readFileSync(path.join(root, "docs/404.html"), "utf8");
+function cssBlock(source, marker) {
+  const start = source.indexOf(marker);
+  assert.notEqual(start, -1, `missing ${marker}`);
+  const open = source.indexOf("{", start);
+  let depth = 0;
+  for (let i = open; i < source.length; i++) {
+    if (source[i] === "{") depth++;
+    else if (source[i] === "}" && --depth === 0) return source.slice(open + 1, i);
+  }
+  assert.fail(`unclosed ${marker}`);
+}
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
 assert.equal(new Set(ids).size, ids.length, "site element IDs must be unique");
 for (const match of html.matchAll(/href="#([^"]+)"/g))
@@ -22,7 +33,10 @@ assert.match(html, /name="twitter:card" content="summary_large_image"/);
 assert.match(html, /type="application\/ld\+json"/);
 assert.match(html, /"softwareVersion":"__PLUGIN_VERSION__"/);
 assert.match(html, /prefers-reduced-motion/);
-assert.match(html, /@media\(max-width:800px\)[\s\S]*grid-template-columns:minmax\(0,1fr\)[\s\S]*\.showcase>\*\{min-width:0\}[\s\S]*\.stage,\.shot\{min-width:0;width:100%\}/);
+const mobileCss = cssBlock(html, "@media(max-width:800px)");
+assert.match(mobileCss, /grid-template-columns:minmax\(0,1fr\)/);
+assert.match(mobileCss, /\.showcase>\*\{min-width:0\}/);
+assert.match(mobileCss, /\.stage,\.shot\{min-width:0;width:100%\}/);
 assert.match(html, /bolens\/omarchy-p2p-services/);
 assert.match(html, /__PLUGIN_VERSION__/);
 assert.match(html, /privacy filter is forced on/i);

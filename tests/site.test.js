@@ -22,6 +22,7 @@ assert.match(html, /name="twitter:card" content="summary_large_image"/);
 assert.match(html, /type="application\/ld\+json"/);
 assert.match(html, /"softwareVersion":"__PLUGIN_VERSION__"/);
 assert.match(html, /prefers-reduced-motion/);
+assert.match(html, /@media\(max-width:800px\)[\s\S]*grid-template-columns:minmax\(0,1fr\)[\s\S]*\.showcase>\*\{min-width:0\}[\s\S]*\.stage,\.shot\{min-width:0;width:100%\}/);
 assert.match(html, /bolens\/omarchy-p2p-services/);
 assert.match(html, /__PLUGIN_VERSION__/);
 assert.match(html, /privacy filter is forced on/i);

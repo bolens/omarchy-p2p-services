@@ -5,6 +5,13 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-09-01
+
+### Added
+
+- Add complete favicon, touch-icon, install-manifest, and social-card metadata
+  to the Pages site, backed by regression checks.
+
 ## [0.3.5] - 2026-09-01
 
 ### Fixed
@@ -142,7 +149,8 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.2...v0.3.3

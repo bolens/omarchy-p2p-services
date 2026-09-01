@@ -328,6 +328,13 @@ assert.equal(context.watcherExitState(true, 60000).nextRetryMilliseconds, 60000)
 assert.equal(context.watcherHeartbeatState(1000, 45000, 45000).stale, false);
 assert.deepEqual(JSON.parse(JSON.stringify(context.watcherHeartbeatState(1000, 46001, 45000))), {stale:true,health:"degraded",code:"heartbeat_stale"});
 assert.equal(context.watcherHeartbeatState(0, 1000, 45000).stale, true);
+assert.match(context.refreshHealthText({lastSuccessfulAt:-1000,lastScanKind:"Scan"}, 0), /updated 1s ago/,
+  "an injected epoch clock must not fall back to wall time");
+assert.equal(context.transitionCooldown({}, "sync", "stopped", 0, 30).timestamps["sync:stopped"], 0);
+assert.equal(context.parseWatcherEvent('{"type":"watch-event","version":1,"kind":"changed"}', 0).heartbeatAt, 0);
+assert.equal(context.retainLifecycleEvidence({}, {serviceId:"sync",kind:"crash",at:0}, 0).sync.expiresAt, 30000);
+assert.equal(context.applyLifecycleEvidence([{id:"sync"}], {sync:{kind:"crash",expiresAt:1,at:0}}, 0)[0].lifecycleKind, "crash");
+assert.equal(context.watcherHeartbeatState(1, 0, 45000).stale, false);
 assert.equal(context.monitoringHealthSeverity("healthy", "healthy", "ok"), "neutral");
 assert.equal(context.monitoringHealthSeverity("disabled", "healthy", "ok"), "neutral");
 assert.equal(context.monitoringHealthSeverity("polling", "starting", "waiting"), "neutral");

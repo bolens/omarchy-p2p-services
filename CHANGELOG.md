@@ -5,6 +5,13 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-09-01
+
+### Fixed
+
+- Honor injected epoch timestamps in time-dependent model behavior instead of
+  silently substituting the wall clock.
+
 ## [0.3.4] - 2026-09-01
 
 ### Added
@@ -135,7 +142,8 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.1...v0.3.2

@@ -1,5 +1,11 @@
 .pragma library
 
+function timestampOrNow(value) {
+  if (value === undefined || value === null || value === "") return Date.now()
+  var timestamp = Number(value)
+  return isFinite(timestamp) ? timestamp : Date.now()
+}
+
 function settingsDefaults() {
   return {
     privacyFilter:true, showStopped:true, showCount:true,
@@ -284,7 +290,7 @@ function refreshHealthText(state, now) {
   state = state || {}
   var last = Number(state.lastSuccessfulAt) || 0
   if (!last) return "Waiting for the first successful refresh"
-  var age = Math.max(0, Math.round(((Number(now) || Date.now()) - last) / 1000))
+  var age = Math.max(0, Math.round((timestampOrNow(now) - last) / 1000))
   var diagnostics = Math.max(0, Number(state.diagnostics) || 0)
   var failures = Math.max(0, Number(state.failures) || 0)
   var text = String(state.lastScanKind || "Completed scan") + " · " + (Math.max(0, Number(state.durationMs) || 0)) + " ms · updated " + age + "s ago"
@@ -297,7 +303,7 @@ function refreshHealthText(state, now) {
 function transitionCooldown(current, id, kind, now, cooldownSeconds) {
   var timestamps = current && typeof current === "object" && !Array.isArray(current) ? Object.assign({}, current) : {}
   var key = id + ":" + kind
-  var timestamp = Number(now) || Date.now()
+  var timestamp = timestampOrNow(now)
   var cooldown = Math.max(0, Number(cooldownSeconds) || 0) * 1000
   if (timestamps[key] !== undefined && cooldown > 0 && timestamp - Number(timestamps[key] || 0) < cooldown)
     return {allowed:false,timestamps:timestamps}
@@ -309,7 +315,7 @@ function parseWatcherEvent(line, now) {
   try {
     var message = JSON.parse(String(line || "{}"))
     if (message.type !== "watch-event" || message.version !== 1) return {accepted:false}
-    var timestamp = Number(now) || Date.now(), lifecycle = null
+    var timestamp = timestampOrNow(now), lifecycle = null
     var lifecycleKinds = ["clean-exit", "crash", "oom", "replaced", "restart", "unhealthy", "recovered", "updated"]
     if (/^[a-z0-9][a-z0-9-]*$/.test(String(message.serviceId || "")) && lifecycleKinds.indexOf(String(message.lifecycleKind || "")) >= 0)
       lifecycle = {serviceId:String(message.serviceId),kind:String(message.lifecycleKind),cause:String(message.lifecycleCause || "").slice(0, 64),at:timestamp}
@@ -320,7 +326,7 @@ function parseWatcherEvent(line, now) {
 
 function retainLifecycleEvidence(current, event, now) {
   var result = current && typeof current === "object" && !Array.isArray(current) ? Object.assign({}, current) : {}
-  var timestamp = Number(now) || Date.now(), priorities = {"clean-exit":1,restart:1,unhealthy:2,recovered:2,replaced:4,updated:5,crash:6,oom:7}
+  var timestamp = timestampOrNow(now), priorities = {"clean-exit":1,restart:1,unhealthy:2,recovered:2,replaced:4,updated:5,crash:6,oom:7}
   Object.keys(result).forEach(function(id) { if (Number(result[id].expiresAt) <= timestamp) delete result[id] })
   if (!event || !event.serviceId || priorities[event.kind] === undefined) return result
   var old = result[event.serviceId]
@@ -330,7 +336,7 @@ function retainLifecycleEvidence(current, event, now) {
 }
 
 function applyLifecycleEvidence(services, evidence, now) {
-  var timestamp = Number(now) || Date.now(), known = evidence || {}
+  var timestamp = timestampOrNow(now), known = evidence || {}
   return (Array.isArray(services) ? services : []).map(function(entry) {
     var event = known[entry.id]
     if (!event || Number(event.expiresAt) <= timestamp) return entry
@@ -355,7 +361,7 @@ function watcherExitState(enabled, retryMilliseconds) {
 
 function watcherHeartbeatState(lastHeartbeatAt, now, thresholdMilliseconds) {
   var last = Number(lastHeartbeatAt) || 0
-  var timestamp = Number(now) || Date.now()
+  var timestamp = timestampOrNow(now)
   var threshold = Math.max(1, Number(thresholdMilliseconds) || 45000)
   if (last > 0 && timestamp - last <= threshold) return {stale:false}
   return {stale:true,health:"degraded",code:"heartbeat_stale"}

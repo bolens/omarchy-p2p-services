@@ -4,6 +4,11 @@ const context = {}; vm.createContext(context); vm.runInContext(source, context);
 const manifest = JSON.parse(fs.readFileSync(require("path").join(__dirname, "..", "manifest.json"), "utf8"));
 assert.deepEqual(JSON.parse(JSON.stringify(context.settingsDefaults())), manifest.barWidget.defaults);
 assert.deepEqual(JSON.parse(JSON.stringify(context.enabled({0:"syncthing",1:"i2pd",length:2},[]))), ["syncthing","i2pd"]);
+let lengthReads = 0;
+const shiftingServices = {0:"syncthing",1:"i2pd"};
+Object.defineProperty(shiftingServices, "length", {get() { lengthReads++; return lengthReads === 1 ? 2 : 4097; }});
+assert.deepEqual(JSON.parse(JSON.stringify(context.enabled(shiftingServices,[]))), ["syncthing","i2pd"]);
+assert.equal(lengthReads, 1);
 for (const invalidList of [{length:Infinity},{length:4097},{length:-1},{length:1.5},function serviceList() {}])
   assert.deepEqual(JSON.parse(JSON.stringify(context.enabled(invalidList,["fallback"]))), ["fallback"]);
 assert.equal(context.formatDuration(3660), "1h 1m");

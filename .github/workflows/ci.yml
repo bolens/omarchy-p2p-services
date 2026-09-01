@@ -215,7 +215,7 @@ jobs:
           site_server=$!
           trap 'kill "$site_server" 2>/dev/null || true' EXIT
           npx lighthouse http://127.0.0.1:4173/ --only-categories=accessibility --chrome-flags='--headless --no-sandbox' --output=json --output-path=/tmp/lighthouse.json
-          node -e 'const r=require("/tmp/lighthouse.json"); process.exit(r.categories.accessibility.score === 1 ? 0 : 1)'
+          node -e 'const r=require("/tmp/lighthouse.json"); const score=r.categories.accessibility.score; const failed=Object.values(r.audits).filter(a=>a.score!==null&&a.score<1).map(a=>({id:a.id,score:a.score,title:a.title,items:(a.details?.items||[]).map(i=>({selector:i.node?.selector,nodeLabel:i.node?.nodeLabel,explanation:i.explanation}))})); console.log(JSON.stringify({score,failed},null,2)); process.exit(score===1?0:1)'
 
   repository-result:
     name: Repository

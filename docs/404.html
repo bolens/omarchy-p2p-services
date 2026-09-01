@@ -1,13 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-default-theme="p2p" data-theme-storage="p2p-services-site-theme">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Not found · P2P Services</title>
+  <script>
+    const root = document.documentElement;
+    let requested = null;
+    let saved = null;
+    try { requested = new URLSearchParams(location.search).get("theme"); } catch {}
+    try { saved = root.dataset.themeStorage ? localStorage.getItem(root.dataset.themeStorage) : null; } catch {}
+    const preferred = typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: light)").matches
+      ? "github-light" : root.dataset.defaultTheme;
+    root.dataset.theme = requested || saved || preferred;
+  </script>
+  <link rel="stylesheet" href="theme.css">
   <style>
-    body{margin:0;display:grid;min-height:100vh;place-items:center;background:#08111f;color:#e8f4ff;font:16px/1.6 ui-monospace,monospace}
+    :root{color-scheme:dark}body{margin:0;display:grid;min-height:100vh;place-items:center;background:#08111f;color:#e8f4ff;font:16px/1.6 ui-monospace,monospace}
     main{max-width:34rem;padding:2rem;text-align:center}a{color:#55d6ff}a:focus-visible{outline:3px solid #ff9f43;outline-offset:3px}
+    [data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]{color-scheme:light}body{background:var(--deep);color:var(--ink)}a{color:var(--cyan)}
   </style>
 </head>
 <body>

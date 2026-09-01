@@ -5,6 +5,26 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-31
+
+### Fixed
+
+- Classify systemd, Docker, and Podman lifecycle records so clean updates report
+  as updates, confirmed crashes and OOM kills remain crash alerts, and ambiguous
+  restarts use neutral wording.
+- Treat a process-only stop as a crash only when a recent core dump matches the
+  configured executable.
+- Report failed or malformed process, socket, coredump, systemd, Docker, and
+  Podman probes with bounded diagnostic codes instead of silently treating
+  backend data as empty.
+
+### Changed
+
+- Cache the boot uptime once per status snapshot instead of reading
+  `/proc/uptime` for each detected systemd service.
+- Keep restart-sequence and systemd-journal classification in the lifecycle
+  policy module instead of duplicating it in runtime discovery.
+
 ## [0.2.1] - 2026-08-31
 
 ### Changed
@@ -81,7 +101,8 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bolens/omarchy-p2p-services/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/bolens/omarchy-p2p-services/releases/tag/v0.1.0

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.bolens.p2p-services",
   "name": "P2P Services",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "author": "bolens",
   "license": "MIT",
   "description": "Detect, inspect, and control local peer-to-peer and overlay-network services with privacy-aware connection details.",

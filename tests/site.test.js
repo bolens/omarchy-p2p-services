@@ -40,6 +40,7 @@ for (const theme of ["github-light", "catppuccin-latte", "solarized-light"])
 assert.match(themeCss, /\[data-theme="github-light"\]\{color-scheme:light/);
 assert.match(themeJs, /if \(themeColor\)/);
 assert.match(themeJs, /if \(root\.dataset\.themeStorage\)/);
+assert.match(themeCss, /\.tab\[aria-selected="true"\]\{background:var\(--ink\);border-color:var\(--ink\);color:var\(--deep\)\}/);
 const mobileCss = cssBlock(html, "@media(max-width:800px)");
 assert.match(mobileCss, /grid-template-columns:minmax\(0,1fr\)/);
 assert.match(mobileCss, /\.showcase>\*\{min-width:0\}/);

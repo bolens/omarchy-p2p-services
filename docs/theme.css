@@ -11,4 +11,5 @@
 :is([data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]) body:before{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--cyan) 14%,transparent),transparent 32rem),radial-gradient(circle at 88% 28%,color-mix(in srgb,var(--orange) 12%,transparent),transparent 28rem),var(--deep)}
 :is([data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]) header{background:color-mix(in srgb,var(--deep) 88%,transparent)}
 :is([data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]) :is(.node,.card,.tab,.shot,.bar-demo,.guide article,.terminal){background:var(--panel)}
+:is([data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]) .tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--deep)}
 @media(max-width:800px){.theme-picker{margin-left:auto}.theme-picker select{max-width:8rem}}

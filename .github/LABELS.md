@@ -9,7 +9,7 @@ the pull request changes; manually applied labels are preserved.
 
 - `bug`, `enhancement`, and `documentation` describe the change type.
 - `dependencies`, `docker`, and `github-actions` identify update tooling.
-- `ci`, `tests`, `qml`, `javascript`, `shell`, `site`, and `metadata`
+- `ci`, `tests`, `qml`, `javascript`, `backend`, `shell`, `site`, and `metadata`
   identify affected implementation areas.
 - `release` is applied to pull requests from a `release/` branch.
 - `needs-triage` marks newly filed issues for initial review.
@@ -19,4 +19,3 @@ the pull request changes; manually applied labels are preserved.
 Use `security` for security-sensitive work, `breaking-change` for incompatible
 changes, and the standard lifecycle labels such as `duplicate`, `invalid`,
 `help wanted`, and `wontfix` when triaging.
-

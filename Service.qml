@@ -68,7 +68,7 @@ Item {
       if (event.type !== "settings-changed" || !isFinite(revision) || revision < 0) return false
       settingsWatcherHealth = "healthy"
       settingsWatcherCode = "ok"
-      settingsWatcherLastEventAt = Number(now) || Date.now()
+      settingsWatcherLastEventAt = Model.timestampOrNow(now)
       settingsWatcherRetryMilliseconds = 1000
       settingsWatcherTimedOut = false
       settingsWatcherHandshake.stop()

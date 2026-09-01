@@ -5,6 +5,16 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-01
+
+### Fixed
+
+- Preserve QML-backed enabled-service lists across settings save,
+  serialization, and reload while rejecting malformed or oversized array-like
+  values with a single bounded length snapshot.
+- Require Qt 6 QML tooling, publish plugin module metadata, and gate reliable
+  semantic lint errors in local and CI validation.
+
 ## [0.3.0] - 2026-08-31
 
 ### Fixed
@@ -101,7 +111,8 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/bolens/omarchy-p2p-services/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bolens/omarchy-p2p-services/compare/v0.1.0...v0.2.0

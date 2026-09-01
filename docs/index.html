@@ -7,12 +7,14 @@
   <meta name="description" content="Discover, inspect, and control local P2P clients and overlay networks from Omarchy Shell.">
   <meta name="theme-color" content="#08111f">
   <script>
-    try {
-      const requested = new URLSearchParams(location.search).get("theme");
-      const saved = localStorage.getItem("p2p-services-site-theme");
-      const preferred = matchMedia("(prefers-color-scheme: light)").matches ? "github-light" : "p2p";
-      document.documentElement.dataset.theme = requested || saved || preferred;
-    } catch { document.documentElement.dataset.theme = "p2p"; }
+    const root = document.documentElement;
+    let requested = null;
+    let saved = null;
+    try { requested = new URLSearchParams(location.search).get("theme"); } catch {}
+    try { saved = root.dataset.themeStorage ? localStorage.getItem(root.dataset.themeStorage) : null; } catch {}
+    const preferred = typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: light)").matches
+      ? "github-light" : root.dataset.defaultTheme;
+    root.dataset.theme = requested || saved || preferred;
   </script>
   <meta property="og:title" content="P2P Services for Omarchy">
   <meta property="og:description" content="One privacy-aware control surface for local P2P and overlay-network services.">

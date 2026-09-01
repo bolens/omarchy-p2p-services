@@ -7,11 +7,11 @@
   const fallback = root.dataset.defaultTheme || "p2p";
   if (!themes.includes(root.dataset.theme)) root.dataset.theme = fallback;
   select.value = root.dataset.theme;
-  const sync = () => { themeColor.content = getComputedStyle(root).getPropertyValue("--deep").trim(); };
+  const sync = () => { if (themeColor) themeColor.content = getComputedStyle(root).getPropertyValue("--deep").trim(); };
   sync();
   select.addEventListener("change", () => {
     root.dataset.theme = select.value;
-    try { localStorage.setItem(root.dataset.themeStorage, select.value); } catch {}
+    try { if (root.dataset.themeStorage) localStorage.setItem(root.dataset.themeStorage, select.value); } catch {}
     sync();
   });
 })();

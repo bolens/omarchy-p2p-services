@@ -296,9 +296,42 @@ function parseWatcherEvent(line, now) {
   try {
     var message = JSON.parse(String(line || "{}"))
     if (message.type !== "watch-event" || message.version !== 1) return {accepted:false}
-    return {accepted:true,changed:message.kind === "changed",heartbeatAt:Number(now) || Date.now(),
-      health:message.healthy === false ? "degraded" : "healthy",code:String(message.code || "ok"),retryMilliseconds:1000}
+    var timestamp = Number(now) || Date.now(), lifecycle = null
+    var lifecycleKinds = ["clean-exit", "crash", "oom", "replaced", "restart", "unhealthy", "recovered", "updated"]
+    if (/^[a-z0-9][a-z0-9-]*$/.test(String(message.serviceId || "")) && lifecycleKinds.indexOf(String(message.lifecycleKind || "")) >= 0)
+      lifecycle = {serviceId:String(message.serviceId),kind:String(message.lifecycleKind),cause:String(message.lifecycleCause || "").slice(0, 64),at:timestamp}
+    return {accepted:true,changed:message.kind === "changed",heartbeatAt:timestamp,
+      health:message.healthy === false ? "degraded" : "healthy",code:String(message.code || "ok"),retryMilliseconds:1000,lifecycle:lifecycle}
   } catch (error) { return {accepted:false} }
+}
+
+function retainLifecycleEvidence(current, event, now) {
+  var result = current && typeof current === "object" && !Array.isArray(current) ? Object.assign({}, current) : {}
+  var timestamp = Number(now) || Date.now(), priorities = {"clean-exit":1,restart:1,unhealthy:2,recovered:2,replaced:4,updated:5,crash:6,oom:7}
+  Object.keys(result).forEach(function(id) { if (Number(result[id].expiresAt) <= timestamp) delete result[id] })
+  if (!event || !event.serviceId || priorities[event.kind] === undefined) return result
+  var old = result[event.serviceId]
+  if (!old || Number(old.expiresAt) <= timestamp || priorities[event.kind] >= (priorities[old.kind] || 0))
+    result[event.serviceId] = {kind:event.kind,cause:String(event.cause || ""),at:Number(event.at) || timestamp,expiresAt:timestamp + 30000}
+  return result
+}
+
+function applyLifecycleEvidence(services, evidence, now) {
+  var timestamp = Number(now) || Date.now(), known = evidence || {}
+  return (Array.isArray(services) ? services : []).map(function(entry) {
+    var event = known[entry.id]
+    if (!event || Number(event.expiresAt) <= timestamp) return entry
+    var copy = Object.assign({}, entry)
+    copy.lifecycleKind = event.kind
+    copy.lifecycleCause = String(event.cause || "")
+    copy.lifecycleAt = Number(event.at) || timestamp
+    if (event.kind === "crash" || event.kind === "oom") {
+      if (copy.active === true) { copy.restartKind = "crash"; copy.restartCause = event.cause }
+      else { copy.stopKind = "crash"; copy.stopCause = event.cause }
+    } else if (event.kind === "updated") { copy.restartKind = "update"; copy.restartCause = event.cause }
+    else if (event.kind === "restart" || event.kind === "replaced" || event.kind === "clean-exit") { copy.restartKind = "restart"; copy.restartCause = event.cause }
+    return copy
+  })
 }
 
 function watcherExitState(enabled, retryMilliseconds) {
@@ -640,19 +673,38 @@ function serviceTransitions(previous, next, restartThreshold) {
   next = Array.isArray(next) ? next : []
   for (var oldIndex = 0; oldIndex < previous.length; oldIndex++) oldById[previous[oldIndex].id] = previous[oldIndex]
   for (var index = 0; index < next.length; index++) {
-    var entry = next[index], old = oldById[entry.id]
+    var entry = next[index], old = oldById[entry.id], lifecycleHandled = false
     if (!old) continue
-    if (old.active === true && entry.active !== true) changes.push({id:entry.id,kind:"stopped"})
+    if (old.active === true && entry.active !== true) {
+      var stopChange = {id:entry.id,kind:entry.stopKind === "crash" ? "crashed" : "stopped"}
+      if (entry.stopCause) stopChange.cause = String(entry.stopCause)
+      changes.push(stopChange)
+      lifecycleHandled = stopChange.kind === "crashed"
+    }
     if (old.hasError === true && entry.active === true && entry.hasError !== true) changes.push({id:entry.id,kind:"recovered"})
     if (old.hasError !== true && entry.hasError === true) changes.push({id:entry.id,kind:"unhealthy"})
     var restarts = Number(entry.restartCount) || 0
-    if (restarts >= threshold && restarts > (Number(old.restartCount) || 0)) changes.push({id:entry.id,kind:"restarts",count:restarts})
+    if (!lifecycleHandled && restarts > (Number(old.restartCount) || 0)) {
+      var restartKind = String(entry.restartKind || "restart")
+      if (restartKind === "update" || restartKind === "crash" || restarts >= threshold) {
+        var restartChange = {id:entry.id,kind:restartKind === "update" ? "updated" : restartKind === "crash" ? "crashed" : "restarts",count:restarts}
+        if (entry.restartCause) restartChange.cause = String(entry.restartCause)
+        changes.push(restartChange)
+        lifecycleHandled = restartChange.kind === "updated" || restartChange.kind === "crashed"
+      }
+    }
+    var lifecycleChanged = Number(entry.lifecycleAt) > 0 && Number(entry.lifecycleAt) !== Number(old.lifecycleAt)
+    if (lifecycleChanged && !lifecycleHandled && ["updated","crash","oom","replaced"].indexOf(String(entry.lifecycleKind)) >= 0) {
+      var lifecycleChange = {id:entry.id,kind:entry.lifecycleKind === "updated" ? "updated" : entry.lifecycleKind === "replaced" ? "replaced" : "crashed"}
+      if (entry.lifecycleCause) lifecycleChange.cause = String(entry.lifecycleCause)
+      changes.push(lifecycleChange)
+    }
   }
   return changes
 }
 
 function transitionNotifications(changes) {
-  var groups = {}, order = ["stopped", "unhealthy", "recovered", "restarts"]
+  var groups = {}, order = ["stopped", "unhealthy", "recovered", "updated", "replaced", "crashed", "restarts"]
   ;(changes || []).forEach(function(change) {
     if (!change || order.indexOf(change.kind) < 0) return
     if (!groups[change.kind]) groups[change.kind] = []
@@ -662,6 +714,9 @@ function transitionNotifications(changes) {
     stopped:["P2P services stopped", "stopped unexpectedly"],
     unhealthy:["P2P services need attention", "became unhealthy"],
     recovered:["P2P services recovered", "are healthy again"],
+    updated:["P2P services updated", "updated and restarted"],
+    replaced:["P2P containers replaced", "were replaced"],
+    crashed:["P2P services crashed", "crashed and restarted"],
     restarts:["P2P restart thresholds", "crossed the restart threshold"]
   }
   return order.filter(function(kind) { return groups[kind] && groups[kind].length }).map(function(kind) {
@@ -669,6 +724,9 @@ function transitionNotifications(changes) {
     if (entries.length === 1) {
       var entry = entries[0], suffix = copy[kind][1]
       if (kind === "recovered") suffix = "is healthy again"
+      if (kind === "updated") suffix = (Number(entry.count) || 0) > 0 ? "updated and restarted" : "updated"
+      if (kind === "replaced") suffix = "container was replaced"
+      if (kind === "crashed") suffix = entry.cause === "oom" ? "ran out of memory and restarted" : (Number(entry.count) || 0) > 0 ? "crashed and restarted" : "crashed"
       if (kind === "restarts") suffix = "has restarted " + (Number(entry.count) || 0) + " times"
       return {kind:kind,count:1,title:copy[kind][0].replace("services", "service").replace("thresholds", "threshold"),body:labels[0] + " " + suffix}
     }

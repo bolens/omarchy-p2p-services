@@ -8,7 +8,7 @@ import time
 
 from backend.p2p_secure_files import atomic_private_write, ensure_private_directory, read_private_text
 
-KINDS = {"stopped", "unhealthy", "recovered", "restarts", "action-success", "action-failure", "watcher-fallback"}
+KINDS = {"stopped", "unhealthy", "recovered", "updated", "replaced", "crashed", "restarts", "action-success", "action-failure", "watcher-fallback"}
 
 
 class EventStore:

@@ -58,12 +58,12 @@ ColumnLayout {
           P2PSettingToggle { controller: page.controller; settingKey: "notifyUnexpectedStops"; label: "Unexpected stops"; fallback: false }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyRecovery"; label: "Service recovery"; fallback: false }
           P2PSettingToggle { controller: page.controller; settingKey: "notifyUnhealthy"; label: "Unhealthy services"; fallback: true }
-          P2PSettingToggle { controller: page.controller; settingKey: "notifyRestartEvents"; label: "Restart threshold"; fallback: true }
+          P2PSettingToggle { controller: page.controller; settingKey: "notifyRestartEvents"; label: "Restart lifecycle"; fallback: true; description: "Notify on confirmed updates and crashes, or repeated unknown restarts." }
           }
           P2PSettingsGrid {
             objectName: "notificationValueGrid"
             IntegerSetting { controller: page.controller; settingKey: "notificationCooldownSeconds"; label: "Notification cooldown, seconds"; minimum: 0; maximum: 300; fallback: 30 }
-            IntegerSetting { controller: page.controller; settingKey: "restartWarningThreshold"; label: "Restart warning threshold"; minimum: 1; maximum: 100; fallback: 3 }
+            IntegerSetting { controller: page.controller; settingKey: "restartWarningThreshold"; label: "Unknown restart threshold"; minimum: 1; maximum: 100; fallback: 3 }
             P2PSettingToggle { controller: page.controller; settingKey: "enableEventJournal"; label: "Local event journal"; fallback: false; description: "Keep a bounded, privacy-filtered history of service changes and action outcomes." }
             IntegerSetting { controller: page.controller; settingKey: "eventJournalLimit"; label: "Visible journal entries"; minimum: 5; maximum: 100; fallback: 25 }
           }

@@ -32,6 +32,8 @@ class EventStoreTest(unittest.TestCase):
       with mock.patch("backend.p2p_event_store.time.time", return_value=5):
         self.assertEqual(store.append("recovered", -10)[-1]["count"], 1)
         self.assertEqual(store.append("restarts", 5000)[-1]["count"], 999)
+        self.assertEqual(store.append("crashed", 1)[-1]["kind"], "crashed")
+        self.assertEqual(store.append("updated", 1)[-1]["kind"], "updated")
 
 
 if __name__ == "__main__": unittest.main()

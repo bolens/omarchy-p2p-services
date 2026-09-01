@@ -12,6 +12,8 @@ class FakeProbe:
   def unit_main_pid(self, unit, _user): return 77 if unit else 0
   def unit_has_error(self, _unit, _user): return False
   def service_diagnostics(self, *_args): return (2, "recently", "")
+  def service_restart_kind(self, *_args): return "update"
+  def service_stop_kind(self, *_args): return ("", "")
   def unit_uptime(self, unit, _user): return 100 if unit else 0
   def container_uptime(self, _item): return 80
   def pid_uptime(self, pid): return {42: 60, 77: 50, 99: 40}.get(pid, 0)
@@ -57,6 +59,7 @@ class ServiceInspectorTests(unittest.TestCase):
     self.assertEqual(entry["proxy"], "traefik")
     self.assertEqual(entry["unitScope"], "user")
     self.assertEqual(entry["restartCount"], 2)
+    self.assertEqual(entry["restartKind"], "update")
 
   def test_diagnostics_is_derived_from_privacy_projection(self):
     text = self.inspector.diagnostics_text(self.service, True)

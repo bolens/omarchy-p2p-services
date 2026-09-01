@@ -30,6 +30,8 @@ class ServiceInspector:
     container_error=any((item.get("State",{}).get("Health",{}).get("Status") == "unhealthy") or item.get("State",{}).get("Status") in ("restarting","dead") or item.get("State",{}).get("OOMKilled") or bool(item.get("State",{}).get("Error")) for item in running_items)
     has_error=active and (container_error or self.probe.unit_has_error(user_unit,True) or self.probe.unit_has_error(system_unit,False))
     restart_count,last_transition,failure_reason=self.probe.service_diagnostics(user_unit,system_unit,running_items,docker_items)
+    restart_kind=self.probe.service_restart_kind(user_unit or system_unit,bool(user_unit),docker_items,restart_count)
+    stop_kind,stop_cause=self.probe.service_stop_kind(user_unit or system_unit,bool(user_unit),service["processes"],active)
     connected,listening,endpoints=self.socket_query(pids,private)
     uptimes=[self.probe.unit_uptime(user_unit,True),self.probe.unit_uptime(system_unit,False)] + [self.probe.container_uptime(item) for item in running_items]
     uptimes += [self.probe.pid_uptime(pid) for pid in pids]
@@ -51,7 +53,7 @@ class ServiceInspector:
       containers=[] if private else [item.get("Name","").lstrip("/") for item in docker_items],containerCount=len(docker_items),
       runtimes=sorted(set(item.get("_runtime","docker") for item in docker_items)),
       backend="+".join(sorted(set(item.get("_runtime","docker") for item in docker_items))) if docker_items else ("systemd" if user_unit or system_unit else "process"),proxy=proxy,
-      restartCount=restart_count,lastTransition=last_transition,failureReason=("Service reported an error" if private and failure_reason else failure_reason),
+      restartCount=restart_count,restartKind=restart_kind,stopKind=stop_kind,stopCause=stop_cause,lastTransition=last_transition,failureReason=("Service reported an error" if private and failure_reason else failure_reason),
       custom=service.get("custom",False),controllable=service.get("controllable",True) is True,
       privacyFiltered=private)
   

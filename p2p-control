@@ -9,6 +9,7 @@ from backend.p2p_catalog import (
   AUR_INSTALL_IDS, AUR_SIGNING_KEYS, DOCKER_ALIASES, PACKAGE_HINTS, SERVICES,
 )
 from backend.p2p_inspection import ServiceInspector
+from backend.p2p_lifecycle import normalize_container_event
 from backend.p2p_event_store import EventStore
 from backend.p2p_packages import install_command, uninstall_command
 from backend.p2p_registry import normalize_custom_services, validate_registry
@@ -128,7 +129,10 @@ def package_snapshot(required=False, bypass=False):
 def socket_lines():
   if SNAPSHOT.socket_lines is None:
     result=run([SS,"-H","-tunap"],3)
-    SNAPSHOT.socket_lines=[] if not result else result.stdout.splitlines()
+    if not result or result.returncode != 0:
+      SNAPSHOT.warning("socket_snapshot_unavailable")
+      SNAPSHOT.socket_lines=[]
+    else: SNAPSHOT.socket_lines=result.stdout.splitlines()
   return SNAPSHOT.socket_lines
 
 def socket_index():
@@ -193,27 +197,30 @@ def export_settings():
   atomic_private_write(target,json.dumps(SETTINGS.load(),indent=2,sort_keys=True)+"\n",data_home())
   return target
 
-def watch_event_payload(kind="heartbeat",healthy=True,code="ok"):
-  return {"type":"watch-event","version":1,"kind":kind,"healthy":healthy,"code":str(code)[:64],"timestampMs":int(time.time()*1000)}
+def watch_event_payload(kind="heartbeat",healthy=True,code="ok",lifecycle=None):
+  payload={"type":"watch-event","version":1,"kind":kind,"healthy":healthy,"code":str(code)[:64],"timestampMs":int(time.time()*1000)}
+  if lifecycle:
+    payload.update(serviceId=lifecycle["serviceId"],lifecycleKind=lifecycle["kind"],lifecycleCause=lifecycle["cause"])
+  return payload
 
 def watch_events():
   commands=[]
   busctl=shutil.which("busctl")
-  if busctl: commands.append([os.path.realpath(busctl),"monitor","org.freedesktop.systemd1"])
+  if busctl: commands.append(("systemd",[os.path.realpath(busctl),"monitor","org.freedesktop.systemd1"]))
   # Podman's events command polls its database continuously and can consume a
   # full CPU core while idle. Status reconciliation already provides bounded
   # Podman change detection, so only Docker gets a persistent event stream.
   for runtime in ("docker",):
     command=shutil.which(runtime)
-    if command: commands.append([os.path.realpath(command),"events","--filter","type=container"])
-  processes=[]; selector=selectors.DefaultSelector()
+    if command: commands.append((runtime,[os.path.realpath(command),"events","--filter","type=container","--format","{{json .}}"] ))
+  processes=[]; sources={}; selector=selectors.DefaultSelector()
   def stop_watching(_signum, _frame): raise KeyboardInterrupt()
   previous_term=signal.signal(signal.SIGTERM,stop_watching)
   try:
-    for command in commands:
+    for source,command in commands:
       try:
         process=subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
-        processes.append(process); selector.register(process.stdout,selectors.EVENT_READ)
+        processes.append(process); sources[id(process.stdout)]=source; selector.register(process.stdout,selectors.EVENT_READ)
       except OSError: pass
     last_emit=0.0; last_heartbeat=0.0
     print(json.dumps(watch_event_payload(),separators=(",",":")),flush=True)
@@ -229,7 +236,12 @@ def watch_events():
           except (KeyError,ValueError): pass
           continue
         now=time.monotonic()
-        if now-last_emit >= 1.0: print(json.dumps(watch_event_payload("changed"),separators=(",",":")),flush=True); last_emit=now
+        lifecycle=None
+        if sources.get(id(key.fileobj)) in ("docker","podman"):
+          try: lifecycle=normalize_container_event(sources[id(key.fileobj)],json.loads(line),all_services(),DOCKER_ALIASES)
+          except (TypeError,ValueError,json.JSONDecodeError): lifecycle=None
+        if lifecycle or now-last_emit >= 1.0:
+          print(json.dumps(watch_event_payload("changed",lifecycle=lifecycle),separators=(",",":")),flush=True); last_emit=now
       now=time.monotonic()
       if not events and now-last_heartbeat >= 15.0:
         print(json.dumps(watch_event_payload(),separators=(",",":")),flush=True); last_heartbeat=now

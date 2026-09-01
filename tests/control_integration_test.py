@@ -101,6 +101,12 @@ class ControlIntegrationTests(ControlTestCase):
     self.assertEqual(CONTROL.SNAPSHOT.diagnostics[-1], {"code": "command_failed", "command": "daemon", "detail": "PermissionError"})
     self.assertNotIn("credential", repr(CONTROL.SNAPSHOT.diagnostics))
 
+  def test_failed_socket_snapshot_reports_safe_diagnostic(self):
+    with mock.patch.object(CONTROL, "run", return_value=types.SimpleNamespace(returncode=1,stdout="private endpoint",stderr="denied")):
+      self.assertEqual(CONTROL.socket_lines(), [])
+    self.assertEqual(CONTROL.SNAPSHOT.diagnostics[-1], {"code":"socket_snapshot_unavailable"})
+    self.assertNotIn("endpoint", repr(CONTROL.SNAPSHOT.diagnostics))
+
   def test_package_snapshot_reuses_inventory_across_helper_scans(self):
     with tempfile.TemporaryDirectory() as directory, \
          mock.patch.object(CONTROL, "STATUS_CACHE_ROOT", pathlib.Path(directory)), \

@@ -234,6 +234,8 @@ def watch_events():
         if not line:
           try: selector.unregister(key.fileobj)
           except (KeyError,ValueError): pass
+          sources.pop(key.fileobj,None)
+          key.fileobj.close()
           continue
         now=time.monotonic()
         lifecycle=None

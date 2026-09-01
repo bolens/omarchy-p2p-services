@@ -319,8 +319,9 @@ class ControlCliTests(ControlTestCase):
 
   def test_watch_excludes_podman_debounces_emits_heartbeat_and_cleans_up(self):
     class EventStream:
-      def __init__(self, line): self.line = line
+      def __init__(self, line): self.line, self.closed = line, False
       def readline(self): return self.line
+      def close(self): self.closed = True
 
     class Process:
       def __init__(self, line): self.stdout, self.terminated = EventStream(line), False
@@ -359,6 +360,7 @@ class ControlCliTests(ControlTestCase):
       ["/usr/bin/docker", "events", "--filter", "type=container", "--format", "{{json .}}"],
     ])
     self.assertEqual(selector.unregistered, [processes[0].stdout])
+    self.assertTrue(processes[0].stdout.closed)
     self.assertTrue(selector.closed)
     self.assertTrue(all(process.terminated for process in processes))
     self.assertEqual(signal_calls[-1], (CONTROL.signal.SIGTERM, previous_handler))

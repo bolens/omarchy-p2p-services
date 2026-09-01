@@ -7,7 +7,8 @@ All notable changes to P2P Services are documented here. This project follows
 
 ### Fixed
 
-- Use stable stream-object keys while routing container lifecycle events.
+- Use stable, promptly released stream-object keys while routing container
+  lifecycle events.
 - Use explicit singular and plural lifecycle notification copy.
 - Validate complete PNG headers before reading screenshot dimensions in tests.
 

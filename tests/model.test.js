@@ -171,9 +171,27 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.savedViewSelection({
 });
 assert.deepEqual(JSON.parse(JSON.stringify(context.smoothTrafficRate({rx:100,tx:50},{rx:300,tx:0},0.25,80))), {rx:150,tx:37.5,active:true});
 assert.deepEqual(JSON.parse(JSON.stringify(context.serviceTransitions(
-  [{id:"a",active:true,hasError:false,restartCount:1},{id:"b",active:false,hasError:true,restartCount:0}],
-  [{id:"a",active:false,hasError:false,restartCount:1},{id:"b",active:true,hasError:false,restartCount:4}], 3
-))), [{id:"a",kind:"stopped"},{id:"b",kind:"recovered"},{id:"b",kind:"restarts",count:4}]);
+  [{id:"a",active:true,hasError:false,restartCount:1},{id:"b",active:false,hasError:true,restartCount:0},{id:"c",active:true,restartCount:2},{id:"d",active:true,restartCount:2}],
+  [{id:"a",active:false,hasError:false,restartCount:1},{id:"b",active:true,hasError:false,restartCount:4,restartKind:"update"},{id:"c",active:true,restartCount:3,restartKind:"crash"},{id:"d",active:true,restartCount:3,restartKind:"restart"}], 3
+))), [{id:"a",kind:"stopped"},{id:"b",kind:"recovered"},{id:"b",kind:"updated",count:4},{id:"c",kind:"crashed",count:3},{id:"d",kind:"restarts",count:3}]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.transitionNotifications([
+  {id:"freenet",label:"Freenet",kind:"updated",count:3},
+  {id:"daemon",label:"Daemon",kind:"crashed",count:2}
+]))), [
+  {kind:"updated",count:1,title:"P2P service updated",body:"Freenet updated and restarted"},
+  {kind:"crashed",count:1,title:"P2P service crashed",body:"Daemon crashed and restarted"}
+]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.serviceTransitions(
+  [{id:"process",active:true,restartCount:0},{id:"container",active:true,restartCount:0}],
+  [{id:"process",active:false,restartCount:0,stopKind:"crash",stopCause:"core-dump"},{id:"container",active:true,restartCount:1,restartKind:"crash",restartCause:"oom"}], 3
+))), [
+  {id:"process",kind:"crashed",cause:"core-dump"},
+  {id:"container",kind:"crashed",count:1,cause:"oom"}
+]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.serviceTransitions(
+  [{id:"daemon",active:true,restartCount:1}],
+  [{id:"daemon",active:false,restartCount:2,stopKind:"crash",stopCause:"systemd-failure",restartKind:"crash"}], 3
+))), [{id:"daemon",kind:"crashed",cause:"systemd-failure"}]);
 assert.equal(context.ensureVisibleContentY(0, 300, 500, 60, 1000), 260);
 assert.equal(context.ensureVisibleContentY(300, 300, 120, 60, 1000), 120);
 assert.equal(context.ensureVisibleContentY(200, 300, 250, 60, 1000), 200);
@@ -267,8 +285,26 @@ assert.equal(cooldown.allowed, false);
 assert.equal(cooldown.timestamps["sync:stopped"], 10000);
 assert.equal(context.transitionCooldown(cooldown.timestamps, "sync", "stopped", 20000, 0).allowed, true);
 assert.deepEqual(JSON.parse(JSON.stringify(context.parseWatcherEvent('{"type":"watch-event","version":1,"kind":"changed","healthy":true,"code":"ok"}', 1234))), {
-  accepted:true,changed:true,heartbeatAt:1234,health:"healthy",code:"ok",retryMilliseconds:1000
+  accepted:true,changed:true,heartbeatAt:1234,health:"healthy",code:"ok",retryMilliseconds:1000,lifecycle:null
 });
+assert.deepEqual(JSON.parse(JSON.stringify(context.parseWatcherEvent('{"type":"watch-event","version":1,"kind":"changed","serviceId":"syncthing","lifecycleKind":"oom","lifecycleCause":"oom"}', 1234).lifecycle)), {
+  serviceId:"syncthing",kind:"oom",cause:"oom",at:1234
+});
+const evidence = context.retainLifecycleEvidence({}, {serviceId:"syncthing",kind:"crash",cause:"exit-code",at:1000}, 1000);
+const retained = context.retainLifecycleEvidence(evidence, {serviceId:"syncthing",kind:"restart",cause:"automatic",at:1100}, 1100);
+assert.equal(retained.syncthing.kind, "crash");
+const replacement = context.retainLifecycleEvidence({}, {serviceId:"syncthing",kind:"replaced",cause:"container-replaced",at:1200}, 1200);
+assert.equal(context.retainLifecycleEvidence(replacement, {serviceId:"syncthing",kind:"recovered",cause:"healthcheck",at:1300}, 1300).syncthing.kind, "replaced");
+assert.deepEqual(JSON.parse(JSON.stringify(context.applyLifecycleEvidence([
+  {id:"syncthing",active:true,restartCount:2},{id:"process",active:false,restartCount:0}
+], {syncthing:{kind:"oom",cause:"oom",expiresAt:5000},process:{kind:"crash",cause:"core-dump",expiresAt:5000}}, 2000))), [
+  {id:"syncthing",active:true,restartCount:2,lifecycleKind:"oom",lifecycleCause:"oom",lifecycleAt:2000,restartKind:"crash",restartCause:"oom"},
+  {id:"process",active:false,restartCount:0,lifecycleKind:"crash",lifecycleCause:"core-dump",lifecycleAt:2000,stopKind:"crash",stopCause:"core-dump"}
+]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.serviceTransitions(
+  [{id:"container",active:true,restartCount:0}],
+  [{id:"container",active:true,restartCount:0,lifecycleKind:"replaced",lifecycleCause:"container-replaced",lifecycleAt:2000}], 3
+))), [{id:"container",kind:"replaced",cause:"container-replaced"}]);
 assert.equal(context.parseWatcherEvent('{"type":"other","version":1}', 1234).accepted, false);
 assert.equal(context.parseWatcherEvent("invalid", 1234).accepted, false);
 assert.deepEqual(JSON.parse(JSON.stringify(context.watcherExitState(true, 4000))), {

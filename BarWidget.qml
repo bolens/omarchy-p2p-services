@@ -780,7 +780,7 @@ Panel {
     if (change.kind === "stopped") return setting("notifyUnexpectedStops", false) === true && now > Number(controlledUntil[change.id] || 0)
     if (change.kind === "recovered") return setting("notifyRecovery", false) === true
     if (change.kind === "unhealthy") return setting("notifyUnhealthy", true) === true
-    if (change.kind === "restarts") return setting("notifyRestartEvents", true) === true
+    if (["updated", "replaced", "crashed", "restarts"].indexOf(change.kind) >= 0) return setting("notifyRestartEvents", true) === true
     return false
   }
   function handleServiceTransitions(previous, next) {

@@ -12,6 +12,7 @@ Item {
   property var diagnostics: []
   property string refreshError: ""
   property int refreshSerial: 0
+  property var lifecycleEvidence: ({})
   property bool lastFullScan: true
   property int lastDurationMs: 0
   property double lastRefreshAt: 0
@@ -120,7 +121,7 @@ Item {
       try {
         var payload = JSON.parse(text || "{}")
         if (!payload || !Array.isArray(payload.services)) throw new Error("missing service list")
-        root.services = payload.services
+        root.services = Model.applyLifecycleEvidence(payload.services, root.lifecycleEvidence, Date.now())
         root.diagnostics = Array.isArray(payload.diagnostics) ? payload.diagnostics : []
         root.lastDurationMs = Number(payload.durationMs) || 0
         root.lastFullScan = fullScan
@@ -172,6 +173,7 @@ Item {
         root.watcherCode = state.code
         if (state.code === "polling-only") root.watcherPollingOnly = true
         root.watcherRetryMilliseconds = state.retryMilliseconds
+        if (state.lifecycle) root.lifecycleEvidence = Model.retainLifecycleEvidence(root.lifecycleEvidence, state.lifecycle, Date.now())
         if (state.changed && root.settings.eventRefresh !== false) eventRefreshDelay.restart()
         root.watcherLastHeartbeatAt = state.heartbeatAt
       }
@@ -200,7 +202,7 @@ Item {
       watcherRetry.restart()
     }
   }
-  Timer { id: eventRefreshDelay; interval: 750; onTriggered: if (root.settings.eventRefresh !== false) root.requestRefresh(true, false) }
+  Timer { id: eventRefreshDelay; interval: 750; onTriggered: if (root.settings.eventRefresh !== false) root.requestRefresh(true, true) }
   Timer { id: watcherRetry; interval: root.watcherRetryMilliseconds; onTriggered: if (root.settings.eventRefresh !== false) watcherProc.running = true }
   Timer {
     interval: 5000; repeat: true; running: root.settings.eventRefresh !== false

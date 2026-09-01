@@ -156,8 +156,17 @@ function safeHttpUrl(value) {
   }
   return text
 }
+function isBoundedList(value) {
+  if (!value || typeof value !== "object") return false
+  var length = Number(value.length)
+  return isFinite(length) && length >= 0 && Math.floor(length) === length && length <= 4096
+}
 function enabled(value, fallback) {
-  if (Array.isArray(value)) return value.map(String)
+  if (isBoundedList(value)) {
+    var result = []
+    for (var index = 0; index < value.length; index++) result.push(String(value[index]))
+    return result
+  }
   return fallback || []
 }
 

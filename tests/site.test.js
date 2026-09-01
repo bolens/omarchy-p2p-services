@@ -29,6 +29,10 @@ const siteDimensions = name => dimensions(path.join(root, "docs", name), name);
 assert.match(html, /<main id="main">/);
 assert.match(html, /rel="canonical" href="https:\/\/bolens\.github\.io\/omarchy-p2p-services\/"/);
 assert.match(html, /name="twitter:card" content="summary_large_image"/);
+for (const contract of ["og:site_name", "twitter:image:alt", "apple-touch-icon.png", "site.webmanifest"])
+  assert.ok(html.includes(contract), `missing discovery contract: ${contract}`);
+for (const asset of ["apple-touch-icon.png", "icon-192.png", "icon-512.png", "site.webmanifest"])
+  assert.ok(fs.existsSync(path.join(root, "docs", asset)), `missing discovery asset: ${asset}`);
 assert.match(html, /type="application\/ld\+json"/);
 assert.match(html, /"softwareVersion":"__PLUGIN_VERSION__"/);
 assert.match(html, /prefers-reduced-motion/);

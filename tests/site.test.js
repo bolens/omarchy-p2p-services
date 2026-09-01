@@ -39,7 +39,7 @@ assert.match(mobileCss, /\.showcase>\*\{min-width:0\}/);
 assert.match(mobileCss, /\.stage,\.shot\{min-width:0;width:100%\}/);
 assert.match(html, /bolens\/omarchy-p2p-services/);
 assert.match(html, /__PLUGIN_VERSION__/);
-assert.match(html, /privacy filter is forced on/i);
+assert.match(html, /screenshot workflow enables and verifies the privacy filter/i);
 assert.doesNotMatch(html, /omarchy-privacy-devices/);
 for (const section of ["guide", "usage", "configuration", "services", "privacy", "performance", "troubleshooting", "removal"])
   assert.match(html, new RegExp(`id="${section}"`), `user guide is missing #${section}`);

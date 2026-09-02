@@ -107,4 +107,7 @@ assert.match(capture, /update-screenshot-metadata/);
 assert.doesNotMatch(capture, /\bsleep\s+(?:1|2)\b/, "capture workflow must wait on observable IPC state, not fixed delays");
 for (const readiness of ["mainReady", "detailsReady", "editorReady", "panelClosed"])
   assert.ok(capture.includes(readiness), `capture workflow is missing readiness probe: ${readiness}`);
+assert.match(html, /value="system"/); assert.match(html, /value="time"/);
+assert.match(themeJs, /new Date\(\)\.getHours\(\)/); assert.match(themeJs, /addEventListener\?\.\("change"/);
+assert.match(themeJs, /return darkTheme/, "no-preference fallback must remain dark");
 console.log("site checks passed");

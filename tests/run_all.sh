@@ -35,14 +35,9 @@ if [[ $portable == true ]]; then
   exit 0
 fi
 
-shell_root="$(find_omarchy_shell_root)"
-qmllint_bin=${QMLLINT:-/usr/lib/qt6/bin/qmllint}
 qmlformat_bin=${QMLFORMAT:-/usr/lib/qt6/bin/qmlformat}
-[[ -x "$qmllint_bin" ]] || { printf 'Qt 6 qmllint not found: %s\n' "$qmllint_bin" >&2; exit 1; }
 [[ -x "$qmlformat_bin" ]] || { printf 'Qt 6 qmlformat not found: %s\n' "$qmlformat_bin" >&2; exit 1; }
-"$qmllint_bin" -I "$shell_root" -I . -i "$plugin_dir/qmldir" \
-  -i "$shell_root/Commons/qmldir" -i "$shell_root/Ui/qmldir" \
-  Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml
+scripts/lint-qml
 "$qmlformat_bin" -n Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
 validation_dir=$(mktemp -d)
 trap 'rm -rf -- "$validation_dir"' EXIT

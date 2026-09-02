@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+plugin_dir="$(cd -- "$(dirname -- "$0")/.." && pwd)"
+# shellcheck disable=SC1091
+source "$plugin_dir/tests/tooling_env.sh"
+shell_root="$(find_omarchy_shell_root)"
+qmllint_bin=${QMLLINT:-/usr/lib/qt6/bin/qmllint}
+[[ -x "$qmllint_bin" ]] || { printf 'Qt 6 qmllint not found: %s\n' "$qmllint_bin" >&2; exit 1; }
+
+# Runtime harnesses execute beside the plugin files. Mirror that topology so
+# relative JavaScript imports and component metadata resolve as under Quickshell.
+lint_dir="$(mktemp -d)"
+trap 'rm -rf -- "$lint_dir"' EXIT
+find "$plugin_dir" -maxdepth 1 -type f -exec cp -- '{}' "$lint_dir/" \;
+find "$plugin_dir/tests/qml" -maxdepth 1 -type f -name 'Runtime*Test.qml' -exec cp -- '{}' "$lint_dir/" \;
+
+cd "$lint_dir"
+"$qmllint_bin" -I "$shell_root" -I . -i qmldir \
+  -i "$shell_root/Commons/qmldir" -i "$shell_root/Ui/qmldir" \
+  Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml Runtime*Test.qml

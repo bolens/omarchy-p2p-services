@@ -41,4 +41,4 @@ jobs:
         run: |
           docker run --rm --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace \
             ghcr.io/bolens/omarchy-plugin-ci@sha256:293b0457198085de5df26519dd4aa336202495c080d253b71ac30e7d8e8d3851 \
-            bash -lc '/usr/lib/qt6/bin/qmllint -I .omarchy/shell -I . -i qmldir -i .omarchy/shell/Commons/qmldir -i .omarchy/shell/Ui/qmldir BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml'
+            bash -lc 'OMARCHY_SHELL_ROOT=.omarchy/shell scripts/lint-qml'

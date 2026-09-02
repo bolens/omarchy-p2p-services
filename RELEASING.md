@@ -13,8 +13,8 @@ attestation.
    including dependencies, installation, troubleshooting, and removal when relevant.
 4. Run [TESTING.md](TESTING.md), push a release branch, and open a pull request.
    Require CI and review conversations to pass on the exact candidate SHA.
-5. Squash-merge the pull request and delete its branch. Direct pushes to
-   `main`, rebase merges, merge commits, and protection bypasses are disabled.
+5. Squash-merge the pull request and delete its branch. Do not push directly
+   to `main`; rebase merges, merge commits, and protection bypasses are disabled.
 6. Confirm the worktree is clean and `origin/main` matches the merged candidate.
 
 ## Tag and publish
@@ -22,7 +22,7 @@ attestation.
 ```sh
 version=$(jq -r .version manifest.json)
 test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
-git tag -a "v$version" -m "P2P Services $version"
+git tag -s "v$version" -m "P2P Services $version"
 git push origin "v$version"
 ```
 
@@ -49,3 +49,12 @@ The community marketplace validates compatibility and a limited automated
 security baseline. It is not a security audit or certification. Follow the
 marketplace's existing-listing verification flow after later releases rather
 than opening a duplicate submission.
+
+## Recovery
+
+Never move a published tag. Fix a public defect with a new patch release. If a
+workflow fails before publication, correct the release branch and replace only
+an unpublished tag. Preserve the tag SHA, CI run, checksum, attestation result,
+clean-install smoke, Pages display, and marketplace status as release evidence.
+
+Fleet policy: <https://github.com/bolens/.github/blob/main/RELEASING.md>.

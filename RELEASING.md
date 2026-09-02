@@ -22,7 +22,7 @@ attestation.
 ```sh
 version=$(jq -r .version manifest.json)
 test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
-git tag -a "v$version" -m "P2P Services $version"
+git tag -s "v$version" -m "P2P Services $version"
 git push origin "v$version"
 ```
 

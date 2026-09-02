@@ -20,6 +20,7 @@ assert.match(runner, /scripts\/lint-qml/);
 assert.match(qmlLint, /QMLLINT:-\/usr\/lib\/qt6\/bin\/qmllint/);
 assert.match(qmlLint, /Runtime\*Test\.qml/);
 assert.match(qmlLint, /mktemp -d/);
+assert.doesNotMatch(qmlLint, /-i .*qmldir/);
 assert.match(runner, /QMLFORMAT:-\/usr\/lib\/qt6\/bin\/qmlformat/);
 assert.match(qmlModule, /^module io\.github\.bolens\.p2p_services$/m);
 assert.match(qmlModule, /^P2PSettingsStore 1\.0 P2PSettingsStore\.qml$/m);

@@ -16,6 +16,5 @@ find "$plugin_dir" -maxdepth 1 -type f -exec cp -- '{}' "$lint_dir/" \;
 find "$plugin_dir/tests/qml" -maxdepth 1 -type f -name 'Runtime*Test.qml' -exec cp -- '{}' "$lint_dir/" \;
 
 cd "$lint_dir"
-"$qmllint_bin" -I "$shell_root" -I . -i qmldir \
-  -i "$shell_root/Commons/qmldir" -i "$shell_root/Ui/qmldir" \
+"$qmllint_bin" -I "$shell_root" -I . \
   Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml Runtime*Test.qml

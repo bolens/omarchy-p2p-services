@@ -46,7 +46,7 @@ reject_text() {
 
 for repo in "${repositories[@]}"; do
   name=$(basename "$repo")
-  [[ -d $repo/.git ]] || { fail "$name" "repository is missing"; continue; }
+  git -C "$repo" rev-parse --git-dir >/dev/null 2>&1 || { fail "$name" "repository is missing"; continue; }
   for file in .github/workflows/ci.yml .github/workflows/release.yml \
     .github/workflows/compatibility.yml .github/dependabot.yml package.json; do
     [[ -f $repo/$file ]] || fail "$name" "missing $file"

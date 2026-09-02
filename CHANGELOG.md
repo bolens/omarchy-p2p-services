@@ -16,8 +16,7 @@ All notable changes to P2P Services are documented here. This project follows
 
 ### Added
 
-- Add complete favicon, touch-icon, install-manifest, and social-card metadata
-  to the Pages site, backed by regression checks.
+- Pages now include favicons, touch and install icons, a web manifest, and a 1200x630 social card. Regression tests protect the metadata and image dimensions.
 
 ## [0.3.5] - 2026-09-01
 
@@ -30,16 +29,14 @@ All notable changes to P2P Services are documented here. This project follows
 
 ### Added
 
-- Add selectable dark and light themes to the Pages site.
-- Default to GitHub Light for a browser light preference while retaining the
-  existing dark palette when no color preference is specified.
+- Pages offer selectable dark and light themes.
+- Browsers that prefer light mode start with GitHub Light; browsers without a preference keep the default dark theme.
 
 ## [0.3.3] - 2026-09-01
 
 ### Fixed
 
-- Delegate `pull-requests: read` to the reusable validation workflow so
-  tag-triggered releases can start after CI path filtering was introduced.
+- Tag-triggered releases now receive the pull-request metadata required by path-filtered validation.
 
 ## [0.3.2] - 2026-09-01
 
@@ -104,47 +101,20 @@ All notable changes to P2P Services are documented here. This project follows
 
 ### Added
 
-- Added first-class discovery, lifecycle controls, logs, configuration access,
-  and package routing where available for Tailscale, ZeroTier, Nebula,
-  Headscale, NetBird, NetBird Server, Netmaker, and Netmaker Client.
-- Added canonical service categories with category-aware search, grouping,
-  saved views, and optional per-category bar counts and icon overrides.
-- Added category sorting, control-scope grouping, semantic or alphabetical group
-  ordering, configurable group icons and counts, and group-safe stable sorting.
+- Discovery, lifecycle controls, logs, configuration access, and package routing for Tailscale, ZeroTier, Nebula, Headscale, NetBird, and Netmaker services.
+- Category-aware search, grouping, saved views, custom ordering, icons, counts, and bar presentation.
+- Aggregated notifications, an optional identity-free local event journal, privacy-filtered support reports, and contextual settings links.
 
 ### Changed
 
-- Consolidated settings defaults and mutation paths around the manifest contract.
-- Split discovery state, registry validation, action planning, package commands,
-  and refresh scheduling into focused modules with dedicated tests.
-- Extracted reusable QML controllers for refreshes, service actions, and settings
-  navigation to reduce duplicated process and UI coordination logic.
-- Expanded architecture, security, release, and live QML validation coverage.
-- Separated the static service catalog and atomic settings repository from the
-  CLI orchestrator, with direct catalog and persistence tests.
-- Replaced repeated boolean-setting QML wiring with one reusable control that
-  owns lookup, styling, and mutation behavior.
-- Unified HTTP and console-host validation across settings, custom services,
-  and runtime actions, and isolated pure traffic-counter parsing.
-- Split runtime probing, privacy-aware inspection, and configuration backup
-  storage from the CLI; divided integration coverage by domain.
-- Reduced the main widget to panel composition by extracting six settings
-  pages, the service editor, filter pills, headings, and theme-role controls.
-- Removed hollow compatibility wrappers and generic owner-module injection;
-  stores are used directly and runtime/inspection modules declare explicit
-  capabilities.
-- Moved organization controls into Widget settings and reduced the main list's
-  organization surface to saved-view shortcuts.
-- Organization changes now invalidate captured live-sort positions immediately,
-  so sort, grouping, favorite, label, and custom-order changes are visible at once.
-- Ordering now has an explicit event revision, making accepted organization
-  selections recompute the visible model before persistence or refresh results.
-- Aggregated simultaneous service notifications and added an opt-in,
-  identity-free local event journal.
-- Added aggregate-only privacy-filtered support reports and contextual links to
-  the relevant settings sections.
-- Kept last-good data visible with a degraded bar marker and added `/` as the
-  service-search shortcut.
+- Settings, discovery, actions, package commands, probing, inspection, backups, and refresh scheduling now have explicit ownership and focused tests.
+- Organization controls live in Widget settings, while the main list keeps saved-view shortcuts.
+- Sort and grouping changes update the visible model before persistence or refresh results.
+- The widget keeps last-good data visible during degraded probes and uses `/` for search.
+
+### Fixed
+
+- Shared validation now handles HTTP endpoints, console hosts, custom services, and runtime actions consistently.
 
 ## [0.1.0] - 2026-08-25
 

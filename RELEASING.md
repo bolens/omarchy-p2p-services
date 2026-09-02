@@ -11,9 +11,11 @@ attestation.
    its comparison links.
 3. Update user-visible behavior in the canonical [website guide](https://bolens.github.io/omarchy-p2p-services/#guide),
    including dependencies, installation, troubleshooting, and removal when relevant.
-4. Run [TESTING.md](TESTING.md), then push the release commit and require CI to
-   pass on the exact candidate SHA.
-5. Confirm the worktree is clean and `origin/main` matches the candidate.
+4. Run [TESTING.md](TESTING.md), push a release branch, and open a pull request.
+   Require CI and review conversations to pass on the exact candidate SHA.
+5. Squash-merge the pull request and delete its branch. Direct pushes to
+   `main`, rebase merges, merge commits, and protection bypasses are disabled.
+6. Confirm the worktree is clean and `origin/main` matches the merged candidate.
 
 ## Tag and publish
 

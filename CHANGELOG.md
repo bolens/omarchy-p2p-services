@@ -5,6 +5,8 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-09-01
+
 ### Fixed
 
 - Recover event-journal and settings-transfer queues when a helper exceeds its deadline.
@@ -130,7 +132,8 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.7...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.8...HEAD
+[0.3.8]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.4...v0.3.5

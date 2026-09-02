@@ -45,8 +45,11 @@ reject_text() {
 }
 
 for repo in "${repositories[@]}"; do
-  name=$(basename "$repo")
-  [[ -e $repo/.git ]] || { fail "$name" "repository is missing"; continue; }
+  name=$(git -C "$repo" remote get-url origin 2>/dev/null || true)
+  name=${name##*/}
+  name=${name%.git}
+  [[ -n $name ]] || name=$(basename "$repo")
+  git -C "$repo" rev-parse --git-dir >/dev/null 2>&1 || { fail "$name" "repository is missing"; continue; }
   for file in .github/workflows/ci.yml .github/workflows/release.yml \
     .github/workflows/compatibility.yml .github/dependabot.yml package.json; do
     [[ -f $repo/$file ]] || fail "$name" "missing $file"

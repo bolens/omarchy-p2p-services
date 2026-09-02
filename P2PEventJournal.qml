@@ -7,6 +7,8 @@ QtObject {
   property var events: []
   property bool busy: false
   property var queue: []
+  readonly property int maximumQueuedCommands: 100
+  readonly property int maximumQueuedCommandBytes: 262144
   signal failed()
 
   function hasHelper() { return String(helper || "").trim() !== "" }
@@ -16,23 +18,31 @@ QtObject {
   }
   function load() {
     if (!hasHelper() || operationPending("events-list")) return false
-    enqueue([helper, "events-list"])
-    return true
+    return enqueue([helper, "events-list"])
   }
   function record(kind, count) {
     var eventKind = String(kind || "").trim()
     if (!hasHelper() || eventKind === "") return false
-    enqueue([helper, "events-add", eventKind, String(Math.max(1, Number(count) || 1))])
-    return true
+    return enqueue([helper, "events-add", eventKind, String(Math.max(1, Number(count) || 1))])
   }
   function clear() {
     if (!hasHelper() || operationPending("events-clear")) return false
-    enqueue([helper, "events-clear"])
-    return true
+    return enqueue([helper, "events-clear"])
   }
   function enqueue(command) {
-    queue = queue.concat([command])
+    if (queuedCommandBytes([command]) > maximumQueuedCommandBytes) return false
+    var next = command[1] === "events-clear" ? [] : queue.slice()
+    next = next.concat([command])
+    while (next.length > maximumQueuedCommands || queuedCommandBytes(next) > maximumQueuedCommandBytes)
+      next.shift()
+    if (!next.length) return false
+    queue = next
     startNext()
+    return true
+  }
+  function queuedCommandBytes(commands) {
+    try { return unescape(encodeURIComponent(JSON.stringify(commands))).length }
+    catch (error) { return Number.POSITIVE_INFINITY }
   }
   function startNext() {
     if (busy || !queue.length) return

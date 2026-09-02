@@ -6,3 +6,12 @@ Read `.specify/memory/constitution.md`, `SECURITY.md`, `ARCHITECTURE.md`, `TESTI
 - Keep service identifiers and command arguments allowlisted; preserve least privilege and bounded process scope.
 - Serialize settings changes and distinguish requested, pending, active, failed, unavailable, and degraded state.
 - Update QML metadata, defaults, settings UI, IPC, docs, adapters, and tests together; run the repository’s focused and full local gates.
+
+## Spec-driven changes
+
+Use Spec Kit for new capabilities, architecture, security-sensitive behavior,
+migrations, and coordinated multi-file changes. Keep narrow fixes, dependency
+updates, prose edits, and release housekeeping in the normal repository
+workflow unless their risk warrants a written specification. Keep completed
+feature directories under `specs/` as decision history; do not backfill them for
+finished work.

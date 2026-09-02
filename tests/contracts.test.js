@@ -44,6 +44,7 @@ const serviceList = read("P2PServiceList.qml")
 const service = read("Service.qml")
 const performanceSettings = read("P2PPerformanceSettings.qml")
 const eventJournal = read("P2PEventJournal.qml")
+const settingsTransfer = read("P2PSettingsTransferController.qml")
 const messageSurface = read("P2PMessageSurface.qml")
 const pageNames = ["General", "Appearance", "Services", "Performance", "Discovery", "Packages"]
 
@@ -78,6 +79,10 @@ assert.match(performanceSettings, /copySupportReportButton/)
 assert.match(performanceSettings, /Model\.eventJournalRows/)
 assert.match(eventJournal, /maximumQueuedCommands:\s*100[\s\S]*?maximumQueuedCommandBytes:\s*262144[\s\S]*?while \(next\.length > maximumQueuedCommands \|\| queuedCommandBytes\(next\) > maximumQueuedCommandBytes\)/,
   "the event journal helper queue must remain count- and byte-bounded")
+for (const [name, source] of [["event journal", eventJournal], ["settings transfer", settingsTransfer]]) {
+  assert.match(source, /P2PProcessWatchdog/, `${name} must terminate a stalled helper`)
+  assert.match(source, /timeoutMilliseconds/, `${name} must expose a bounded deadline`)
+}
 assert.match(messageSurface, /signal actionRequested\(\)/)
 assert.match(bar, /showSettingsSection\("performance",\s*"diagnostics"\)/)
 assert.match(bar, /showSettingsSection\("discovery",\s*"custom-services"\)/)

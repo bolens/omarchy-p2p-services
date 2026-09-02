@@ -5,6 +5,10 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Recover event-journal and settings-transfer queues when a helper exceeds its deadline.
+
 ## [0.3.7] - 2026-09-01
 
 ### Fixed

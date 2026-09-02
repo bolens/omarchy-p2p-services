@@ -7,6 +7,8 @@ QtObject {
   property var events: []
   property bool busy: false
   property var queue: []
+  property bool timedOut: false
+  property int timeoutMilliseconds: 15000
   readonly property int maximumQueuedCommands: 100
   readonly property int maximumQueuedCommandBytes: 262144
   signal failed()
@@ -47,19 +49,25 @@ QtObject {
   function startNext() {
     if (busy || !queue.length) return
     var next = queue.slice(); process.command = next.shift(); queue = next
-    busy = true; process.running = true
+    timedOut = false; busy = true; process.running = true; watchdog.start()
   }
 
   property Process process: Process {
     stdout: StdioCollector { id: output; waitForEnd: true }
     onExited: function(exitCode) {
+      watchdog.stop()
       journal.busy = false
-      if (exitCode !== 0) journal.failed()
+      if (journal.timedOut || exitCode !== 0) journal.failed()
       else if (process.command[1] !== "events-clear") {
         try { var parsed = JSON.parse(String(output.text || "[]")); journal.events = Array.isArray(parsed) ? parsed : [] }
         catch (error) { journal.failed() }
       } else journal.events = []
       Qt.callLater(journal.startNext)
     }
+  }
+  property P2PProcessWatchdog watchdog: P2PProcessWatchdog {
+    process: journal.process
+    timeoutMilliseconds: journal.timeoutMilliseconds
+    onTimedOut: journal.timedOut = true
   }
 }

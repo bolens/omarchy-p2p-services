@@ -257,14 +257,14 @@ class ControlIntegrationTests(ControlTestCase):
       proc = pathlib.Path(directory); process = proc/"42"; process.mkdir()
       (process/"comm").write_text("syncthing\n")
       (process/"cmdline").write_bytes(b"/usr/bin/syncthing\0serve\0")
-      with mock.patch.object(CONTROL.os, "pidfd_open", return_value=9), \
-           mock.patch.object(CONTROL.signal, "pidfd_send_signal") as send, \
+      with mock.patch.object(CONTROL.os, "pidfd_open", return_value=9, create=True), \
+           mock.patch.object(CONTROL.signal, "pidfd_send_signal", create=True) as send, \
            mock.patch.object(CONTROL.os, "close"):
         self.assertTrue(CONTROL.terminate_matching_process(42,["syncthing"],proc))
       send.assert_called_once_with(9,CONTROL.signal.SIGTERM)
       (process/"comm").write_text("unrelated\n"); (process/"cmdline").write_bytes(b"unrelated\0")
-      with mock.patch.object(CONTROL.os, "pidfd_open", return_value=10), \
-           mock.patch.object(CONTROL.signal, "pidfd_send_signal") as send, \
+      with mock.patch.object(CONTROL.os, "pidfd_open", return_value=10, create=True), \
+           mock.patch.object(CONTROL.signal, "pidfd_send_signal", create=True) as send, \
            mock.patch.object(CONTROL.os, "close"):
         self.assertFalse(CONTROL.terminate_matching_process(42,["syncthing"],proc))
       send.assert_not_called()

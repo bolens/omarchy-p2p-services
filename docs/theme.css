@@ -7,9 +7,9 @@
 [data-theme="github-light"]{color-scheme:light;--ink:#1f2328;--muted:#59636e;--deep:#ffffff;--panel:#f6f8fa;--line:#d0d7de;--cyan:#0969da;--orange:#9a6700;--green:#1a7f37;--shadow:0 20px 55px #1f23281f}
 [data-theme="catppuccin-latte"]{color-scheme:light;--ink:#4c4f69;--muted:#6c6f85;--deep:#eff1f5;--panel:#e6e9ef;--line:#bcc0cc;--cyan:#179299;--orange:#df8e1d;--green:#40a02b;--shadow:0 20px 55px #4c4f691f}
 [data-theme="solarized-light"]{color-scheme:light;--ink:#073642;--muted:#586e75;--deep:#fdf6e3;--panel:#eee8d5;--line:#93a1a1;--cyan:#268bd2;--orange:#b58900;--green:#859900;--shadow:0 20px 55px #0736421f}
-.theme-picker{display:flex;align-items:center;color:var(--muted);font-size:.72rem}.theme-picker>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.theme-picker select{max-width:9rem;padding:.42rem .6rem;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
+.theme-picker{display:flex;align-items:center;min-width:0;color:var(--muted);font-size:.72rem}.theme-picker>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.theme-picker select{width:11rem;max-width:100%;padding:.42rem .6rem;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
 :is([data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]) body:before{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--cyan) 14%,transparent),transparent 32rem),radial-gradient(circle at 88% 28%,color-mix(in srgb,var(--orange) 12%,transparent),transparent 28rem),var(--deep)}
 :is([data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]) header{background:color-mix(in srgb,var(--deep) 88%,transparent)}
 :is([data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]) :is(.node,.card,.tab,.shot,.bar-demo,.guide article,.terminal){background:var(--panel)}
 :is([data-theme="github-light"],[data-theme="catppuccin-latte"],[data-theme="solarized-light"]) .tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--deep)}
-@media(max-width:800px){.theme-picker{margin-left:auto}.theme-picker select{max-width:8rem}}
+@media (max-width:800px){.theme-picker{margin-left:auto}}

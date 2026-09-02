@@ -7,6 +7,8 @@ const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "docs/index.html"), "utf8");
 const themeCss = fs.readFileSync(path.join(root, "docs/theme.css"), "utf8");
 const themeJs = fs.readFileSync(path.join(root, "docs/theme.js"), "utf8");
+const syntaxCss = fs.readFileSync(path.join(root, "docs/syntax-highlight.css"), "utf8");
+const syntaxJs = fs.readFileSync(path.join(root, "docs/syntax-highlight.js"), "utf8");
 const notFound = fs.readFileSync(path.join(root, "docs/404.html"), "utf8");
 function cssBlock(source, marker) {
   const start = source.indexOf(marker);
@@ -27,6 +29,11 @@ for (const match of html.matchAll(/href="#([^"]+)"/g))
 const siteDimensions = name => dimensions(path.join(root, "docs", name), name);
 
 assert.match(html, /<main id="main">/);
+for (const asset of ["syntax-highlight.css", "syntax-highlight.js"]) assert.ok(html.includes(asset), `missing syntax asset `);
+for (const token of ["sh-command", "sh-option", "sh-string", "sh-variable", "sh-operator", "sh-comment"]) assert.ok(syntaxCss.includes(token), `missing syntax token `);
+assert.match(syntaxJs, /createTextNode/);
+assert.match(syntaxJs, /replaceChildren/);
+assert.doesNotMatch(syntaxJs, /innerHTML/);
 assert.match(html, /rel="canonical" href="https:\/\/bolens\.github\.io\/omarchy-p2p-services\/"/);
 assert.match(html, /name="twitter:card" content="summary_large_image"/);
 for (const contract of ["og:site_name", "twitter:image:alt", "apple-touch-icon.png", "site.webmanifest"])
@@ -45,6 +52,7 @@ assert.match(themeCss, /\[data-theme="github-light"\]\{color-scheme:light/);
 assert.match(themeJs, /if \(themeColor\)/);
 assert.match(themeJs, /if \(root\.dataset\.themeStorage\)/);
 assert.match(themeCss, /\.tab\[aria-selected="true"\]\{background:var\(--ink\);border-color:var\(--ink\);color:var\(--deep\)\}/);
+assert.match(themeCss, /\.theme-picker select\{width:11rem;max-width:100%/, "theme selector must fit long labels");
 const mobileCss = cssBlock(html, "@media(max-width:800px)");
 assert.match(mobileCss, /grid-template-columns:minmax\(0,1fr\)/);
 assert.match(mobileCss, /\.showcase>\*\{min-width:0\}/);
@@ -106,4 +114,7 @@ assert.match(capture, /update-screenshot-metadata/);
 assert.doesNotMatch(capture, /\bsleep\s+(?:1|2)\b/, "capture workflow must wait on observable IPC state, not fixed delays");
 for (const readiness of ["mainReady", "detailsReady", "editorReady", "panelClosed"])
   assert.ok(capture.includes(readiness), `capture workflow is missing readiness probe: ${readiness}`);
+assert.match(html, /value="system"/); assert.match(html, /value="time"/);
+assert.match(themeJs, /new Date\(\)\.getHours\(\)/); assert.match(themeJs, /addEventListener\?\.\("change"/);
+assert.match(themeJs, /return darkTheme/, "no-preference fallback must remain dark");
 console.log("site checks passed");

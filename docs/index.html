@@ -12,9 +12,16 @@
     let saved = null;
     try { requested = new URLSearchParams(location.search).get("theme"); } catch {}
     try { saved = root.dataset.themeStorage ? localStorage.getItem(root.dataset.themeStorage) : null; } catch {}
-    const preferred = typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: light)").matches
-      ? "github-light" : root.dataset.defaultTheme;
-    root.dataset.theme = requested || saved || preferred;
+    const preference = requested || saved || "system";
+    const prefersLight = typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: light)").matches;
+    const prefersDark = typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches;
+    const hour = new Date().getHours();
+    root.dataset.themePreference = preference;
+    root.dataset.theme = preference === "system"
+      ? (prefersLight ? "github-light" : root.dataset.defaultTheme)
+      : preference === "time"
+        ? (hour >= 7 && hour < 19 ? "github-light" : root.dataset.defaultTheme)
+        : preference;
   </script>
   <meta property="og:title" content="P2P Services for Omarchy">
   <meta property="og:site_name" content="P2P Services">
@@ -55,7 +62,7 @@
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<header><nav><a class="brand" href="#"><b>◈</b> P2P SERVICES</a><span></span><a href="#interface">Interface</a><a href="#guide">Guide</a><a href="#install">Install</a><a href="https://github.com/bolens/omarchy-p2p-services">GitHub ↗</a><label class="theme-picker"><span>Theme</span><select data-theme-select aria-label="Site color theme"><option value="p2p">P2P</option><option value="tokyo-night">Tokyo Night</option><option value="catppuccin">Catppuccin</option><option value="gruvbox">Gruvbox</option><option value="nord">Nord</option><option value="github-dark">GitHub Dark</option><option value="github-light">GitHub Light</option><option value="catppuccin-latte">Catppuccin Latte</option><option value="solarized-light">Solarized Light</option></select></label></nav></header>
+<header><nav><a class="brand" href="#"><b>◈</b> P2P SERVICES</a><span></span><a href="#interface">Interface</a><a href="#guide">Guide</a><a href="#install">Install</a><a href="https://github.com/bolens/omarchy-p2p-services">GitHub ↗</a><label class="theme-picker"><span>Theme</span><select data-theme-select aria-label="Site color theme"><option value="system">System</option><option value="time">Day cycle</option><option value="p2p">P2P</option><option value="tokyo-night">Tokyo Night</option><option value="catppuccin">Catppuccin</option><option value="gruvbox">Gruvbox</option><option value="nord">Nord</option><option value="github-dark">GitHub Dark</option><option value="github-light">GitHub Light</option><option value="catppuccin-latte">Catppuccin Latte</option><option value="solarized-light">Solarized Light</option></select></label></nav></header>
 <main id="main">
   <section class="hero">
     <div><p class="eyebrow">Omarchy Shell plugin · v__PLUGIN_VERSION__</p><h1>Your peers.<em>One surface.</em></h1><p class="lead">Discover, organize, inspect, and control local P2P clients and overlay-network daemons without turning your desktop into a dashboard.</p><div class="actions"><a class="button primary" href="#install">Install plugin</a><a class="button" href="#interface">See it live</a></div></div>

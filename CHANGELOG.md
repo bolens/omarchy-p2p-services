@@ -5,6 +5,10 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+
+- Pages code examples use theme-aware shell syntax highlighting without changing copied commands.
+
 ## [0.3.8] - 2026-09-01
 
 ### Fixed

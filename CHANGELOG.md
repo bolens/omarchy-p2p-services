@@ -5,6 +5,13 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-09-01
+
+### Fixed
+
+- Bound pending event-journal commands by count and size so a stalled helper
+  cannot grow the shared shell process indefinitely.
+
 ## [0.3.6] - 2026-09-01
 
 ### Added
@@ -119,7 +126,8 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.6...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.7...HEAD
+[0.3.7]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.3...v0.3.4

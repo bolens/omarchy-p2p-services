@@ -115,6 +115,7 @@ run_harness RuntimeEventJournalTest.qml P2P_QML_EVENT_JOURNAL_OK
 run_harness RuntimeEventJournalFailureTest.qml P2P_QML_EVENT_JOURNAL_FAILURE_OK
 run_harness RuntimeEventJournalCoalescingTest.qml P2P_QML_EVENT_JOURNAL_COALESCING_OK
 run_harness RuntimeEventJournalClearCoalescingTest.qml P2P_QML_EVENT_JOURNAL_CLEAR_COALESCING_OK
+run_harness RuntimeEventJournalQueueBoundsTest.qml P2P_QML_EVENT_JOURNAL_QUEUE_BOUNDS_OK
 run_harness RuntimeAccessibilityTest.qml P2P_QML_ACCESSIBILITY_OK
 
 if (( ${#requested_harnesses[@]} > 0 && selected_harnesses != ${#requested_harnesses[@]} )); then

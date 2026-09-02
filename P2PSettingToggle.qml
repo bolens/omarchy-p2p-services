@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import QtQuick.Layouts
 import QtQuick.Controls
 import qs.Commons

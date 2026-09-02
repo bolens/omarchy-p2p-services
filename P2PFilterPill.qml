@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import qs.Commons
 import qs.Ui
 

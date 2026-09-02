@@ -1,9 +1,9 @@
-pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
 import qs.Ui
+import "Model.js" as Model
 
 ColumnLayout {
   id: page
@@ -98,12 +98,11 @@ ColumnLayout {
           Repeater {
             model: page.controller.setting("savedViews", []) || []
             delegate: RowLayout {
-              id: savedViewRow
               required property var modelData
               Layout.fillWidth: true
-              Text { Layout.fillWidth: true; text: savedViewRow.modelData.name + " · " + savedViewRow.modelData.filter + " · " + savedViewRow.modelData.sortMode + (savedViewRow.modelData.groupMode && savedViewRow.modelData.groupMode !== "none" ? " · " + savedViewRow.modelData.groupMode + " groups" : ""); textFormat: Text.PlainText; color: Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-              Button { objectName: "savedViewApplyButton"; iconText: "󰄬"; tooltipText: "Apply " + savedViewRow.modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.applyView(savedViewRow.modelData) }
-              Button { objectName: "savedViewRemoveButton"; iconText: "󰆴"; tooltipText: "Remove " + savedViewRow.modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.removeSavedView(savedViewRow.modelData.name) }
+              Text { Layout.fillWidth: true; text: modelData.name + " · " + modelData.filter + " · " + modelData.sortMode + (modelData.groupMode && modelData.groupMode !== "none" ? " · " + modelData.groupMode + " groups" : ""); textFormat: Text.PlainText; color: Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+              Button { objectName: "savedViewApplyButton"; iconText: "󰄬"; tooltipText: "Apply " + modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.applyView(modelData) }
+              Button { objectName: "savedViewRemoveButton"; iconText: "󰆴"; tooltipText: "Remove " + modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.removeSavedView(modelData.name) }
             }
           }
           }

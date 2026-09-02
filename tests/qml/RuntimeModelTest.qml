@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import Quickshell
 import QtQuick
 import "Model.js" as Model

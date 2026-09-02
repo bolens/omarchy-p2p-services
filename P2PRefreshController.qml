@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Io
 
@@ -56,8 +55,8 @@ QtObject {
     property bool fullScan: false
     stdout: StdioCollector { id: output; waitForEnd: true }
     onExited: function(exitCode) {
-      controller.watchdog.stop()
-      var fullScan = controller.process.fullScan
+      watchdog.stop()
+      var fullScan = process.fullScan
       if (exitCode === 0 && !controller.timedOut) controller.succeeded(String(output.text || "").trim(), fullScan)
       else controller.failed(controller.timedOut ? -2 : exitCode, fullScan)
       controller.drain()

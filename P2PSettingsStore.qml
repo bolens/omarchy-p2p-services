@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Io
 
@@ -77,7 +76,7 @@ QtObject {
   property Process loadProc: Process {
     stdout: StdioCollector { id: loadOutput; waitForEnd: true }
     onExited: function(exitCode) {
-        store.loadWatchdog.stop()
+        loadWatchdog.stop()
         store.loadBusy = false
         var stored = null
         if (exitCode === 0 && !store.loadTimedOut) {
@@ -103,7 +102,7 @@ QtObject {
     property bool patchMode: false
     stdout: StdioCollector { id: saveOutput; waitForEnd: true }
     onExited: function(exitCode) {
-      store.saveWatchdog.stop()
+      saveWatchdog.stop()
       var failed = exitCode !== 0 || store.saveTimedOut
       if (!failed && patchMode) {
         var valid = false

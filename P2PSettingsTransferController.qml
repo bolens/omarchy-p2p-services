@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Io
 
@@ -40,8 +39,8 @@ QtObject {
     stdout: StdioCollector { id: output; waitForEnd: true }
     stderr: StdioCollector { id: errorOutput; waitForEnd: true }
     onExited: function(exitCode) {
-      controller.watchdog.stop()
-      var completedMode = controller.process.mode
+      watchdog.stop()
+      var completedMode = process.mode
       var effectiveExitCode = controller.timedOut ? -2 : exitCode
       var payload = String(output.text || "").trim()
       var detail = String(errorOutput.text || "").trim().slice(0, 512)

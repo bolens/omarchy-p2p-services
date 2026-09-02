@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -111,7 +110,7 @@ Panel {
   readonly property var visibleMissingServices: availablePackagesExpanded ? missingServices : missingServices.slice(0, 5)
   readonly property var visibleDetectedServiceCatalog: installedPackagesExpanded ? detectedServiceCatalog : detectedServiceCatalog.slice(0, 5)
   property string helper: PathUtils.localFilePath(Qt.resolvedUrl("p2p-control"))
-  readonly property real openPanelIndicatorWidth: button.measuredLabelWidth
+  readonly property real openPanelIndicatorWidth: button.labelWidth
 
   function setting(key, fallback) {
     if (durableSettingsLoaded && durableSettings && durableSettings[key] !== undefined) return durableSettings[key]
@@ -876,10 +875,10 @@ Panel {
 
   WidgetButton {
     id: button
-    property real measuredLabelWidth: implicitWidth
+    property real labelWidth: implicitWidth
     anchors.fill: parent
     bar: root.bar
-    text: root.setting("showCount", true) ? root.barText() : String(root.setting("widgetIcon", "󰒍"))
+    text: setting("showCount", true) ? root.barText() : String(setting("widgetIcon", "󰒍"))
     fontSize: Number(root.setting("barFontSize", 14))
     horizontalMargin: Number(root.setting("barHorizontalMargin", 8))
     verticalPadding: Number(root.setting("barVerticalPadding", 6))
@@ -944,7 +943,7 @@ Panel {
         else if ((text === "s" || text === "S") && !serviceSearch.activeFocus) { root.editingServiceId = ""; root.showingWidgetSettings = true }
         else if (root.showingWidgetSettings && "1234".indexOf(text) >= 0) root.showSettingsPage(["general", "performance", "discovery", "packages"][Number(text) - 1])
       }
-      onTabRequested: function(direction) { if (root.bar && typeof root.bar.switchPanelFrom === "function") root.bar.switchPanelFrom(root, direction) }
+      onTabRequested: function(direction) { if (bar && typeof bar.switchPanelFrom === "function") bar.switchPanelFrom(root, direction) }
 
       Item {
         id: popupLayout

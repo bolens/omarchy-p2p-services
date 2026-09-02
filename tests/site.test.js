@@ -45,6 +45,7 @@ assert.match(themeCss, /\[data-theme="github-light"\]\{color-scheme:light/);
 assert.match(themeJs, /if \(themeColor\)/);
 assert.match(themeJs, /if \(root\.dataset\.themeStorage\)/);
 assert.match(themeCss, /\.tab\[aria-selected="true"\]\{background:var\(--ink\);border-color:var\(--ink\);color:var\(--deep\)\}/);
+assert.match(themeCss, /\.theme-picker select\{width:11rem;max-width:100%/, "theme selector must fit long labels");
 const mobileCss = cssBlock(html, "@media(max-width:800px)");
 assert.match(mobileCss, /grid-template-columns:minmax\(0,1fr\)/);
 assert.match(mobileCss, /\.showcase>\*\{min-width:0\}/);

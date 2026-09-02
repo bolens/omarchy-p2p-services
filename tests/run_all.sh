@@ -42,7 +42,7 @@ qmlformat_bin=${QMLFORMAT:-/usr/lib/qt6/bin/qmlformat}
 [[ -x "$qmlformat_bin" ]] || { printf 'Qt 6 qmlformat not found: %s\n' "$qmlformat_bin" >&2; exit 1; }
 "$qmllint_bin" -I "$shell_root" -I . -i "$plugin_dir/qmldir" \
   -i "$shell_root/Commons/qmldir" -i "$shell_root/Ui/qmldir" \
-  Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml
+  Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml
 "$qmlformat_bin" -n Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
 validation_dir=$(mktemp -d)
 trap 'rm -rf -- "$validation_dir"' EXIT

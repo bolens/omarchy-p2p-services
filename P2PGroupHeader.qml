@@ -1,7 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Ui
 
 Rectangle {
   id: header
@@ -34,17 +34,17 @@ Rectangle {
     id: groupRow
     anchors.fill: parent
     anchors.margins: Style.spacing.sm
-    Text { objectName: "groupCollapseIndicator"; text: controller.isGroupCollapsed(header.groupName) ? "▸" : "▾"; textFormat: Text.PlainText; color: Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.body }
-    Text { objectName: "groupIcon"; visible: controller.setting("showGroupIcons", true) === true; text: controller.groupIcon(header.entry); textFormat: Text.PlainText; color: Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.body }
+    Text { objectName: "groupCollapseIndicator"; text: header.controller.isGroupCollapsed(header.groupName) ? "▸" : "▾"; textFormat: Text.PlainText; color: Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.body }
+    Text { objectName: "groupIcon"; visible: header.controller.setting("showGroupIcons", true) === true; text: header.controller.groupIcon(header.entry); textFormat: Text.PlainText; color: Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.body }
     Text { objectName: "groupLabel"; Layout.fillWidth: true; text: header.groupName; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold; font.letterSpacing: 1.1 }
     Rectangle {
       objectName: "groupCountBadge"
-      visible: controller.setting("showGroupCounts", true) === true
+      visible: header.controller.setting("showGroupCounts", true) === true
       implicitWidth: countText.implicitWidth + Style.spacing.sm * 2
       implicitHeight: countText.implicitHeight + Style.space(4)
       radius: implicitHeight / 2
       color: Util.alpha(Color.accent, 0.10)
-      Text { id: countText; objectName: "groupCountText"; anchors.centerIn: parent; text: controller.groupCountText(header.groupName); textFormat: Text.PlainText; color: Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold }
+      Text { id: countText; objectName: "groupCountText"; anchors.centerIn: parent; text: header.controller.groupCountText(header.groupName); textFormat: Text.PlainText; color: Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.Bold }
     }
   }
   MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: header.activate() }

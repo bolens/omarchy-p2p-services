@@ -1,7 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Ui
 import "Model.js" as Model
 
 Rectangle {

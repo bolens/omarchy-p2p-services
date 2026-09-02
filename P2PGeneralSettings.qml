@@ -1,9 +1,9 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
 import qs.Ui
-import "Model.js" as Model
 
 ColumnLayout {
   id: page

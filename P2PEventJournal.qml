@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Io
 
@@ -55,10 +56,10 @@ QtObject {
   property Process process: Process {
     stdout: StdioCollector { id: output; waitForEnd: true }
     onExited: function(exitCode) {
-      watchdog.stop()
+      journal.watchdog.stop()
       journal.busy = false
       if (journal.timedOut || exitCode !== 0) journal.failed()
-      else if (process.command[1] !== "events-clear") {
+      else if (journal.process.command[1] !== "events-clear") {
         try { var parsed = JSON.parse(String(output.text || "[]")); journal.events = Array.isArray(parsed) ? parsed : [] }
         catch (error) { journal.failed() }
       } else journal.events = []

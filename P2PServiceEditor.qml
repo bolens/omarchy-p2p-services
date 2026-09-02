@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -166,10 +167,11 @@ import "Model.js" as Model
                 return item && item.backups ? item.backups : []
               }
               delegate: RowLayout {
+                id: backupRow
                 required property var modelData
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: modelData.timestamp; textFormat: Text.PlainText; color: Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-                Button { objectName: "serviceRestoreButton"; text: "Restore"; enabled: !!editor.current && !editor.current.active; tooltipText: enabled ? "Restore this configuration backup" : "Stop the service before restoring configuration"; onClicked: if (enabled) editor.controller.requestRestore(editor.current, modelData.name) }
+                Text { Layout.fillWidth: true; text: backupRow.modelData.timestamp; textFormat: Text.PlainText; color: Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+                Button { objectName: "serviceRestoreButton"; text: "Restore"; enabled: !!editor.current && !editor.current.active; tooltipText: enabled ? "Restore this configuration backup" : "Stop the service before restoring configuration"; onClicked: if (enabled) editor.controller.requestRestore(editor.current, backupRow.modelData.name) }
               }
             }
           }

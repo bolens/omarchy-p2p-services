@@ -10,6 +10,10 @@ const themeJs = fs.readFileSync(path.join(root, "docs/theme.js"), "utf8");
 const syntaxCss = fs.readFileSync(path.join(root, "docs/syntax-highlight.css"), "utf8");
 const syntaxJs = fs.readFileSync(path.join(root, "docs/syntax-highlight.js"), "utf8");
 const notFound = fs.readFileSync(path.join(root, "docs/404.html"), "utf8");
+for (const file of ["robots.txt", "sitemap.xml", "llms.txt"])
+  assert.ok(fs.existsSync(path.join(root, "docs", file)), `missing discovery file: ${file}`);
+for (const [, url] of fs.readFileSync(path.join(root, "docs/sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g))
+  assert.ok(fs.readFileSync(path.join(root, "docs/llms.txt"), "utf8").includes(url), `llms.txt missing ${url}`);
 function cssBlock(source, marker) {
   const start = source.indexOf(marker);
   assert.notEqual(start, -1, `missing ${marker}`);

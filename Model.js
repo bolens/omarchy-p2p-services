@@ -695,10 +695,13 @@ function serviceTransitions(previous, next, restartThreshold) {
     var entry = next[index], old = oldById[entry.id], lifecycleHandled = false
     if (!old) continue
     if (old.active === true && entry.active !== true) {
-      var stopChange = {id:entry.id,kind:entry.stopKind === "crash" ? "crashed" : "stopped"}
-      if (entry.stopCause) stopChange.cause = String(entry.stopCause)
+      var confirmedUpdate = String(entry.restartKind || "") === "update"
+        || String(entry.lifecycleKind || "") === "updated"
+      var stopChange = {id:entry.id,kind:confirmedUpdate ? "updated" : entry.stopKind === "crash" ? "crashed" : "stopped"}
+      if (confirmedUpdate && (entry.restartCause || entry.lifecycleCause)) stopChange.cause = String(entry.restartCause || entry.lifecycleCause)
+      else if (entry.stopCause) stopChange.cause = String(entry.stopCause)
       changes.push(stopChange)
-      lifecycleHandled = stopChange.kind === "crashed"
+      lifecycleHandled = stopChange.kind === "updated" || stopChange.kind === "crashed"
     }
     if (old.hasError === true && entry.active === true && entry.hasError !== true) changes.push({id:entry.id,kind:"recovered"})
     if (old.hasError !== true && entry.hasError === true) changes.push({id:entry.id,kind:"unhealthy"})

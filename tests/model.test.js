@@ -205,6 +205,11 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.serviceTransitions(
   [{id:"daemon",active:true,restartCount:1}],
   [{id:"daemon",active:false,restartCount:2,stopKind:"crash",stopCause:"systemd-failure",restartKind:"crash"}], 3
 ))), [{id:"daemon",kind:"crashed",cause:"systemd-failure"}]);
+assert.deepEqual(JSON.parse(JSON.stringify(context.serviceTransitions(
+  [{id:"freenet",active:true,restartCount:3}],
+  [{id:"freenet",active:false,restartCount:3,stopKind:"crash",stopCause:"systemd-failure",restartKind:"update",restartCause:"self-update"}], 3
+))), [{id:"freenet",kind:"updated",cause:"self-update"}],
+"confirmed update evidence must outrank a transient stop failure");
 assert.equal(context.ensureVisibleContentY(0, 300, 500, 60, 1000), 260);
 assert.equal(context.ensureVisibleContentY(300, 300, 120, 60, 1000), 120);
 assert.equal(context.ensureVisibleContentY(200, 300, 250, 60, 1000), 200);

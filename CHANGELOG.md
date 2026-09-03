@@ -9,6 +9,11 @@ All notable changes to P2P Services are documented here. This project follows
 
 - Pages code examples use theme-aware shell syntax highlighting without changing copied commands.
 
+### Fixed
+
+- Prefer confirmed self-update lifecycle evidence over transient stop-failure
+  state so updating services do not emit a false crash notification.
+
 ## [0.3.8] - 2026-09-01
 
 ### Fixed

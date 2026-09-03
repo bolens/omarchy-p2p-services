@@ -1,0 +1,13 @@
+# Omarchy P2P Services
+
+Omarchy P2P Services is an Omarchy plugin for controlling supported peer-to-peer services from the desktop shell. The site covers capabilities, installation, settings, status, and releases.
+
+## Documentation
+
+- Overview: https://bolens.github.io/omarchy-p2p-services/
+- Changelog: https://bolens.github.io/omarchy-p2p-services/changelog/
+
+## Source
+
+- Repository: https://github.com/bolens/omarchy-p2p-services
+- Issues: https://github.com/bolens/omarchy-p2p-services/issues

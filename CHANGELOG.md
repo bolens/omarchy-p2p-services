@@ -5,6 +5,8 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-09-03
+
 ### Added
 
 - Pages code examples use theme-aware shell syntax highlighting without changing copied commands.
@@ -141,7 +143,8 @@ All notable changes to P2P Services are documented here. This project follows
 - Settings persistence, service customization, diagnostics, configuration
   backups, and package-management integration.
 
-[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.8...HEAD
+[Unreleased]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.9...HEAD
+[0.3.9]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/bolens/omarchy-p2p-services/compare/v0.3.5...v0.3.6

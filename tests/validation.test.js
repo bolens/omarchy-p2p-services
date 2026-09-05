@@ -38,7 +38,7 @@ assert.doesNotMatch(live, /\b(open|close|reloadSettings)\b/,
   "live IPC verification must remain read-only");
 assert.equal(JSON.parse(fs.readFileSync("package.json", "utf8")).scripts["verify:live"], "bash scripts/verify-live");
 assert.doesNotMatch(workflow, /node tests\/model\.test\.js/);
-assert.match(workflow, /group: ci-\$\{\{ github\.event\.pull_request\.number \|\| github\.ref \}\}/);
+assert.match(workflow, /group: \$\{\{ github\.workflow \}\}-ci-\$\{\{ github\.ref \}\}/);
 assert.match(workflow, /actions\/setup-node@[0-9a-f]{40}[^\n]*# v[0-9]+\.[0-9]+\.[0-9]+/);
 assert.match(workflow, /node-version: 24\.19\.0/);
 assert.match(workflow, /npm ci --ignore-scripts --no-audit/);

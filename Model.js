@@ -139,8 +139,8 @@ function safeHttpUrl(value) {
   var match = text.match(/^https?:\/\/([^\/?#]+)/i)
   if (!match || match[1].indexOf("@") >= 0) return ""
   var authority = match[1]
-  var host = authority
-  var port = ""
+  var host
+  var port
   if (authority.charAt(0) === "[") {
     var close = authority.indexOf("]")
     if (close < 2) return ""
@@ -435,7 +435,7 @@ function compareServices(a, b, context) {
     if (runningDelta) return runningDelta
   }
   var mode = String(options.mode || "custom")
-  var av = 0, bv = 0, naturalDescending = false
+  var av, bv, naturalDescending = false
   if (mode === "name") {
     av = String(options.labels && options.labels[a.id] || a.name || a.id)
     bv = String(options.labels && options.labels[b.id] || b.name || b.id)

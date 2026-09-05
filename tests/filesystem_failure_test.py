@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from backend import p2p_cache, p2p_settings_store
+from backend import p2p_settings_store
 from backend.p2p_cache import cached_status
 from backend.p2p_settings import sanitize_settings
 from backend.p2p_settings_store import SettingsStore

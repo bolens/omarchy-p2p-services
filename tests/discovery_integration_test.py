@@ -2,7 +2,7 @@ import pathlib
 import tempfile
 from unittest import mock
 
-from control_test_support import CONTROL, ROOT, ControlTestCase
+from control_test_support import CONTROL, ControlTestCase
 
 
 class DiscoveryIntegrationTests(ControlTestCase):

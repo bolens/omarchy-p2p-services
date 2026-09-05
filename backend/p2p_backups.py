@@ -1,6 +1,5 @@
 """Restore policy kept separate from discovery and CLI orchestration."""
 
-import os
 
 PKEXEC = "/usr/bin/pkexec"
 INSTALL = "/usr/bin/install"

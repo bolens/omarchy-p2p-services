@@ -2,7 +2,6 @@
 
 import json
 import pathlib
-import re
 
 from backend.p2p_validation import safe_http_url
 

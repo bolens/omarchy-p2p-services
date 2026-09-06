@@ -65,17 +65,13 @@ class ControlIntegrationTests(ControlTestCase):
         self.assertIn(service_id, CONTROL.DOCKER_ALIASES)
 
   def test_aria2_launch_enables_local_rpc_foreground(self):
-    original_which = CONTROL.shutil.which
-    try:
-      CONTROL.shutil.which = lambda command: "/usr/bin/aria2c" if command == "aria2c" else None
+    with mock.patch.object(CONTROL, "command_path", return_value="/fixture/aria2c"):
       command = CONTROL.launch_command(self.service("aria2"))
-      self.assertEqual(command[0], "/usr/bin/aria2c")
+      self.assertEqual(command[0], "/fixture/aria2c")
       self.assertIn("--enable-rpc=true", command)
       self.assertIn("--daemon=false", command)
       self.assertIn("--rpc-listen-all=false", command)
       self.assertTrue(any(value.startswith("--conf-path=") for value in command))
-    finally:
-      CONTROL.shutil.which = original_which
 
   def test_verify_action_rejects_false_success(self):
     original_sleep, original_reset, original_inspect = CONTROL.time.sleep, CONTROL.reset_discovery, CONTROL.INSPECTOR.inspect

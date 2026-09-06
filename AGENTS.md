@@ -1,41 +1,30 @@
 # Agent guidance
 
-Before Spec Kit planning or implementation, read
-`.specify/memory/project-guide.md` with the project constitution. It maps
-requirements to this repository's source, acceptance evidence, and validation.
+[Documentation](DOCUMENTATION.md) maps architecture, deployment, state, and document ownership.
 
-For behavior or architecture changes, read `.specify/memory/constitution.md`
-and the relevant parts of `ARCHITECTURE.md`. Use `TESTING.md` to select and run
-checks, and `CONTRIBUTING.md` for commit and contribution requirements. Read
-`SECURITY.md` before changing detection, control, commands, or trust boundaries.
+For behavior or architecture changes, read [.specify/memory/constitution.md](.specify/memory/constitution.md)
+and the relevant parts of [ARCHITECTURE.md](ARCHITECTURE.md). Use [TESTING.md](TESTING.md) to select and run
+checks, and [CONTRIBUTING.md](CONTRIBUTING.md) for commit and contribution requirements. Read
+[SECURITY.md](SECURITY.md) before changing detection, control, commands, or trust boundaries.
 
 - Never control real services during tests or diagnosis without explicit authorization.
 - Keep service identifiers and command arguments allowlisted; preserve least privilege and bounded process scope.
 - Serialize settings changes and distinguish requested, pending, active, failed, unavailable, and degraded state.
 - Update QML metadata, defaults, settings UI, IPC, docs, adapters, and tests together; run the repository’s focused and full local gates.
 
-## Spec-driven changes
+## Planning and evidence
 
-Use Spec Kit for new capabilities, architecture, security-sensitive behavior,
-migrations, and coordinated multi-file changes. Keep narrow fixes, dependency
-updates, prose edits, and release housekeeping in the normal repository
-workflow unless their risk warrants a written specification. Keep completed
-feature directories under `specs/` as decision history. Backfill finished work
-only when explicitly requested. Label those
-specifications as retrospective baselines, record the inspected revision, and map
-requirements to source and acceptance evidence. Separate observed behavior from
-corrective requirements. Never imply the specification preceded its code or mark
-unverified checks complete.
+Use the [project guide](.specify/memory/project-guide.md) and
+[constitution](.specify/memory/constitution.md) for substantial changes. The guide
+owns Spec Kit scope, retained history, retrospective requirements, and acceptance
+evidence. Prose maintenance uses the normal repository workflow.
 
 ## Context and handoffs
 
-- Locate source with targeted searches before reading. For exploratory reads of
-  files over 350 lines, select relevant ranges. Read required guidance and actual
-  source before edits or correctness claims; summaries do not replace them.
-- When delegation is permitted, give each worker one question or concrete output,
-  allowed paths, and a check. Return findings with source locations, changed paths,
-  and verification gaps. Keep final review with the coordinating agent.
-- Record durable user corrections in the [project guide](.specify/memory/project-guide.md)
-  or owning contract with scope, reason, and evidence. Replace superseded advice;
-  read relevant corrections before reusing assumptions. Keep temporary progress
-  in task notes and preserve existing authority rules.
+- Search before reading. Use bounded source excerpts for exploratory reads over
+  350 lines, and inspect required guidance and actual source before editing.
+- When delegation is permitted, assign a bounded question or output, paths, and
+  check. Return source locations, changes, and verification gaps for final review.
+- Keep durable corrections in the [project guide](.specify/memory/project-guide.md)
+  or owning contract. Replace superseded advice and read it before reuse.
+  Temporary progress belongs in task notes. Preserve existing authority rules.

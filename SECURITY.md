@@ -1,5 +1,7 @@
 # Security policy
 
+[Documentation](DOCUMENTATION.md)
+
 ## Supported versions
 
 Security fixes are provided for the latest release.

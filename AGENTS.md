@@ -4,7 +4,10 @@ Before Spec Kit planning or implementation, read
 `.specify/memory/project-guide.md` with the project constitution. It maps
 requirements to this repository's source, acceptance evidence, and validation.
 
-Read `.specify/memory/constitution.md`, `SECURITY.md`, `ARCHITECTURE.md`, `TESTING.md`, and `CONTRIBUTING.md` when present.
+For behavior or architecture changes, read `.specify/memory/constitution.md`
+and the relevant parts of `ARCHITECTURE.md`. Use `TESTING.md` to select and run
+checks, and `CONTRIBUTING.md` for commit and contribution requirements. Read
+`SECURITY.md` before changing detection, control, commands, or trust boundaries.
 
 - Never control real services during tests or diagnosis without explicit authorization.
 - Keep service identifiers and command arguments allowlisted; preserve least privilege and bounded process scope.

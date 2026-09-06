@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "redhat.vscode-yaml",
+    "GitHub.vscode-github-actions",
+    "timonwong.shellcheck",
+    "mads-hartmann.bash-ide-vscode",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "TheQtCompany.qt-qml"
+  ]
+}

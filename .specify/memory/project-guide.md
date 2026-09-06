@@ -1,5 +1,7 @@
 # omarchy-p2p-services Spec Kit project guide
 
+[Documentation](../../DOCUMENTATION.md)
+
 A QML service-control interface backed by bounded Python discovery, action, settings,
 and cache adapters.
 

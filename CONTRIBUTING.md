@@ -1,5 +1,7 @@
 # Contributing
 
+[Documentation](DOCUMENTATION.md)
+
 Thanks for helping improve P2P Services. Keep changes focused, local-first, and
 consistent with Omarchy Shell conventions.
 

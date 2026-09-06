@@ -1,5 +1,7 @@
 # Releasing
 
+[Documentation](DOCUMENTATION.md)
+
 Releases are immutable, SemVer-tagged snapshots. GitHub Actions validates the
 tag and publishes a source archive, a SHA-256 checksum, and a provenance
 attestation.

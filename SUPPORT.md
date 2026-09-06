@@ -1,5 +1,7 @@
 # Support
 
+[Documentation](DOCUMENTATION.md)
+
 Start with the user guide for [installation and usage](https://bolens.github.io/omarchy-p2p-services/#guide)
 or [troubleshooting](https://bolens.github.io/omarchy-p2p-services/#troubleshooting).
 If the problem remains, open the matching GitHub issue form and include

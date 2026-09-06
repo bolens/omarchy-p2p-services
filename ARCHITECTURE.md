@@ -1,5 +1,7 @@
 # Architecture
 
+[Documentation](DOCUMENTATION.md)
+
 ## Repository map
 
 - `BarWidget.qml` composes the panel. `P2PSettingsPanel.qml` composes six

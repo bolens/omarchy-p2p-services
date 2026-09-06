@@ -1,5 +1,7 @@
 # Testing
 
+[Documentation](DOCUMENTATION.md)
+
 ## Full local suite
 
 ```sh

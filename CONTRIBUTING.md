@@ -25,3 +25,7 @@ Open a pull request that explains the problem, chosen behavior, and validation.
 Discuss large interface or security changes in an issue first. See
 [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITY.md](SECURITY.md), and
 [RELEASING.md](RELEASING.md) before changing their respective contracts.
+
+## Reproducible tools
+
+Use the [development environment guide](docs/development-environments.md) for devenv and local Docker, Podman, or Apple container validation. Desktop integration remains an explicit host check.

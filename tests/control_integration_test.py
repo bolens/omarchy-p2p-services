@@ -65,17 +65,13 @@ class ControlIntegrationTests(ControlTestCase):
         self.assertIn(service_id, CONTROL.DOCKER_ALIASES)
 
   def test_aria2_launch_enables_local_rpc_foreground(self):
-    original_which = CONTROL.shutil.which
-    try:
-      CONTROL.shutil.which = lambda command: "/usr/bin/aria2c" if command == "aria2c" else None
+    with mock.patch.object(CONTROL, "command_path", return_value="/fixture/aria2c"):
       command = CONTROL.launch_command(self.service("aria2"))
-      self.assertEqual(command[0], "/usr/bin/aria2c")
+      self.assertEqual(command[0], "/fixture/aria2c")
       self.assertIn("--enable-rpc=true", command)
       self.assertIn("--daemon=false", command)
       self.assertIn("--rpc-listen-all=false", command)
       self.assertTrue(any(value.startswith("--conf-path=") for value in command))
-    finally:
-      CONTROL.shutil.which = original_which
 
   def test_verify_action_rejects_false_success(self):
     original_sleep, original_reset, original_inspect = CONTROL.time.sleep, CONTROL.reset_discovery, CONTROL.INSPECTOR.inspect
@@ -446,7 +442,7 @@ class ControlIntegrationTests(ControlTestCase):
     original_which = CONTROL.shutil.which
     try:
       with tempfile.TemporaryDirectory() as directory:
-        root = pathlib.Path(directory)
+        root = pathlib.Path(directory).resolve()
         compose = root/"docker-compose.yml"
         compose.write_text("services: {}\n")
         item = self.item("syncthing", service="syncthing", workdir=str(root), config_files=str(compose))
@@ -483,7 +479,7 @@ class ControlIntegrationTests(ControlTestCase):
 
   def test_config_targets_do_not_depend_on_container_order(self):
     with tempfile.TemporaryDirectory() as directory:
-      root = pathlib.Path(directory)
+      root = pathlib.Path(directory).resolve()
       alpha = root/"alpha.yml"; alpha.write_text("services: {}\n")
       zeta = root/"zeta.yml"; zeta.write_text("services: {}\n")
       alpha_item = self.item("alpha",workdir=str(root),config_files=str(alpha))

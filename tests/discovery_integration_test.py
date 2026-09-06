@@ -260,7 +260,8 @@ class DiscoveryIntegrationTests(ControlTestCase):
       self.assertEqual(CONTROL.PROBE.unit_state(["monerod.service"], False), ("monerod.service", True))
       self.assertEqual(CONTROL.PROBE.unit_main_pid("monerod.service", False), 77)
       self.assertFalse(CONTROL.PROBE.unit_has_error("monerod.service", False))
-      self.assertGreater(CONTROL.PROBE.unit_uptime("monerod.service", False), 0)
+      with mock.patch.object(CONTROL.SNAPSHOT, "boot_uptime_microseconds", 10000001):
+        self.assertEqual(CONTROL.PROBE.unit_uptime("monerod.service", False), 10)
       self.assertEqual(len(calls), 1)
       self.assertIn("yggdrasil.service", calls[0])
       self.assertIn("monerod.service", calls[0])

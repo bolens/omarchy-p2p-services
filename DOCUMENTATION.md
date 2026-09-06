@@ -57,3 +57,5 @@ runtime proof. A topic without an implementation stays explicitly unimplemented.
 User-facing facts belong in the website guide. Repository documents should link to the relevant
 guide anchor instead of maintaining a second copy; keep this index focused on contributor and
 maintainer material.
+
+- [Editor setup](.vscode/README.md)

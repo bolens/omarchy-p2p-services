@@ -31,3 +31,8 @@ Discuss large interface or security changes in an issue first. See
 ## Reproducible tools
 
 Use the [development environment guide](docs/development-environments.md) for devenv and local Docker, Podman, or Apple container validation. Desktop integration remains an explicit host check.
+
+## Devcontainer
+
+See [the devcontainer guide](.devcontainer/README.md) for the repository toolchain,
+setup, checks and platform limits.

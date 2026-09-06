@@ -78,7 +78,13 @@ for repo in "${repositories[@]}"; do
 
   [[ $(jq -r '.engines.node // ""' "$repo/package.json") == '>=24.19.0' ]] || fail "$name" "Node.js engine drifted"
   [[ $(jq -r '.packageManager // ""' "$repo/package.json") == 'npm@11.19.0' ]] || fail "$name" "npm version drifted"
-  [[ $(count_matches 'interval: weekly' "$repo/.github/dependabot.yml") -eq 2 ]] || fail "$name" "Dependabot schedule drifted"
+  expected_schedules=2
+  if [[ $name == omarchy-app-drawer ]]; then expected_schedules=3; fi
+  if [[ -f $repo/.devcontainer/Dockerfile ]]; then
+    expected_schedules=$((expected_schedules + 1))
+    require_text "$repo" .github/dependabot.yml '/.devcontainer' "devcontainer update schedule is missing"
+  fi
+  [[ $(count_matches 'interval: weekly' "$repo/.github/dependabot.yml") -eq $expected_schedules ]] || fail "$name" "Dependabot schedule drifted"
 done
 
 (( failures == 0 )) || exit 1

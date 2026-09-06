@@ -32,6 +32,7 @@ jobs:
               - '.github/workflows/devenv.yml'
               - 'backend/**'
               - '*.js'
+              - '*.qml'
               - 'p2p-control'
               - 'manifest.json'
               - 'package*.json'

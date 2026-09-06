@@ -442,7 +442,7 @@ class ControlIntegrationTests(ControlTestCase):
     original_which = CONTROL.shutil.which
     try:
       with tempfile.TemporaryDirectory() as directory:
-        root = pathlib.Path(directory)
+        root = pathlib.Path(directory).resolve()
         compose = root/"docker-compose.yml"
         compose.write_text("services: {}\n")
         item = self.item("syncthing", service="syncthing", workdir=str(root), config_files=str(compose))
@@ -479,7 +479,7 @@ class ControlIntegrationTests(ControlTestCase):
 
   def test_config_targets_do_not_depend_on_container_order(self):
     with tempfile.TemporaryDirectory() as directory:
-      root = pathlib.Path(directory)
+      root = pathlib.Path(directory).resolve()
       alpha = root/"alpha.yml"; alpha.write_text("services: {}\n")
       zeta = root/"zeta.yml"; zeta.write_text("services: {}\n")
       alpha_item = self.item("alpha",workdir=str(root),config_files=str(alpha))

@@ -11,21 +11,9 @@ source "$plugin_dir/tests/tooling_env.sh"
 python_bin="$(find_command "${PYTHON_BIN:-}" python3)"
 
 "$python_bin" -m unittest discover -s tests -p '*_test.py'
-node tests/model.test.js
-node tests/path_utils.test.js
-node tests/contracts.test.js
-node tests/security.test.js
-node tests/release.test.js
-node tests/documentation.test.js
-node tests/site.test.js
-node tests/site_build.test.js
-node tests/validation.test.js
-node tests/capture_transaction.test.js
-node tests/capture_recovery.test.js
-node tests/capture_fingerprint.test.js
-node tests/capture_monitor.test.js
-node tests/capture_safety.test.js
-node tests/fleet_hardening.test.js
+for test_file in tests/*.test.js; do
+  node "$test_file"
+done
 scripts/check-plugin-suite "$plugin_dir"
 ruby scripts/validate-issue-forms.rb
 "$python_bin" -m py_compile p2p-control backend/*.py scripts/update-screenshot-metadata

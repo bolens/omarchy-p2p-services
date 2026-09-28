@@ -13,6 +13,6 @@
     "test:site": "node tests/site.test.js"
   },
   "devDependencies": {
-    "lighthouse": "13.4.1"
+    "lighthouse": "13.5.0"
   }
 }

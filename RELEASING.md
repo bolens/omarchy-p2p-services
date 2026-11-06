@@ -81,8 +81,16 @@ GitHub CI. The entry point is `bash scripts/woodpecker-plugin.sh` inside that
 image. It requires network access only to fetch the pinned public imports
 and any lockfile-based test dependencies; it receives no publishing secrets.
 
-GitHub checks remain during the protected-check transition. Repository links,
-HTML/XML, browser accessibility, workflow security, compatibility canaries,
-macOS, development-image builds, Pages, and signed release publication retain
-their existing GitHub workflows. Native plugin success does not replace those
-checks or prove live desktop behavior. No version or release is created by CI.
+The required plugin check is `ci/woodpecker/pr/plugin`. Ordinary GitHub PR
+and main runs skip the duplicate plugin jobs. Reusable callers retain hosted
+plugin validation by default; signed release validation explicitly enables
+`release_validation: true` before publication. Use Woodpecker for manual plugin
+validation. Repository links, HTML/XML, browser accessibility, workflow security,
+compatibility canaries, macOS, development-image builds, Pages and signed release
+publication retain their GitHub workflows. Native success does not replace those
+checks or prove live desktop behavior. No release is created by validation CI.
+
+Editor image changes select a real hosted Docker build and post-create smoke
+under a non-root user with a read-only image and no host Docker socket. Review
+native workflow image pins monthly and after security releases; Dependabot's
+Dockerfile coverage does not discover `.woodpecker/` image references.

@@ -465,17 +465,25 @@ class ControlIntegrationTests(ControlTestCase):
 
   def test_config_targets_ignore_missing_and_outside_compose_paths(self):
     with tempfile.TemporaryDirectory() as directory:
-      root = pathlib.Path(directory)/"project"
+      base = pathlib.Path(directory).resolve()
+      root = base/"project"
       root.mkdir()
+      home = base/"home"
+      home.mkdir()
       compose = root/"compose.yml"
       compose.write_text("services: {}\n")
-      outside = pathlib.Path(directory)/"outside.yml"
+      outside = base/"outside.yml"
       outside.write_text("services: {}\n")
+      home_compose = home/"compose.yml"
+      home_compose.write_text("services: {}\n")
       service = dict(self.service("syncthing"), config=str(root/"missing.conf"))
       outside_item = self.item("syncthing", workdir=str(root), config_files=str(outside))
       missing_item = self.item("syncthing", workdir=str(root), config_files=str(root/"missing.yml"))
       missing_root = self.item("syncthing", workdir=str(root/"absent"), config_files=str(compose))
-      self.assertEqual(CONTROL.config_targets(service, [outside_item, missing_item, missing_root]), [])
+      home_item = self.item("syncthing", workdir=str(root), config_files=str(home_compose))
+      with mock.patch.object(CONTROL, "HOME", home):
+        self.assertEqual(CONTROL.config_targets(service, [outside_item, missing_item, missing_root]), [])
+        self.assertEqual(CONTROL.config_targets(service, [home_item]), [str(home_compose)])
 
   def test_config_targets_do_not_depend_on_container_order(self):
     with tempfile.TemporaryDirectory() as directory:

@@ -31,9 +31,9 @@ assert.match(ci, /repository:\s*\$\{\{\s*github\.event_name\s*!=\s*'pull_request
 assert.equal((ci.match(/CHANGES_RESULT:\s*\$\{\{ needs\.changes\.result \}\}/g) || []).length, 2)
 assert.equal((ci.match(/\[\[ "\$CHANGES_RESULT" == success \]\]/g) || []).length, 2)
 assert.equal((ci.match(/\[\[ "\$SELECTED" == true \|\| "\$SELECTED" == false \]\]/g) || []).length, 2)
-assert.match(ci, /plugin-result:[\s\S]*name: Plugin[\s\S]*if: always\(\)/)
+assert.match(ci, /plugin-result:[\s\S]*name: Plugin[\s\S]*if: always\(\) && inputs\.release_validation/)
 assert.match(ci, /repository-result:[\s\S]*name: Repository[\s\S]*if: always\(\)/)
-assert.match(ci, /actions\/setup-node@820762786026740c76f36085b0efc47a31fe5020/)
+assert.match(ci, /actions\/setup-node@[a-f0-9]{40}(?:\s|$)/)
 assert.match(ci, /shellcheck/)
 assert.match(ci, /lycheeverse\/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8/)
 assert.match(ci, /--exclude-path '[^']*node_modules/)
@@ -67,8 +67,18 @@ assert.match(release, /actions\/attest-build-provenance@4d101475d8b20a2381f78447
 assert.match(release, /id-token:\s*write/)
 assert.match(release, /attestations:\s*write/)
 assert.match(release, /validate:[\s\S]*?checks:\s*write/)
+assert.match(ci, /workflow_call:\n    inputs:\n      release_validation:[\s\S]*?type: boolean\n        default: true/,
+  "existing reusable callers must retain hosted plugin validation by default")
+for (const job of ["plugin-fast", "plugin-qml"]) {
+  const block = ci.match(new RegExp(`^  ${job}:\\n[\\s\\S]*?(?=^  \\S)`, "m"))
+  assert.ok(block, `missing hosted release validation job: ${job}`)
+  assert.match(block[0], /if: inputs\.release_validation && needs\.changes\.outputs\.plugin == 'true'/,
+    "ordinary PR/main validation must be native; reusable releases remain explicit")
+}
 const releaseValidateJob = release.match(/^  validate:\n[\s\S]*?(?=^  \S)/m)
 assert.ok(releaseValidateJob, "release workflow must define the reusable validate job")
+assert.match(releaseValidateJob[0], /uses: \.\/\.github\/workflows\/ci\.yml\n    with:\n      release_validation: true/,
+  "signed releases must explicitly keep the full hosted plugin validation gate")
 assert.match(releaseValidateJob[0], /^    permissions:\n(?:(?:      .+)\n)*?      pull-requests:\s*read$/m)
 assert.match(release, /concurrency:[\s\S]*cancel-in-progress:\s*false/)
 assert.doesNotMatch(release, /runs-on:\s*ubuntu-latest/)

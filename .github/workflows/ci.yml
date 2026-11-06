@@ -8,7 +8,7 @@ on:
   workflow_call:
     inputs:
       release_validation:
-        description: Preserve hosted plugin validation for reusable release callers.
+        description: Keep hosted plugin and browser validation for reusable release callers.
         type: boolean
         default: true
 
@@ -57,6 +57,7 @@ jobs:
               - '.github/dependabot.yml'
               - '.github/labeler.yml'
               - '.github/workflows/**'
+              - '.woodpecker/**'
               - 'docs/**'
               - 'manifest.json'
               - 'package*.json'
@@ -224,6 +225,7 @@ jobs:
           npm run test:site
           ! grep -R --fixed-strings '__PLUGIN_VERSION__' _site
       - name: Audit site accessibility
+        if: inputs.release_validation || github.event_name == 'workflow_dispatch'
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory _site >/tmp/p2p-site.log 2>&1 &
           site_server=$!

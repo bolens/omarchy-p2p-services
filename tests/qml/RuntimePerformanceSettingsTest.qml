@@ -31,8 +31,8 @@ ShellRoot {
     if (!item) return null
     if (item.objectName === name) return item
     var children = item.children || []
-    for (var index = 0; index < children.length; index++) {
-      var match = descendant(children[index], name)
+    for (let index = 0; index < children.length; index++) {
+      const match = descendant(children[index], name)
       if (match) return match
     }
     return null
@@ -41,8 +41,8 @@ ShellRoot {
     if (!item) return null
     if (item.settingKey === key) return item
     var children = item.children || []
-    for (var index = 0; index < children.length; index++) {
-      var match = settingControl(children[index], key)
+    for (let index = 0; index < children.length; index++) {
+      const match = settingControl(children[index], key)
       if (match) return match
     }
     return null

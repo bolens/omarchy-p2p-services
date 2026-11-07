@@ -47,8 +47,8 @@ QtObject {
       if (queuedFallback === null) queuedFallback = previous
       if (patch) {
         if (!queuedFullSave) {
-          var merged = queuedPatch || {}
-          for (var key in patch) merged[key] = patch[key]
+          const merged = queuedPatch || {}
+          for (const key in patch) merged[key] = patch[key]
           queuedPatch = merged
         }
       } else {
@@ -76,12 +76,12 @@ QtObject {
   property Process loadProc: Process {
     stdout: StdioCollector { id: loadOutput; waitForEnd: true }
     onExited: function(exitCode) {
-        loadWatchdog.stop()
+        store.loadWatchdog.stop()
         store.loadBusy = false
         var stored = null
         if (exitCode === 0 && !store.loadTimedOut) {
         try {
-          var parsed = JSON.parse(String(loadOutput.text || ""))
+          const parsed = JSON.parse(String(loadOutput.text || ""))
           if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) stored = parsed
         } catch (error) {}
         }
@@ -90,7 +90,7 @@ QtObject {
           store.loadFailed()
         }
         var merged = {}
-        for (var key in stored) if (key !== "id") merged[key] = stored[key]
+        for (const key in stored) if (key !== "id") merged[key] = stored[key]
         merged.id = store.moduleName
         store.durableSettings = merged
         store.loaded = true
@@ -98,16 +98,18 @@ QtObject {
     }
   }
 
-  property Process saveProc: Process {
+  component SaveProcess: Process {
     property bool patchMode: false
+  }
+  property SaveProcess saveProc: SaveProcess {
     stdout: StdioCollector { id: saveOutput; waitForEnd: true }
     onExited: function(exitCode) {
-      saveWatchdog.stop()
+      store.saveWatchdog.stop()
       var failed = exitCode !== 0 || store.saveTimedOut
       if (!failed && patchMode) {
-        var valid = false
+        let valid = false
         try {
-          var parsed = JSON.parse(String(saveOutput.text || ""))
+          const parsed = JSON.parse(String(saveOutput.text || ""))
           if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
             valid = true
             parsed.id = store.moduleName
@@ -123,9 +125,9 @@ QtObject {
         store.saveFailed()
       }
       if (store.queuedSettings) {
-        var next = store.queuedSettings
-        var patch = store.queuedFullSave ? null : store.queuedPatch
-        var fallback = failed ? store.activeSaveFallback : store.queuedFallback
+        const next = store.queuedSettings
+        const patch = store.queuedFullSave ? null : store.queuedPatch
+        const fallback = failed ? store.activeSaveFallback : store.queuedFallback
         store.queuedSettings = null
         store.queuedPatch = null
         store.queuedFullSave = false

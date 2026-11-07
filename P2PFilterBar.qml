@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 ColumnLayout {
@@ -81,7 +82,7 @@ ColumnLayout {
     height: implicitHeight
     visible: filterBar.controller.backendFilter !== ""
     indicator: ({icon:"",value:filterBar.controller.backendFilter.toUpperCase(),tooltip:"Clear backend filter"})
-    tone: Color.bar.active
+    tone: Commons.Color.bar.active
     onTriggered: filterBar.controller.filterByBackend(filterBar.controller.backendFilter)
   }
   Rectangle {
@@ -92,18 +93,18 @@ ColumnLayout {
     implicitWidth: visibleServiceCountText.implicitWidth + Style.spacing.sm * 2
     implicitHeight: visibleServiceCountText.implicitHeight + Style.space(4)
     radius: implicitHeight / 2
-    color: Util.alpha(Color.muted, 0.14)
+    color: Util.alpha(Commons.Color.muted, 0.14)
     border.width: 1
-    border.color: Util.alpha(Color.muted, 0.24)
+    border.color: Util.alpha(Commons.Color.muted, 0.24)
     Text {
       id: visibleServiceCountText
       objectName: "visibleServiceCountText"
       anchors.centerIn: parent
       text: filterBar.controller.visibleServices.length + " SHOWN"
       textFormat: Text.PlainText
-      color: Color.popups.text
+      color: Commons.Color.popups.text
       opacity: 0.68
-      font.family: Style.font.mono || Style.font.family
+      font.family: Style.font.family
       font.pixelSize: Style.font.caption
       font.weight: Font.Bold
       font.letterSpacing: 0.8

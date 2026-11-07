@@ -1,9 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
-import "Model.js" as Model
 
 ColumnLayout {
   id: page
@@ -24,8 +25,8 @@ ColumnLayout {
             label: "Service sorting"
             value: String(page.controller.setting("serviceSortMode", "custom"))
             options: [{value:"custom",label:"Custom order"},{value:"name",label:"Name"},{value:"category",label:"Category"},{value:"status",label:"Status"},{value:"activity",label:"Live activity"},{value:"connections",label:"Connections"},{value:"uptime",label:"Uptime"},{value:"traffic",label:"Transfer rate"},{value:"backend",label:"Backend"},{value:"recent",label:"Recently changed"},{value:"errors",label:"Error severity"}]
-            foreground: Color.popups.text
-            accent: Color.bar.active
+            foreground: Commons.Color.popups.text
+            accent: Commons.Color.bar.active
             onChanged: function(next) { page.controller.persistKeepingOpen({serviceSortMode: next}) }
           }
           Dropdown {
@@ -34,8 +35,8 @@ ColumnLayout {
             label: "Sort direction"
             value: String(page.controller.setting("serviceSortDirection", "automatic"))
             options: [{value:"automatic",label:"Automatic"},{value:"ascending",label:"Ascending"},{value:"descending",label:"Descending"}]
-            foreground: Color.popups.text
-            accent: Color.bar.active
+            foreground: Commons.Color.popups.text
+            accent: Commons.Color.bar.active
             onChanged: function(next) { page.controller.persistKeepingOpen({serviceSortDirection: next}) }
           }
           }
@@ -54,7 +55,7 @@ ColumnLayout {
             label: "Group services"
             value: String(page.controller.setting("serviceGroupMode", "none"))
             options: [{value:"none",label:"No grouping"},{value:"status",label:"Status"},{value:"category",label:"Category"},{value:"backend",label:"Backend"},{value:"scope",label:"Control scope"},{value:"favorite",label:"Favorites"}]
-            foreground: Color.popups.text; accent: Color.bar.active
+            foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active
             onChanged: function(next) { page.controller.persistKeepingOpen({serviceGroupMode: next}) }
           }
           Dropdown {
@@ -64,7 +65,7 @@ ColumnLayout {
             label: "Group order"
             value: String(page.controller.setting("serviceGroupDirection", "automatic"))
             options: [{value:"automatic",label:"Smart order"},{value:"ascending",label:"A to Z"},{value:"descending",label:"Z to A"}]
-            foreground: Color.popups.text; accent: Color.bar.active
+            foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active
             onChanged: function(next) { page.controller.persistKeepingOpen({serviceGroupDirection: next}) }
           }
           }
@@ -80,11 +81,11 @@ ColumnLayout {
             label: "Group count format"
             value: String(page.controller.setting("groupCountMode", "active-total"))
             options: [{value:"active-total",label:"Active / total"},{value:"active",label:"Active only"},{value:"total",label:"Total only"}]
-            foreground: Color.popups.text; accent: Color.bar.active
+            foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active
             onChanged: function(next) { page.controller.persistKeepingOpen({groupCountMode: next}) }
           }
           }
-          Text { visible: page.controller.setting("serviceSortMode", "custom") === "traffic" && page.controller.setting("showTrafficStats", true) !== true; Layout.fillWidth: true; text: "Transfer-rate sorting needs Live transfer speeds enabled."; textFormat: Text.PlainText; color: Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { visible: page.controller.setting("serviceSortMode", "custom") === "traffic" && page.controller.setting("showTrafficStats", true) !== true; Layout.fillWidth: true; text: "Transfer-rate sorting needs Live transfer speeds enabled."; textFormat: Text.PlainText; color: Commons.Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           }
 
           P2PSectionHeading { visible: page.controller.settingsPage === "services"; title: "Saved views"; description: "Store and reuse a filter, search, sort, and grouping combination." }
@@ -92,17 +93,18 @@ ColumnLayout {
           visible: page.controller.settingsPage === "services"
           RowLayout {
             Layout.fillWidth: true
-            TextField { id: savedViewName; Layout.fillWidth: true; placeholderText: "Saved view name"; foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: { page.controller.saveCurrentView(text); text = "" } }
+            TextField { id: savedViewName; Layout.fillWidth: true; placeholderText: "Saved view name"; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; font.family: Style.font.family; onAccepted: { page.controller.saveCurrentView(text); text = "" } }
             Button { objectName: "saveCurrentViewButton"; iconText: "󰆓"; tooltipText: "Save current view"; horizontalPadding: Style.spacing.controlGap; onClicked: { page.controller.saveCurrentView(savedViewName.text); savedViewName.text = "" } }
           }
           Repeater {
             model: page.controller.setting("savedViews", []) || []
             delegate: RowLayout {
+              id: savedViewRow
               required property var modelData
               Layout.fillWidth: true
-              Text { Layout.fillWidth: true; text: modelData.name + " · " + modelData.filter + " · " + modelData.sortMode + (modelData.groupMode && modelData.groupMode !== "none" ? " · " + modelData.groupMode + " groups" : ""); textFormat: Text.PlainText; color: Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-              Button { objectName: "savedViewApplyButton"; iconText: "󰄬"; tooltipText: "Apply " + modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.applyView(modelData) }
-              Button { objectName: "savedViewRemoveButton"; iconText: "󰆴"; tooltipText: "Remove " + modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.removeSavedView(modelData.name) }
+              Text { Layout.fillWidth: true; text: savedViewRow.modelData.name + " · " + savedViewRow.modelData.filter + " · " + savedViewRow.modelData.sortMode + (savedViewRow.modelData.groupMode && savedViewRow.modelData.groupMode !== "none" ? " · " + savedViewRow.modelData.groupMode + " groups" : ""); textFormat: Text.PlainText; color: Commons.Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+              Button { objectName: "savedViewApplyButton"; iconText: "󰄬"; tooltipText: "Apply " + savedViewRow.modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.applyView(savedViewRow.modelData) }
+              Button { objectName: "savedViewRemoveButton"; iconText: "󰆴"; tooltipText: "Remove " + savedViewRow.modelData.name; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.removeSavedView(savedViewRow.modelData.name) }
             }
           }
           }

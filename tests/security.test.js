@@ -34,7 +34,7 @@ for (const workflowName of fs.readdirSync(workflowDirectory)) {
 }
 
 const ci = read(path.join(".github", "workflows", "ci.yml"));
-const omarchyCheckout = ci.match(/repository:\s*basecamp\/omarchy[\s\S]*?ref:\s*([^\s#]+)/);
+const omarchyCheckout = ci.match(/repository:\s*omacom\/omarchy[\s\S]*?ref:\s*([^\s#]+)/);
 if (!omarchyCheckout || !/^[0-9a-f]{40}$/i.test(omarchyCheckout[1]))
   throw new Error("Omarchy validator source is not commit-pinned");
 

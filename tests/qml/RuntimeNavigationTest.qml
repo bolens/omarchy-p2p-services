@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import Quickshell
 import QtQuick
 import "Model.js" as Model
@@ -5,11 +6,16 @@ import "Model.js" as Model
 ShellRoot {
   id: root
 
-  property Item harness: Item {
+  component NavigationHarness: Item {
     width: 360
     height: 240
     property int selectedIndex: -1
     property alias scrollPosition: viewport.contentY
+
+    function prepareLayout() {
+      content.forceLayout()
+      viewport.contentHeight = content.childrenRect.height
+    }
 
     function move(delta) {
       selectedIndex = Model.nextSelectionIndex(cards.count, selectedIndex, delta)
@@ -44,10 +50,10 @@ ShellRoot {
       }
     }
   }
+  property NavigationHarness harness: NavigationHarness {}
 
   Component.onCompleted: Qt.callLater(function() {
-    content.forceLayout()
-    viewport.contentHeight = content.childrenRect.height
+    harness.prepareLayout()
     harness.move(1)
     if (harness.selectedIndex !== 0 || Math.abs(harness.scrollPosition) > 0.01) throw new Error("initial Down navigation failed")
     harness.move(1)

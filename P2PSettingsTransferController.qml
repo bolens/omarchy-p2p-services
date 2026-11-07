@@ -34,13 +34,13 @@ QtObject {
     return true
   }
 
-  property Process process: Process {
-    property string mode: ""
+  component TransferProcess: Process { property string mode: "" }
+  property TransferProcess process: TransferProcess {
     stdout: StdioCollector { id: output; waitForEnd: true }
     stderr: StdioCollector { id: errorOutput; waitForEnd: true }
     onExited: function(exitCode) {
-      watchdog.stop()
-      var completedMode = process.mode
+      controller.watchdog.stop()
+      var completedMode = controller.process.mode
       var effectiveExitCode = controller.timedOut ? -2 : exitCode
       var payload = String(output.text || "").trim()
       var detail = String(errorOutput.text || "").trim().slice(0, 512)

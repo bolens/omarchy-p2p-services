@@ -29,7 +29,7 @@ QtObject {
   property Process process: Process {
     stderr: StdioCollector { id: errorOutput; waitForEnd: true }
     onExited: function(exitCode) {
-      watchdog.stop()
+      runner.watchdog.stop()
       var entry = runner.activeEntry
       var action = runner.activeAction
       var detail = String(errorOutput.text || "").trim().slice(0, 512)

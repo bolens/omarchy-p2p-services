@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 ColumnLayout {
@@ -17,8 +18,8 @@ ColumnLayout {
   Layout.fillWidth: true
   spacing: Style.spacing.xs
 
-  Text { text: field.label + " (" + field.minimum + "–" + field.maximum + ")"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-  Text { visible: field.description !== ""; Layout.fillWidth: true; text: field.description; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+  Text { text: field.label + " (" + field.minimum + "–" + field.maximum + ")"; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+  Text { visible: field.description !== ""; Layout.fillWidth: true; text: field.description; textFormat: Text.PlainText; color: Commons.Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
   RowLayout {
     Layout.fillWidth: true
     TextField {
@@ -27,8 +28,8 @@ ColumnLayout {
       Layout.fillWidth: true
       text: String(field.controller.setting(field.settingKey, field.fallback))
       inputMethodHints: Qt.ImhDigitsOnly
-      foreground: Color.popups.text
-      accent: Color.bar.active
+      foreground: Commons.Color.popups.text
+      accent: Commons.Color.bar.active
       font.family: Style.font.family
       validator: IntValidator { bottom: field.minimum; top: field.maximum }
       onAccepted: field.save()

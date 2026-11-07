@@ -1,6 +1,7 @@
 import QtQuick.Layouts
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Toggle {
@@ -12,8 +13,8 @@ Toggle {
 
   Layout.fillWidth: true
   checked: controller.setting(settingKey, fallback) === true
-  foreground: Color.popups.text
-  accent: Color.bar.active
+  foreground: Commons.Color.popups.text
+  accent: Commons.Color.bar.active
   fontFamily: Style.font.family
   ToolTip.visible: tooltipText !== "" && tooltipHovered
   ToolTip.text: tooltipText

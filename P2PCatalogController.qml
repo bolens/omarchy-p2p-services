@@ -28,7 +28,7 @@ QtObject {
   property Process process: Process {
     stdout: StdioCollector { id: output; waitForEnd: true }
     onExited: function(exitCode) {
-      watchdog.stop()
+      controller.watchdog.stop()
       var effectiveExitCode = controller.timedOut ? -2 : exitCode
       var entries = effectiveExitCode === 0 ? Model.parseCatalog(String(output.text || "").trim()) : null
       var rerun = controller.pending

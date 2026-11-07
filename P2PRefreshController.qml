@@ -51,12 +51,12 @@ QtObject {
     Qt.callLater(function() { controller.start(next) })
   }
 
-  property Process process: Process {
-    property bool fullScan: false
+  component RefreshProcess: Process { property bool fullScan: false }
+  property RefreshProcess process: RefreshProcess {
     stdout: StdioCollector { id: output; waitForEnd: true }
     onExited: function(exitCode) {
-      watchdog.stop()
-      var fullScan = process.fullScan
+      controller.watchdog.stop()
+      var fullScan = controller.process.fullScan
       if (exitCode === 0 && !controller.timedOut) controller.succeeded(String(output.text || "").trim(), fullScan)
       else controller.failed(controller.timedOut ? -2 : exitCode, fullScan)
       controller.drain()

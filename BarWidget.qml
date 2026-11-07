@@ -1,18 +1,60 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
+import "BarHostProtocol.js" as HostProtocol
 import "PathUtils.js" as PathUtils
 
 Panel {
   id: root
+  BarHostAccess {
+    id: barHost
+    host: root.bar
+    fallbackBarSize: Style.bar.sizeHorizontal
+    fallbackUrgent: Commons.Color.urgent
+    fallbackForeground: Commons.Color.popups.text
+    fallbackBarForeground: Commons.Color.foreground
+  }
+
   moduleName: "io.github.bolens.p2p-services"
   manageIpc: false
-  readonly property var p2pService: bar && bar.shell ? bar.shell.serviceFor(moduleName) : null
+  readonly property var p2pService: barHost.serviceFor(moduleName)
+  property P2PIpcHub registeredIpcHub: null
+  property QtObject ipcRegisteredService: null
+  property string ipcRegisteredModule: ""
+  property int ipcLease: 0
+  property bool ipcComponentReady: false
+  function ipcFocusedPanel() { return barHost.findPanel(moduleName, null) }
+  function syncIpcRegistration() {
+    const service = root.p2pService
+    const next = service && service.ipcHub ? service.ipcHub : null
+    if (root.registeredIpcHub && (root.registeredIpcHub !== next
+        || root.ipcRegisteredService !== service || root.ipcRegisteredModule !== root.moduleName)) {
+      root.registeredIpcHub.unregisterWidget(root, root.ipcLease)
+      root.registeredIpcHub = null
+      root.ipcLease = 0
+      root.ipcRegisteredService = null
+      root.ipcRegisteredModule = ""
+    }
+    if (!root.ipcComponentReady || !next) return
+    const lease = next.registerWidget(root, root.moduleName, service)
+    if (lease > 0) {
+      root.registeredIpcHub = next
+      root.ipcRegisteredService = service
+      root.ipcRegisteredModule = root.moduleName
+      root.ipcLease = lease
+    }
+  }
+  onModuleNameChanged: root.syncIpcRegistration()
+  Component.onDestruction: {
+    if (root.registeredIpcHub && root.ipcLease > 0)
+      root.registeredIpcHub.unregisterWidget(root, root.ipcLease)
+  }
   property var services: []
   property var serviceCatalog: []
   property var trafficHistory: ({})
@@ -110,7 +152,7 @@ Panel {
   readonly property var visibleMissingServices: availablePackagesExpanded ? missingServices : missingServices.slice(0, 5)
   readonly property var visibleDetectedServiceCatalog: installedPackagesExpanded ? detectedServiceCatalog : detectedServiceCatalog.slice(0, 5)
   property string helper: PathUtils.localFilePath(Qt.resolvedUrl("p2p-control"))
-  readonly property real openPanelIndicatorWidth: button.labelWidth
+  readonly property real openPanelIndicatorWidth: button.indicatorExtent
 
   function setting(key, fallback) {
     if (durableSettingsLoaded && durableSettings && durableSettings[key] !== undefined) return durableSettings[key]
@@ -144,14 +186,14 @@ Panel {
     var fallback = JSON.parse(JSON.stringify(durableSettings || settings || {}))
     fallback.id = moduleName
     settings = fallback
-    if (bar && bar.shell && typeof bar.shell.updateEntryInline === "function") bar.shell.updateEntryInline(moduleName, fallback)
+    barHost.updateEntry(moduleName, fallback)
     settingsSaveStatus = "failed"
     errorText = "Unable to save P2P widget settings; previous settings restored"
   }
   function adoptTransferredSettings(imported) {
     settingsStore.adopt(imported)
     settings = imported
-    if (bar && bar.shell && typeof bar.shell.updateEntryInline === "function") bar.shell.updateEntryInline(moduleName, imported)
+    barHost.updateEntry(moduleName, imported)
   }
   function filteredServices() {
     var allow = Model.enabled(setting("enabledServices", []), [])
@@ -160,9 +202,9 @@ Panel {
     var order = Model.enabled(setting("serviceOrder", []), [])
     var sortMode = String(setting("serviceSortMode", "custom"))
     var orderRanks = {}, sourceRanks = {}, favoriteMap = serviceIndexes.favorites, labels = {}
-    for (var allowIndex = 0; allowIndex < allow.length; allowIndex++) allowed[allow[allowIndex]] = true
-    for (var orderIndex = 0; orderIndex < order.length; orderIndex++) orderRanks[order[orderIndex]] = orderIndex
-    for (var sourceIndex = 0; sourceIndex < services.length; sourceIndex++) {
+    for (let allowIndex = 0; allowIndex < allow.length; allowIndex++) allowed[allow[allowIndex]] = true
+    for (let orderIndex = 0; orderIndex < order.length; orderIndex++) orderRanks[order[orderIndex]] = orderIndex
+    for (let sourceIndex = 0; sourceIndex < services.length; sourceIndex++) {
       sourceRanks[services[sourceIndex].id] = sourceIndex
       labels[services[sourceIndex].id] = labelFor(services[sourceIndex])
     }
@@ -367,8 +409,10 @@ Panel {
     Qt.callLater(scrollToSettingsSection)
   }
   function scrollToSettingsSection() {
-    if (!settingsSection || !settingsPageLoader.item || typeof settingsPageLoader.item.sectionY !== "function") return
-    var target = settingsPageLoader.y + Number(settingsPageLoader.item.sectionY(settingsSection) || 0)
+    if (!settingsSection) return
+    const sectionOffset = HostProtocol.sectionY(settingsPageLoader.item, settingsSection)
+    if (sectionOffset === null) return
+    var target = settingsPageLoader.y + sectionOffset
     popupScroll.contentY = Math.max(0, Math.min(popupScroll.contentHeight - popupScroll.height, target - Style.spacing.md))
   }
   function settingsPageDescription() {
@@ -381,17 +425,17 @@ Panel {
   }
   function trafficRate(id, key) { var rate = trafficRates ? trafficRates[id] : null; return rate && rate[key] !== undefined ? rate[key] : 0 }
   function themeColor(role, fallback) {
-    if (role === "bar-active") return Color.bar.active
-    if (role === "urgent") return Color.urgent
-    if (role === "accent") return Color.accent
-    if (role === "foreground") return bar ? bar.barForeground : Color.foreground
-    if (role === "muted") return Color.muted
+    if (role === "bar-active") return Commons.Color.bar.active
+    if (role === "urgent") return Commons.Color.urgent
+    if (role === "accent") return Commons.Color.accent
+    if (role === "foreground") return barHost.barForeground
+    if (role === "muted") return Commons.Color.muted
     return fallback
   }
   function serviceColor(entry) {
-    if (!entry || !entry.active) return themeColor(String(setting("stoppedColorRole", "muted")), Color.muted)
-    if (entry.hasError) return themeColor(String(setting("errorColorRole", "urgent")), Color.urgent)
-    return themeColor(String(setting("runningColorRole", "accent")), Color.accent)
+    if (!entry || !entry.active) return themeColor(String(setting("stoppedColorRole", "muted")), Commons.Color.muted)
+    if (entry.hasError) return themeColor(String(setting("errorColorRole", "urgent")), Commons.Color.urgent)
+    return themeColor(String(setting("runningColorRole", "accent")), Commons.Color.accent)
   }
   function barText() {
     if (statusLoading && setting("showLoadingIndicators", true) === true) {
@@ -411,8 +455,7 @@ Panel {
     return 0
   }
   function focusedPanelInstance() {
-    if (bar && typeof bar.findPanelWidget === "function") return bar.findPanelWidget(moduleName)
-    return root
+    return barHost.findPanel(moduleName, root)
   }
   function captureContractVersion() { return "2" }
   function openFocused() {
@@ -533,7 +576,7 @@ Panel {
   function reloadDurableSettings() { settingsStore.load(settings) }
   function applyReconciledSettings(merged) {
     settings = merged
-    if (bar && bar.shell && typeof bar.shell.updateEntryInline === "function") bar.shell.updateEntryInline(moduleName, merged)
+    barHost.updateEntry(moduleName, merged)
     if (setting("persistCollapsedGroups", true) === true) collapsedServiceGroups = setting("collapsedServiceGroups", {}) || {}
     applyInitialView()
     Qt.callLater(reloadIfSharedSettingsAdvanced)
@@ -546,10 +589,10 @@ Panel {
     return true
   }
   function reloadSettingsAcrossInstances() {
-    var widgets = bar && typeof bar.moduleWidgets === "function" ? bar.moduleWidgets(moduleName) : [root]
+    var widgets = barHost.moduleWidgets(moduleName, [root])
     if (!widgets || !widgets.length) widgets = [root]
-    for (var index = 0; index < widgets.length; index++) {
-      var widget = widgets[index]
+    for (let index = 0; index < widgets.length; index++) {
+      let widget = widgets[index]
       if (widget && typeof widget.reloadDurableSettings === "function") widget.reloadDurableSettings()
     }
     return "ok"
@@ -641,16 +684,16 @@ Panel {
   }
   function updateTrafficRates(next) {
     var now = Date.now(), history = {}, rates = {}
-    for (var index = 0; index < next.length; index++) {
-      var entry = next[index], previous = trafficHistory[entry.id]
+    for (let index = 0; index < next.length; index++) {
+      let entry = next[index], previous = trafficHistory[entry.id]
       if (entry.trafficAvailable) {
         history[entry.id] = {rx: Number(entry.rxBytes) || 0, tx: Number(entry.txBytes) || 0, at: now}
         if (previous && now > previous.at && history[entry.id].rx >= previous.rx && history[entry.id].tx >= previous.tx) {
-          var seconds = (now - previous.at) / 1000
-          var rx = (history[entry.id].rx - previous.rx) / seconds
-          var tx = (history[entry.id].tx - previous.tx) / seconds
-          var window = Math.max(1, Number(setting("trafficSmoothingSeconds", 3)) || 3)
-          var alpha = Math.min(1, seconds / window)
+          let seconds = (now - previous.at) / 1000
+          let rx = (history[entry.id].rx - previous.rx) / seconds
+          let tx = (history[entry.id].tx - previous.tx) / seconds
+          let window = Math.max(1, Number(setting("trafficSmoothingSeconds", 3)) || 3)
+          let alpha = Math.min(1, seconds / window)
           rates[entry.id] = Model.smoothTrafficRate(trafficRates[entry.id], {rx:rx,tx:tx}, alpha, Number(setting("trafficMinimumBytesPerSecond", 1024)) || 0)
         }
       }
@@ -672,15 +715,15 @@ Panel {
   function commitSettings(values, refreshAfterCommit) {
     var organizationChange = Model.organizationChanged(values)
     var entry = {id:moduleName}, source = durableSettingsLoaded ? durableSettings : settings
-    for (var key in source) if (key !== "id") entry[key] = source[key]
-    for (var changed in values) entry[changed] = values[changed]
+    for (let key in source) if (key !== "id") entry[key] = source[key]
+    for (let changed in values) entry[changed] = values[changed]
     entry._p2pSettingsVersion = 1
     entry._p2pRevision = Math.max(0, Number(entry._p2pRevision) || 0) + 1
     entry._p2pUpdatedAt = Date.now()
     settings = entry
     writeDurableSettings(entry, values)
     if (organizationChange) organizationState.invalidate(values)
-    if (bar && bar.shell && typeof bar.shell.updateEntryInline === "function") bar.shell.updateEntryInline(moduleName, entry)
+    barHost.updateEntry(moduleName, entry)
     if (refreshAfterCommit === true && setting("refreshAfterSettings", true) === true) refresh()
   }
   function persistQuietly(values) { commitSettings(values, false) }
@@ -693,7 +736,7 @@ Panel {
   }
   function resetService(id) {
     var source = {}, keys = ["serviceLabels", "serviceIcons", "serviceShowStopped", "serviceConsoleUrls", "serviceNotificationPolicies"]
-    for (var index = 0; index < keys.length; index++) source[keys[index]] = setting(keys[index], {})
+    for (let index = 0; index < keys.length; index++) source[keys[index]] = setting(keys[index], {})
     source.favoriteServices = setting("favoriteServices", [])
     persistKeepingOpen(Model.resetServicePatch(source, id))
   }
@@ -719,7 +762,7 @@ Panel {
     if (!services.length) startStatusLoading()
     if (p2pService && typeof p2pService.requestRefresh === "function") {
       syncService()
-      var sharedFullScan = fullContainerScanPending
+      let sharedFullScan = fullContainerScanPending
       fullContainerScanPending = false
       refreshStartedAt = Date.now()
       lastScanKind = sharedFullScan ? "Full shared reconciliation" : "Fast shared running-only scan"
@@ -787,9 +830,9 @@ Panel {
     if (!previous.length) return
     var changes = Model.serviceTransitions(previous, next, Number(setting("restartWarningThreshold", 3)) || 3)
     var eligible = []
-    for (var index = 0; index < changes.length; index++) {
-      var change = changes[index], entry = next.find(function(item) { return item.id === change.id })
-      var now = Date.now()
+    for (let index = 0; index < changes.length; index++) {
+      let change = changes[index], entry = next.find(function(item) { return item.id === change.id })
+      let now = Date.now()
       if (!transitionNotificationEligible(change, entry, now) || !transitionNotificationAllowed(change.id, change.kind)) continue
       eligible.push(Object.assign({}, change, {label:labelFor(entry)}))
     }
@@ -840,7 +883,7 @@ Panel {
     var status = services.length ? activeCount + "/" + services.length + " active\nPrivacy filter: " + (privacyFilter ? "on" : "off") : "No supported services detected"
     var presentation = String(setting("barPresentation", "active"))
     if (presentation === "category-active" || presentation === "category-active-total") {
-      var categories = Model.categorySummaries(services, setting("categoryIcons", {}) || {}, presentation === "category-active-total", setting("hideZeroCount", false) === true)
+      let categories = Model.categorySummaries(services, setting("categoryIcons", {}) || {}, presentation === "category-active-total", setting("hideZeroCount", false) === true)
       if (categories.length) status += "\nGroups: " + categories.map(function(row) { return row.text }).join("  ")
     }
     if (consecutiveRefreshFailures > 0) status += "\nRefresh degraded: showing last successful data"
@@ -875,47 +918,28 @@ Panel {
 
   WidgetButton {
     id: button
-    property real labelWidth: implicitWidth
+    readonly property real indicatorExtent: implicitWidth
     anchors.fill: parent
     bar: root.bar
-    text: setting("showCount", true) ? root.barText() : String(setting("widgetIcon", "󰒍"))
+    text: root.setting("showCount", true) ? root.barText() : String(root.setting("widgetIcon", "󰒍"))
     fontSize: Number(root.setting("barFontSize", 14))
     horizontalMargin: Number(root.setting("barHorizontalMargin", 8))
     verticalPadding: Number(root.setting("barVerticalPadding", 6))
-    fixedWidth: root.bar && root.bar.vertical ? root.bar.barSize
+    fixedWidth: barHost.vertical ? barHost.barSize
       : (Number(root.setting("barFixedWidth", 0)) > 0 ? Number(root.setting("barFixedWidth", 0)) : -1)
     textRotation: root.barRotation()
-    foreground: root.themeColor(String(root.setting("barForegroundColorRole", "foreground")), root.bar ? root.bar.barForeground : Color.foreground)
+    foreground: root.themeColor(String(root.setting("barForegroundColorRole", "foreground")), barHost.barForeground)
     tooltipText: root.tooltip()
     active: root.opened
     useActiveColor: root.activeCount > 0
     activeColor: root.errorCount > 0 || root.consecutiveRefreshFailures > 0
-      ? root.themeColor(String(root.setting("errorColorRole", "urgent")), Color.urgent)
-      : root.themeColor(String(root.setting("barActiveColorRole", "accent")), Color.accent)
+      ? root.themeColor(String(root.setting("errorColorRole", "urgent")), Commons.Color.urgent)
+      : root.themeColor(String(root.setting("barActiveColorRole", "accent")), Commons.Color.accent)
     dimmed: root.setting("barDimWhenIdle", false) === true && root.activeCount === 0 && !root.opened
     onPressed: function(mouseButton) { root.handleBarPress(mouseButton) }
   }
 
-  IpcHandler {
-    target: root.moduleName
-    function captureContract(): string { return root.captureContractVersion() }
-    function open(): string { return root.openMainView() }
-    function close(): string { return root.closeFocused() }
-    function mainReady(layout: string, density: string): string { return root.focusedMainReady(layout, density) ? "true" : "false" }
-    function openDetails(serviceId: string): string { return root.openServiceDetails(serviceId) }
-    function detailsReady(serviceId: string): string { return root.focusedDetailsReady(serviceId) ? "true" : "false" }
-    function openEditor(serviceId: string): string { return root.openServiceEditor(serviceId) }
-    function editorReady(serviceId: string): string { return root.focusedEditorReady(serviceId) ? "true" : "false" }
-    function showFilters(): string { return root.setFiltersExpanded(true) }
-    function filtersReady(): string { return root.focusedFiltersExpanded() ? "true" : "false" }
-    function panelClosed(): string { return root.focusedPanelClosed() ? "true" : "false" }
-    function openSettings(page: string): string { return root.openSettings(page) }
-    function scrollSettings(position: string): string { return root.setSettingsScroll(position) }
-    function settingsReady(page: string): string { return root.focusedSettingsReady(page) ? "true" : "false" }
-    function reloadSettings(): string { return root.reloadSettingsAcrossInstances() }
-    function settingsSnapshot(): string { return root.focusedSettingsSnapshot() }
-    function privacyEnabled(): string { return root.privacyFilter ? "true" : "false" }
-  }
+
 
   KeyboardPanel {
     id: popup
@@ -943,7 +967,7 @@ Panel {
         else if ((text === "s" || text === "S") && !serviceSearch.activeFocus) { root.editingServiceId = ""; root.showingWidgetSettings = true }
         else if (root.showingWidgetSettings && "1234".indexOf(text) >= 0) root.showSettingsPage(["general", "performance", "discovery", "packages"][Number(text) - 1])
       }
-      onTabRequested: function(direction) { if (bar && typeof bar.switchPanelFrom === "function") bar.switchPanelFrom(root, direction) }
+      onTabRequested: function(direction) { barHost.switchPanel(root, direction) }
 
       Item {
         id: popupLayout
@@ -972,7 +996,7 @@ Panel {
         PanelSeparator {
           visible: root.editingServiceId === ""
           Layout.fillWidth: true
-          foreground: root.bar ? root.bar.foreground : Color.popups.text
+          foreground: barHost.foreground
         }
         }
 
@@ -1014,8 +1038,8 @@ Panel {
             Layout.fillWidth: true
             placeholderText: "Search services, categories, backends, or units"
             text: root.searchQuery
-            foreground: Color.popups.text
-            accent: Color.bar.active
+            foreground: Commons.Color.popups.text
+            accent: Commons.Color.bar.active
             font.family: Style.font.family
             onTextChanged: root.searchQuery = text
           }
@@ -1055,7 +1079,7 @@ Panel {
           visible: root.visibleErrorText !== ""
           message: root.visibleErrorText
           icon: "󰅙"
-          tone: Color.urgent
+          tone: Commons.Color.urgent
           actionText: "Diagnostics"
           onActionRequested: root.showSettingsSection("performance", "diagnostics")
         }
@@ -1069,7 +1093,7 @@ Panel {
           style: String(root.setting("loadingIndicatorStyle", "spinner"))
           glyph: String(root.setting("loadingIndicatorGlyph", ">"))
           speed: Number(root.setting("loadingIndicatorSpeed", 140)) || 140
-          tone: root.themeColor("accent", Color.accent)
+          tone: root.themeColor("accent", Commons.Color.accent)
         }
 
         P2PMessageSurface {
@@ -1082,7 +1106,7 @@ Panel {
                     : "No services match the “" + root.serviceFilter + "” view."))
             : "No supported P2P services detected."
           icon: root.services.length ? "󰍉" : "󰒍"
-          tone: Color.muted
+          tone: Commons.Color.muted
           actionText: root.services.length === 0 ? "Configure discovery" : ""
           onActionRequested: root.showSettingsSection("discovery", "custom-services")
         }
@@ -1117,7 +1141,7 @@ Panel {
           style: String(root.setting("loadingIndicatorStyle", "spinner"))
           glyph: String(root.setting("loadingIndicatorGlyph", ">"))
           speed: Number(root.setting("loadingIndicatorSpeed", 140)) || 140
-          tone: root.themeColor("accent", Color.accent)
+          tone: root.themeColor("accent", Commons.Color.accent)
         }
 
         P2PServiceEditor {
@@ -1139,7 +1163,7 @@ Panel {
         PanelSeparator {
           visible: root.editingServiceId === "" && (root.showingWidgetSettings || root.services.length > 0)
           Layout.fillWidth: true
-          foreground: root.bar ? root.bar.foreground : Color.popups.text
+          foreground: barHost.foreground
         }
         Text {
           visible: root.editingServiceId === "" && !root.showingWidgetSettings && root.services.length > 0
@@ -1148,7 +1172,7 @@ Panel {
             ? "↑/↓ or j/k move · enter details · r refresh · s settings\nMiddle customize · right details"
             : "↑/↓ or j/k navigate · enter details · r refresh · s settings\nCard middle: customize · right: details"
           textFormat: Text.PlainText
-          color: Color.muted
+          color: Commons.Color.muted
           horizontalAlignment: Text.AlignHCenter
           wrapMode: Text.WordWrap
           font.family: Style.font.family
@@ -1222,7 +1246,7 @@ Panel {
     onSucceeded: function(payload, fullScan) {
       if (!payload) { root.recordRefreshFailure(""); return }
       try {
-        var parsed = JSON.parse(payload)
+        let parsed = JSON.parse(payload)
         if (!parsed || !Array.isArray(parsed.services)) throw new Error("status response has no service list")
         root.helperDiagnostics = Array.isArray(parsed.diagnostics) ? parsed.diagnostics : []
         deferredRefresh.receive(parsed.services, fullScan, popupScroll.moving)
@@ -1237,7 +1261,7 @@ Panel {
     onReconciled: function(merged) { root.applyReconciledSettings(merged) }
     onUpdated: function(merged) {
       root.settings = merged
-      if (root.bar && root.bar.shell && typeof root.bar.shell.updateEntryInline === "function") root.bar.shell.updateEntryInline(root.moduleName, merged)
+      barHost.updateEntry(root.moduleName, merged)
       if (root.setting("persistCollapsedGroups", true) === true) root.collapsedServiceGroups = root.setting("collapsedServiceGroups", {}) || {}
     }
     onSaved: {
@@ -1325,8 +1349,8 @@ Panel {
     onConfirmed: root.confirmRestore()
   }
   onSettingsChanged: Qt.callLater(syncService)
-  onP2pServiceChanged: Qt.callLater(syncService)
+  onP2pServiceChanged: { root.syncIpcRegistration(); Qt.callLater(syncService) }
   onStatusLoadingChanged: if (statusLoading) barLoadingFrameIndex = 0
   onShowingWidgetSettingsChanged: startSettingsLoading()
-  Component.onCompleted: { settingsStore.load(root.settings); journal.load(); Qt.callLater(syncService); root.refresh(false, true) }
+  Component.onCompleted: { root.ipcComponentReady = true; root.syncIpcRegistration(); settingsStore.load(root.settings); journal.load(); Qt.callLater(syncService); root.refresh(false, true) }
 }

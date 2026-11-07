@@ -1,5 +1,5 @@
 import QtQuick.Layouts
-import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Dropdown {
@@ -16,8 +16,8 @@ Dropdown {
   Layout.fillWidth: true
   value: normalizedRole(controller.setting(settingKey, fallback))
   options: [{value:"bar-active",label:"Bar active"},{value:"urgent",label:"Urgent"},{value:"accent",label:"Accent"},{value:"foreground",label:"Foreground"},{value:"muted",label:"Muted"}]
-  foreground: Color.popups.text
-  accent: Color.bar.active
+  foreground: Commons.Color.popups.text
+  accent: Commons.Color.bar.active
   onChanged: function(next) {
     if (allowedRoles.indexOf(String(next)) < 0) return
     var update = {}; update[settingKey] = next; controller.persistKeepingOpen(update)

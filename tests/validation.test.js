@@ -20,13 +20,14 @@ assert.match(runner, /scripts\/lint-qml/);
 assert.match(qmlLint, /QMLLINT:-\/usr\/lib\/qt6\/bin\/qmllint/);
 assert.match(qmlLint, /Runtime\*Test\.qml/);
 assert.match(qmlLint, /mktemp -d/);
-assert.doesNotMatch(qmlLint, /-i .*qmldir/);
+assert.match(qmlLint, /-i "\$lint_dir\/qmldir" -i "\$shell_root\/Commons\/qmldir" -i "\$shell_root\/Ui\/qmldir"/,
+  "explicit qmldirs must preserve the local module and both Omarchy URI contexts");
 assert.match(runner, /QMLFORMAT:-\/usr\/lib\/qt6\/bin\/qmlformat/);
 assert.match(qmlModule, /^module io\.github\.bolens\.p2p_services$/m);
 assert.match(qmlModule, /^P2PSettingsStore 1\.0 P2PSettingsStore\.qml$/m);
 assert.match(qmlLintPolicy, /^InvalidLintDirective=error$/m);
 assert.match(workflow, /tests\/run_all\.sh --portable/);
-assert.match(workflow, /OMARCHY_SHELL_ROOT=\.omarchy\/shell scripts\/lint-qml/);
+assert.match(workflow, /bash scripts\/with-qml-imports\.sh \.omarchy\/shell scripts\/lint-qml/);
 assert.match(runner, /git archive HEAD \| tar -x -C "\$validation_dir"/);
 assert.match(runner, /omarchy plugin validate "\$validation_dir"/);
 assert.match(preCommit, /archive "\$\(git -C "\$root" write-tree\)"/);

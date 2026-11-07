@@ -1,8 +1,6 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
-import qs.Ui
 
 ColumnLayout {
   id: panel
@@ -12,8 +10,8 @@ ColumnLayout {
 
   function sectionY(section) {
     var pages = [generalPage, appearancePage, servicesPage, performancePage, discoveryPage, packagesPage]
-    for (var index = 0; index < pages.length; index++) {
-      var value = pages[index].sectionY(section)
+    for (let index = 0; index < pages.length; index++) {
+      const value = pages[index].sectionY(section)
       if (value >= 0) return pages[index].mapToItem(panel, 0, value).y
     }
     return 0

@@ -1,9 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
-import "Model.js" as Model
 
 ColumnLayout {
   id: page
@@ -21,7 +22,7 @@ ColumnLayout {
     style: String(page.controller.setting("loadingIndicatorStyle", "spinner"))
     glyph: String(page.controller.setting("loadingIndicatorGlyph", ">"))
     speed: Number(page.controller.setting("loadingIndicatorSpeed", 140)) || 140
-    tone: page.controller.themeColor("accent", Color.accent)
+    tone: page.controller.themeColor("accent", Commons.Color.accent)
   }
           P2PSectionHeading { title: "Service packages"; description: "Install supported clients or remove package-managed services." }
           SettingsSurface {
@@ -31,7 +32,7 @@ ColumnLayout {
             objectName: "availablePackagesHeading"
             visible: page.controller.missingServices.length > 0
             Layout.fillWidth: true
-            Text { Layout.fillWidth: true; text: "Available to install · " + page.controller.missingServices.length; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold }
+            Text { Layout.fillWidth: true; text: "Available to install · " + page.controller.missingServices.length; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold }
             Button { objectName: "availablePackagesToggle"; text: page.controller.availablePackagesExpanded ? "Show less" : "Show all"; visible: page.controller.missingServices.length > 5; onClicked: page.controller.availablePackagesExpanded = !page.controller.availablePackagesExpanded }
           }
           Repeater {
@@ -42,19 +43,19 @@ ColumnLayout {
               Layout.fillWidth: true
               implicitHeight: availablePackageRow.implicitHeight + Style.spacing.sm * 2
               radius: Style.cornerRadius
-              color: Util.alpha(Color.accent, 0.035)
+              color: Util.alpha(Commons.Color.accent, 0.035)
               border.width: 1
-              border.color: Util.alpha(Color.accent, 0.12)
+              border.color: Util.alpha(Commons.Color.accent, 0.12)
               RowLayout {
                 id: availablePackageRow
                 anchors.fill: parent
                 anchors.margins: Style.spacing.sm
-                Text { text: availablePackageCard.modelData.icon; textFormat: Text.PlainText; color: Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.icon }
+                Text { text: availablePackageCard.modelData.icon; textFormat: Text.PlainText; color: Commons.Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.icon }
                 ColumnLayout {
                   Layout.fillWidth: true
                   spacing: 1
-                  Text { Layout.fillWidth: true; text: availablePackageCard.modelData.name; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.body; font.weight: Font.DemiBold }
-                  Text { Layout.fillWidth: true; text: availablePackageCard.modelData.packages.join(" / "); textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+                  Text { Layout.fillWidth: true; text: availablePackageCard.modelData.name; textFormat: Text.PlainText; color: Commons.Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.body; font.weight: Font.DemiBold }
+                  Text { Layout.fillWidth: true; text: availablePackageCard.modelData.packages.join(" / "); textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
                 }
                 Button { objectName: "installPackageButton-" + availablePackageCard.modelData.id; text: "Install"; onClicked: page.controller.installService(availablePackageCard.modelData) }
               }
@@ -65,11 +66,11 @@ ColumnLayout {
             objectName: "installedPackagesHeading"
             visible: page.controller.detectedServiceCatalog.length > 0
             Layout.fillWidth: true
-            Text { Layout.fillWidth: true; text: "Installed services · " + page.controller.detectedServiceCatalog.length; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold }
+            Text { Layout.fillWidth: true; text: "Installed services · " + page.controller.detectedServiceCatalog.length; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold }
             Button { objectName: "installedPackagesToggle"; text: page.controller.installedPackagesExpanded ? "Show less" : "Show all"; visible: page.controller.detectedServiceCatalog.length > 5; onClicked: page.controller.installedPackagesExpanded = !page.controller.installedPackagesExpanded }
           }
-          Text { visible: page.controller.detectedServiceCatalog.length > 0; Layout.fillWidth: true; text: "Package-managed services can be removed after they are stopped; configuration is backed up first. Other installs remain externally managed."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-          Text { objectName: "emptyPackageCatalogText"; visible: page.catalogEmpty && !page.controller.catalogLoading; Layout.fillWidth: true; text: "No package changes are available. Manual and container services remain externally managed."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { visible: page.controller.detectedServiceCatalog.length > 0; Layout.fillWidth: true; text: "Package-managed services can be removed after they are stopped; configuration is backed up first. Other installs remain externally managed."; textFormat: Text.PlainText; color: Commons.Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { objectName: "emptyPackageCatalogText"; visible: page.catalogEmpty && !page.controller.catalogLoading; Layout.fillWidth: true; text: "No package changes are available. Manual and container services remain externally managed."; textFormat: Text.PlainText; color: Commons.Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           Repeater {
             model: page.controller.settingsPage === "packages" ? page.controller.visibleDetectedServiceCatalog : []
             delegate: Rectangle {
@@ -80,19 +81,19 @@ ColumnLayout {
               Layout.fillWidth: true
               implicitHeight: installedPackageRow.implicitHeight + Style.spacing.sm * 2
               radius: Style.cornerRadius
-              color: Util.alpha(Color.muted, 0.025)
+              color: Util.alpha(Commons.Color.muted, 0.025)
               border.width: 1
-              border.color: Util.alpha(Color.muted, 0.12)
+              border.color: Util.alpha(Commons.Color.muted, 0.12)
               RowLayout {
                 id: installedPackageRow
                 anchors.fill: parent
                 anchors.margins: Style.spacing.sm
-                Text { text: installedPackageCard.modelData.icon; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.icon }
+                Text { text: installedPackageCard.modelData.icon; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.icon }
                 ColumnLayout {
                   Layout.fillWidth: true
                   spacing: 1
-                  Text { Layout.fillWidth: true; text: installedPackageCard.modelData.name; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.body; font.weight: Font.DemiBold }
-                  Text { Layout.fillWidth: true; text: installedPackageCard.removable ? installedPackageCard.modelData.installedPackages.join(" / ") : "Externally managed"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+                  Text { Layout.fillWidth: true; text: installedPackageCard.modelData.name; textFormat: Text.PlainText; color: Commons.Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.body; font.weight: Font.DemiBold }
+                  Text { Layout.fillWidth: true; text: installedPackageCard.removable ? installedPackageCard.modelData.installedPackages.join(" / ") : "Externally managed"; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
                 }
                 Button { objectName: "stopPackageButton-" + installedPackageCard.modelData.id; text: "Stop"; visible: installedPackageCard.removable && installedPackageCard.runtime && installedPackageCard.runtime.active; enabled: page.controller.pendingService === ""; onClicked: page.controller.act(installedPackageCard.runtime, "stop") }
                 Button {

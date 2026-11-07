@@ -202,6 +202,14 @@ QML lint and real invalid controls before running every harness registered in
 `tests/run_qml_runtime.sh` through `scripts/qml-runtime-fixture.py`. Optional
 desktop-test selection variables do not skip this owned runtime gate.
 
+Woodpecker 3.x reads `network_mode: none` as a direct step field; placing it
+under `backend_options.docker` is ignored by the agent. Docker backend options
+retain the ordinary `10042:10042` user. The server must accept the legacy
+step-level field in its workflow schema. Verify the actual plugin container has
+`HostConfig.NetworkMode=none` and no attached workflow network before claiming
+offline acceptance; YAML lint and source assertions alone do not prove this.
+Preparation and cloning retain their network access and public immutable inputs.
+
 The fixture uses private HOME/XDG roots, canonical default typography and the
 packaged font resolver. Window tests use a software headless compositor; Privacy
 tests also use an isolated PipeWire registry without hardware nodes. Protocol

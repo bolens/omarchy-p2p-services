@@ -1,11 +1,21 @@
 """The native QML gate must execute offline as an ordinary container user."""
-from pathlib import Path
-import subprocess
 import os
+import re
+import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def step_network_modes(workflow, name):
+    """Inspect direct step fields in this repository's fixed workflow layout."""
+    blocks = re.split(r"(?m)^  - name: ", workflow)[1:]
+    selected = [block for block in blocks if block.splitlines()[0] == name]
+    if len(selected) != 1:
+        raise ValueError("Expected one named workflow step")
+    return [line for line in selected[0].splitlines() if re.match(r"^\s*network_mode:", line)]
 
 
 class NativeQmlContract(unittest.TestCase):
@@ -32,11 +42,21 @@ class NativeQmlContract(unittest.TestCase):
         self.assertIn("name: prepare", workflow)
         self.assertIn("name: plugin", workflow)
         self.assertIn("user: '10042:10042'", workflow)
-        self.assertIn("network_mode: none", workflow)
+        self.assertEqual(step_network_modes(workflow, "plugin"), ["    network_mode: none"])
+        self.assertEqual(step_network_modes(workflow, "prepare"), [])
         self.assertIn("woodpecker-plugin.sh --prepare", workflow)
         self.assertIn("woodpecker-plugin.sh --offline", workflow)
         self.assertNotIn("privileged:", workflow)
         self.assertNotIn("/var/run/docker.sock", workflow)
+
+    def test_network_contract_rejects_ignored_nested_backend_key(self):
+        workflow = (ROOT / ".woodpecker/plugin.yml").read_text()
+        direct = "    network_mode: none\n"
+        nested = workflow.replace(direct, "").replace("        user: '10042:10042'\n",
+                                                       "        user: '10042:10042'\n        network_mode: none\n")
+        self.assertNotEqual(step_network_modes(nested, "plugin"), [direct.rstrip("\n")])
+        duplicate = workflow.replace(direct, direct + "        network_mode: none\n")
+        self.assertNotEqual(step_network_modes(duplicate, "plugin"), [direct.rstrip("\n")])
 
     def test_preparation_refuses_existing_tree_without_overwriting(self):
         with tempfile.TemporaryDirectory() as directory:

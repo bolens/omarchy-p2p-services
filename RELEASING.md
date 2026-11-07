@@ -135,6 +135,14 @@ imports. The required `--offline` phase runs as container user 10042 with
 networking disabled; test dependencies are already in the image. Neither phase
 receives publishing secrets.
 
+Woodpecker 3.x reads `network_mode: none` as a direct step field; placing it
+under `backend_options.docker` is ignored by the agent. Docker backend options
+retain the ordinary `10042:10042` user. The server must accept the legacy
+step-level field in its workflow schema. Verify the actual plugin container has
+`HostConfig.NetworkMode=none` and no attached workflow network before claiming
+offline acceptance; YAML lint and source assertions alone do not prove this.
+Preparation and cloning retain their network access and public immutable inputs.
+
 The required plugin check is `ci/woodpecker/pr/plugin`. Ordinary GitHub PR
 and main runs skip the duplicate plugin jobs. Reusable callers retain hosted
 plugin validation by default; signed release validation explicitly enables

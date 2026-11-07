@@ -5,6 +5,12 @@ All notable changes to P2P Services are documented here. This project follows
 
 ## [Unreleased]
 
+
+### Fixed
+
+- Keep one IPC handler across monitors and reject ambiguous focused-panel routing.
+- Keep plugin colors tied to Omarchy’s palette on Qt 6.12.
+
 ## [0.3.9] - 2026-09-03
 
 ### Added

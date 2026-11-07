@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Ui
+import qs.Commons as Commons
 import "Model.js" as Model
 
 Rectangle {
@@ -13,7 +13,7 @@ Rectangle {
   property int speed: 140
   property bool compact: false
   property bool animationEnabled: true
-  property color tone: Color.accent
+  property color tone: Commons.Color.accent
   property int frameIndex: 0
   readonly property var frames: Model.loadingFrames(style, glyph)
   readonly property bool animationRunning: animationTimer.running
@@ -38,7 +38,7 @@ Rectangle {
       text: indicator.frames[indicator.frameIndex % indicator.frames.length]
       textFormat: Text.PlainText
       color: indicator.tone
-      font.family: Style.font.mono || Style.font.family
+      font.family: Style.font.family
       font.pixelSize: Style.font.body
       font.weight: Font.DemiBold
     }
@@ -47,8 +47,8 @@ Rectangle {
       Layout.fillWidth: true
       text: indicator.label
       textFormat: Text.PlainText
-      color: Color.muted
-      font.family: Style.font.mono || Style.font.family
+      color: Commons.Color.muted
+      font.family: Style.font.family
       font.pixelSize: Style.font.caption
       font.letterSpacing: 0.7
     }

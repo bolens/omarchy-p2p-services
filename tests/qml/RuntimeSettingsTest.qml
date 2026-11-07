@@ -34,8 +34,8 @@ ShellRoot {
     if (!item) return null
     if (item.objectName === name) return item
     var children = item.children || []
-    for (var index = 0; index < children.length; index++) {
-      var match = descendant(children[index], name)
+    for (let index = 0; index < children.length; index++) {
+      const match = descendant(children[index], name)
       if (match) return match
     }
     return null
@@ -48,10 +48,10 @@ ShellRoot {
   }
 
   Component.onCompleted: Qt.callLater(function() {
-    for (var gridName of ["serviceSortGrid", "servicePriorityGrid", "serviceGroupingGrid", "groupDisplayGrid"]) {
-      var grid = descendant(settingsPage, gridName)
+    for (const gridName of ["serviceSortGrid", "servicePriorityGrid", "serviceGroupingGrid", "groupDisplayGrid"]) {
+      const grid = descendant(settingsPage, gridName)
       if (!grid || !grid.twoColumns) throw new Error("wide services settings grid missing: " + gridName)
-      var expectedColumns = gridName === "groupDisplayGrid" ? 3 : 2
+      const expectedColumns = gridName === "groupDisplayGrid" ? 3 : 2
       if (grid.columns !== expectedColumns) throw new Error("services settings grid used the wrong column capacity: " + gridName)
     }
     var saveView = descendant(settingsPage, "saveCurrentViewButton")
@@ -70,8 +70,8 @@ ShellRoot {
       ["groupCountMode","active"]
     ]
     if (mockController.patches.length !== expected.length) throw new Error("organization event count mismatch")
-    for (var index = 0; index < expected.length; index++) {
-      var key = expected[index][0]
+    for (let index = 0; index < expected.length; index++) {
+      const key = expected[index][0]
       if (mockController.patches[index][key] !== expected[index][1]) throw new Error("organization event payload mismatch: " + key)
     }
     console.log("P2P_QML_SETTINGS_OK")

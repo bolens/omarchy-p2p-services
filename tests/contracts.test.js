@@ -22,7 +22,8 @@ assert.match(appearanceSettings, /settingKey:\s*"animateLoadingIndicators"/,
   "loading motion must have a visible reduced-motion control")
 assert.match(bar, /running:\s*root\.statusLoading[\s\S]*animateLoadingIndicators/,
   "disabling loading motion must also stop the bar frame timer")
-assert.match(bar, /fixedWidth:\s*root\.bar && root\.bar\.vertical \? root\.bar\.barSize/,
+assert.match(bar, /BarHostAccess\s*\{[\s\S]*?id:\s*barHost[\s\S]*?host:\s*root\.bar/, "host projections must observe the real injected bar")
+assert.match(bar, /fixedWidth:\s*barHost\.vertical \? barHost\.barSize/,
   "a horizontal fixed-width preference must not overflow a left or right bar")
 assert.match(bar, /Item\s*\{[\s\S]*?id:\s*popupLayout[\s\S]*?P2PHeader[\s\S]*?Flickable\s*\{[\s\S]*?id:\s*popupScroll[\s\S]*?popupLayout\.width < Style\.space\(440\)/, "the main header and footer must remain outside the scrollable content viewport")
 assert.match(bar, /configuredPanelHeight:[\s\S]*?popupMaxHeight", 600[\s\S]*?panelViewportHeight:[\s\S]*?panelContentRevision[\s\S]*?popupScroll\.contentHeight[\s\S]*?desiredPanelHeight:[\s\S]*?contentHeight:\s*fittedContentHeight\(root\.desiredPanelHeight, root\.configuredPanelHeight\)/, "panel height must follow content up to the configured cap without collapsing its viewport")

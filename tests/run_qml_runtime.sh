@@ -28,6 +28,11 @@ run_harness() {
     [[ $selected == true ]] || return 0
   fi
   selected_harnesses=$((selected_harnesses + 1))
+  if [[ $file == RuntimeIpcTransportTest.qml ]]; then
+    python3 "$plugin_dir/scripts/run-qml-ipc-harness.py" --repository p2p \
+      --harness "$runtime_dir/$file" --quickshell "$quickshell_bin"
+    return
+  fi
   set +e
   output="$(timeout "$limit" "$quickshell_bin" --no-color --path "$runtime_dir/$file" 2>&1)"
   status=$?
@@ -58,6 +63,8 @@ run_harness() {
   fi
 }
 
+run_harness RuntimeIpcTransportTest.qml P2P_QML_IPC_TRANSPORT_OK
+run_harness RuntimePaletteContractTest.qml PALETTE_QML_CONTRACT_OK
 run_harness RuntimeModelTest.qml P2P_QML_RUNTIME_OK
 run_harness RuntimeNavigationTest.qml P2P_QML_NAVIGATION_OK
 run_harness RuntimeRefreshTest.qml P2P_QML_REFRESH_OK

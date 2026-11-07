@@ -1,7 +1,7 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Ui
 
 ColumnLayout {
   id: list
@@ -15,10 +15,10 @@ ColumnLayout {
   readonly property real serviceRowSpacing: density === "comfortable" ? Style.spacing.md : (density === "compact" ? Style.spacing.sm : Style.spacing.xs)
   readonly property var gridGroups: {
     var groups = [], services = controller.visibleServices || []
-    for (var index = 0; index < services.length; index++) {
-      var entry = services[index]
-      var name = controller.groupLabelFor(entry)
-      var group = groups.length ? groups[groups.length - 1] : null
+    for (let index = 0; index < services.length; index++) {
+      const entry = services[index]
+      const name = controller.groupLabelFor(entry)
+      let group = groups.length ? groups[groups.length - 1] : null
       if (!group || group.name !== name) {
         group = {name:name, firstIndex:index, firstEntry:entry, entries:[]}
         groups.push(group)
@@ -30,8 +30,8 @@ ColumnLayout {
   readonly property real contentWidthHint: {
     var instantiatedCount = gridView ? gridSections.count : listRows.count
     var hint = 0, services = controller.visibleServices || []
-    for (var index = 0; index < services.length; index++) {
-      var item = itemAt(index)
+    for (let index = 0; index < services.length; index++) {
+      const item = itemAt(index)
       if (item) hint = Math.max(hint, Number(item.contentWidthHint) || 0)
     }
     if (!gridView) return hint
@@ -44,8 +44,8 @@ ColumnLayout {
   function itemAt(index) {
     if (!gridView) return listRows.itemAt(index)
     var offset = 0
-    for (var groupIndex = 0; groupIndex < gridSections.count; groupIndex++) {
-      var section = gridSections.itemAt(groupIndex)
+    for (let groupIndex = 0; groupIndex < gridSections.count; groupIndex++) {
+      const section = gridSections.itemAt(groupIndex) as GridSection
       if (!section) continue
       if (index < offset + section.serviceCount) return section.itemAt(index - offset)
       offset += section.serviceCount
@@ -54,7 +54,7 @@ ColumnLayout {
   }
   function itemForId(serviceId) {
     var services = controller.visibleServices || []
-    for (var index = 0; index < services.length; index++) {
+    for (let index = 0; index < services.length; index++) {
       if (services[index].id === serviceId) return itemAt(index)
     }
     return null
@@ -85,42 +85,44 @@ ColumnLayout {
     }
   }
 
-  Repeater {
-    id: gridSections
-    model: list.gridView && list.controller.editingServiceId === "" && !list.controller.showingWidgetSettings ? list.gridGroups : null
-    delegate: ColumnLayout {
-      id: gridSection
-      required property var modelData
-      readonly property int serviceCount: modelData.entries.length
-      Layout.fillWidth: true
-      spacing: Style.spacing.xs
-      function itemAt(index) { return gridCards.itemAt(index) }
+  component GridSection: ColumnLayout {
+    id: gridSection
+    required property var modelData
+    readonly property int serviceCount: modelData.entries.length
+    Layout.fillWidth: true
+    spacing: Style.spacing.xs
+    function itemAt(index) { return gridCards.itemAt(index) }
 
-      P2PGroupHeader {
-        objectName: "gridGroupHeader"
-        layoutVisible: list.controller.setting("serviceGroupMode", "none") !== "none"
-        controller: list.controller
-        entry: gridSection.modelData.firstEntry
-        serviceIndex: gridSection.modelData.firstIndex
-        groupName: gridSection.modelData.name
-      }
-      GridLayout {
-        Layout.fillWidth: true
-        columns: list.twoColumnGrid ? 2 : 1
-        columnSpacing: list.gridColumnSpacing
-        rowSpacing: list.serviceRowSpacing
-        Repeater {
-          id: gridCards
-          model: list.controller.isGroupCollapsed(gridSection.modelData.name) ? null : gridSection.modelData.entries
-          delegate: P2PServiceCard {
-            required property var modelData
-            Layout.fillWidth: true
-            Layout.preferredWidth: list.twoColumnGrid ? Math.max(Style.space(160), (list.width - list.gridColumnSpacing) / 2) : list.width
-            entry: modelData
-            controller: list.controller
-          }
+    P2PGroupHeader {
+      objectName: "gridGroupHeader"
+      layoutVisible: list.controller.setting("serviceGroupMode", "none") !== "none"
+      controller: list.controller
+      entry: gridSection.modelData.firstEntry
+      serviceIndex: gridSection.modelData.firstIndex
+      groupName: gridSection.modelData.name
+    }
+    GridLayout {
+      Layout.fillWidth: true
+      columns: list.twoColumnGrid ? 2 : 1
+      columnSpacing: list.gridColumnSpacing
+      rowSpacing: list.serviceRowSpacing
+      Repeater {
+        id: gridCards
+        model: list.controller.isGroupCollapsed(gridSection.modelData.name) ? null : gridSection.modelData.entries
+        delegate: P2PServiceCard {
+          required property var modelData
+          Layout.fillWidth: true
+          Layout.preferredWidth: list.twoColumnGrid ? Math.max(Style.space(160), (list.width - list.gridColumnSpacing) / 2) : list.width
+          entry: modelData
+          controller: list.controller
         }
       }
     }
+  }
+
+  Repeater {
+    id: gridSections
+    model: list.gridView && list.controller.editingServiceId === "" && !list.controller.showingWidgetSettings ? list.gridGroups : null
+    delegate: GridSection {}
   }
 }

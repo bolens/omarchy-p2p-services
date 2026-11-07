@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
 
@@ -17,15 +18,15 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: healthColumn.implicitHeight + Style.spacing.md * 2
             radius: Style.cornerRadius
-            color: Util.alpha(page.controller.consecutiveRefreshFailures ? Color.urgent : Color.accent, 0.07)
+            color: Util.alpha(page.controller.consecutiveRefreshFailures ? Commons.Color.urgent : Commons.Color.accent, 0.07)
             border.width: 1
-            border.color: Util.alpha(page.controller.consecutiveRefreshFailures ? Color.urgent : Color.accent, 0.2)
+            border.color: Util.alpha(page.controller.consecutiveRefreshFailures ? Commons.Color.urgent : Commons.Color.accent, 0.2)
             ColumnLayout {
               id: healthColumn
               anchors.fill: parent
               anchors.margins: Style.spacing.md
-              Text { text: page.controller.consecutiveRefreshFailures ? "Refresh degraded" : "Refresh healthy"; textFormat: Text.PlainText; color: page.controller.consecutiveRefreshFailures ? Color.urgent : Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.body; font.weight: Font.DemiBold }
-          Text { Layout.fillWidth: true; text: page.controller.refreshHealthText(); textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+              Text { text: page.controller.consecutiveRefreshFailures ? "Refresh degraded" : "Refresh healthy"; textFormat: Text.PlainText; color: page.controller.consecutiveRefreshFailures ? Commons.Color.urgent : Commons.Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.body; font.weight: Font.DemiBold }
+          Text { Layout.fillWidth: true; text: page.controller.refreshHealthText(); textFormat: Text.PlainText; color: Commons.Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
             }
           }
           P2PSectionHeading { id: refreshHeading; title: "Refresh cadence"; description: "Set periodic polling and full reconciliation intervals." }
@@ -63,7 +64,7 @@ ColumnLayout {
           }
           P2PSectionHeading { id: diagnosticsHeading; title: "Monitor diagnostics"; description: "Live health from the shared background watcher." }
           SettingsSurface {
-          Text { Layout.fillWidth: true; text: page.controller.monitoringTelemetryText(); textFormat: Text.PlainText; color: page.controller.p2pService && Model.monitoringHealthSeverity(page.controller.p2pService.watcherHealth, page.controller.p2pService.settingsWatcherHealth, page.controller.p2pService.settingsWatcherCode) === "neutral" ? Color.muted : Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { Layout.fillWidth: true; text: page.controller.monitoringTelemetryText(); textFormat: Text.PlainText; color: page.controller.p2pService && Model.monitoringHealthSeverity(page.controller.p2pService.watcherHealth, page.controller.p2pService.settingsWatcherHealth, page.controller.p2pService.settingsWatcherCode) === "neutral" ? Commons.Color.muted : Commons.Color.urgent; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
             Layout.fillWidth: true
             Button { objectName: "copySupportReportButton"; iconText: "󰆏"; tooltipText: "Copy privacy-filtered support report"; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.copySupportReport() }
@@ -75,9 +76,9 @@ ColumnLayout {
             Layout.fillWidth: true
             Repeater {
               model: Model.eventJournalRows(page.controller.eventJournal, page.controller.setting("eventJournalLimit", 25))
-              Text { required property var modelData; Layout.fillWidth: true; text: new Date(modelData.at * 1000).toLocaleString(Qt.locale(), Locale.ShortFormat) + "  ·  " + modelData.kind.replace(/-/g, " ") + (modelData.count > 1 ? " ×" + modelData.count : ""); textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+              Text { required property var modelData; Layout.fillWidth: true; text: new Date(modelData.at * 1000).toLocaleString(Qt.locale(), Locale.ShortFormat) + "  ·  " + modelData.kind.replace(/-/g, " ") + (modelData.count > 1 ? " ×" + modelData.count : ""); textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
             }
-            Text { visible: page.controller.eventJournal.length === 0; text: "No recorded events."; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+            Text { visible: page.controller.eventJournal.length === 0; text: "No recorded events."; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           }
           }
 }

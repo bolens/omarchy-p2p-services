@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 RowLayout {
@@ -13,21 +14,21 @@ RowLayout {
     objectName: "headerIconSurface"
     visible: !header.narrow
     implicitWidth: Style.space(header.controller.setting("compactHeader", false) ? 38 : 48); implicitHeight: implicitWidth; radius: Style.cornerRadius
-    color: Util.alpha(header.controller.errorCount > 0 ? Color.urgent : Color.accent, 0.12)
-    Text { objectName: "headerIcon"; anchors.centerIn: parent; text: String(header.controller.setting("widgetIcon", "󰒍")); textFormat: Text.PlainText; color: header.controller.errorCount > 0 ? Color.urgent : Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.display }
+    color: Util.alpha(header.controller.errorCount > 0 ? Commons.Color.urgent : Commons.Color.accent, 0.12)
+    Text { objectName: "headerIcon"; anchors.centerIn: parent; text: String(header.controller.setting("widgetIcon", "󰒍")); textFormat: Text.PlainText; color: header.controller.errorCount > 0 ? Commons.Color.urgent : Commons.Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.display }
   }
   ColumnLayout {
     Layout.fillWidth: true; Layout.minimumWidth: 0; spacing: Style.space(2)
-    Text { Layout.fillWidth: true; text: "P2P Services"; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.title; font.weight: Font.Bold; elide: Text.ElideRight }
+    Text { Layout.fillWidth: true; text: "P2P Services"; textFormat: Text.PlainText; color: Commons.Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.title; font.weight: Font.Bold; elide: Text.ElideRight }
     RowLayout {
       objectName: "headerStatusChips"
       visible: header.controller.setting("compactHeader", false) !== true && !header.narrow
       spacing: Style.spacing.xs
-      StatusChip { objectName: "headerActiveStatus"; label: header.controller.activeCount + " active"; tone: header.controller.themeColor(String(header.controller.setting("runningColorRole","accent")), Color.accent) }
-      StatusChip { objectName: "headerStoppedStatus"; label: header.controller.stoppedCount + " stopped"; tone: header.controller.themeColor(String(header.controller.setting("stoppedColorRole","muted")), Color.muted) }
-      StatusChip { objectName: "headerIssueStatus"; visible: header.controller.errorCount > 0; label: header.controller.errorCount + " issues"; tone: header.controller.themeColor(String(header.controller.setting("errorColorRole","urgent")), Color.urgent) }
+      StatusChip { objectName: "headerActiveStatus"; label: header.controller.activeCount + " active"; tone: header.controller.themeColor(String(header.controller.setting("runningColorRole","accent")), Commons.Color.accent) }
+      StatusChip { objectName: "headerStoppedStatus"; label: header.controller.stoppedCount + " stopped"; tone: header.controller.themeColor(String(header.controller.setting("stoppedColorRole","muted")), Commons.Color.muted) }
+      StatusChip { objectName: "headerIssueStatus"; visible: header.controller.errorCount > 0; label: header.controller.errorCount + " issues"; tone: header.controller.themeColor(String(header.controller.setting("errorColorRole","urgent")), Commons.Color.urgent) }
     }
-    Text { objectName: "headerCompactSummary"; visible: header.controller.setting("compactHeader", false) === true || header.narrow; text: header.controller.activeCount + " active · " + header.controller.stoppedCount + " stopped" + (header.controller.errorCount > 0 ? " · " + header.controller.errorCount + " issues" : ""); textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; elide: Text.ElideRight; Layout.fillWidth: true }
+    Text { objectName: "headerCompactSummary"; visible: header.controller.setting("compactHeader", false) === true || header.narrow; text: header.controller.activeCount + " active · " + header.controller.stoppedCount + " stopped" + (header.controller.errorCount > 0 ? " · " + header.controller.errorCount + " issues" : ""); textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; elide: Text.ElideRight; Layout.fillWidth: true }
   }
   RowLayout {
     id: headerActions

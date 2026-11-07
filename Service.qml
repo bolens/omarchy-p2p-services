@@ -6,6 +6,7 @@ import "PathUtils.js" as PathUtils
 Item {
   id: root
   property var shell: null
+  readonly property P2PIpcHub ipcHub: P2PIpcHub { serviceIdentity: root }
   property var manifest: null
   property var settings: ({})
   property var services: []
@@ -63,8 +64,8 @@ Item {
 
   function handleSettingsWatcherLine(line, now) {
     try {
-      var event = JSON.parse(line)
-      var revision = Number(event.revision)
+      const event = JSON.parse(line)
+      const revision = Number(event.revision)
       if (event.type !== "settings-changed" || !isFinite(revision) || revision < 0) return false
       settingsWatcherHealth = "healthy"
       settingsWatcherCode = "ok"
@@ -119,7 +120,7 @@ Item {
     id: refreshController
     onSucceeded: function(text, fullScan) {
       try {
-        var payload = JSON.parse(text || "{}")
+        const payload = JSON.parse(text || "{}")
         if (!payload || !Array.isArray(payload.services)) throw new Error("missing service list")
         root.services = Model.applyLifecycleEvidence(payload.services, root.lifecycleEvidence, Date.now())
         root.diagnostics = Array.isArray(payload.diagnostics) ? payload.diagnostics : []

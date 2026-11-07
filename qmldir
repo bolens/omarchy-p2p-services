@@ -1,4 +1,5 @@
 module io.github.bolens.p2p_services
+BarHostAccess 1.0 BarHostAccess.qml
 BarWidget 1.0 BarWidget.qml
 Button 1.0 Button.qml
 IntegerSetting 1.0 IntegerSetting.qml
@@ -14,6 +15,7 @@ P2PGeneralSettings 1.0 P2PGeneralSettings.qml
 P2PGroupHeader 1.0 P2PGroupHeader.qml
 P2PHeader 1.0 P2PHeader.qml
 P2PIndicatorPill 1.0 P2PIndicatorPill.qml
+P2PIpcHub 1.0 P2PIpcHub.qml
 P2PLoadingIndicator 1.0 P2PLoadingIndicator.qml
 P2PMessageSurface 1.0 P2PMessageSurface.qml
 P2PMinimumLoadingState 1.0 P2PMinimumLoadingState.qml

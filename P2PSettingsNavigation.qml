@@ -1,7 +1,9 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 ColumnLayout {
@@ -18,8 +20,8 @@ ColumnLayout {
     ColumnLayout {
       Layout.fillWidth: true
       spacing: Style.space(2)
-      Text { Layout.fillWidth: true; text: "P2P Settings"; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.title; font.weight: Font.Bold }
-      Text { Layout.fillWidth: true; text: navigation.controller.settingsPageDescription(); textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold; font.letterSpacing: 1.1 }
+      Text { Layout.fillWidth: true; text: "P2P Settings"; textFormat: Text.PlainText; color: Commons.Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.title; font.weight: Font.Bold }
+      Text { Layout.fillWidth: true; text: navigation.controller.settingsPageDescription(); textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold; font.letterSpacing: 1.1 }
     }
     P2PLoadingIndicator {
       objectName: "settingsSaveLoadingIndicator"
@@ -30,13 +32,13 @@ ColumnLayout {
       style: String(navigation.controller.setting("loadingIndicatorStyle", "spinner"))
       glyph: String(navigation.controller.setting("loadingIndicatorGlyph", ">"))
       speed: Number(navigation.controller.setting("loadingIndicatorSpeed", 140)) || 140
-      tone: Color.accent
+      tone: Commons.Color.accent
     }
-    Text { objectName: "settingsSavedStatus"; visible: navigation.controller.settingsSaveStatus === "saved"; text: "✓ SAVED"; textFormat: Text.PlainText; color: Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold; font.letterSpacing: 0.8 }
-    Text { objectName: "settingsSaveFailedStatus"; visible: navigation.controller.settingsSaveStatus === "failed"; text: "⚠ SAVE FAILED"; textFormat: Text.PlainText; color: Color.urgent; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold; font.letterSpacing: 0.8 }
+    Text { objectName: "settingsSavedStatus"; visible: navigation.controller.settingsSaveStatus === "saved"; text: "✓ SAVED"; textFormat: Text.PlainText; color: Commons.Color.accent; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold; font.letterSpacing: 0.8 }
+    Text { objectName: "settingsSaveFailedStatus"; visible: navigation.controller.settingsSaveStatus === "failed"; text: "⚠ SAVE FAILED"; textFormat: Text.PlainText; color: Commons.Color.urgent; font.family: Style.font.family; font.pixelSize: Style.font.caption; font.weight: Font.DemiBold; font.letterSpacing: 0.8 }
   }
 
-  PanelSeparator { Layout.fillWidth: true; foreground: navigation.controller.bar ? navigation.controller.bar.foreground : Color.popups.text }
+  PanelSeparator { Layout.fillWidth: true; foreground: navigation.controller.bar ? navigation.controller.bar.foreground : Commons.Color.popups.text }
 
   GridLayout {
     objectName: "settingsPageGrid"

@@ -55,8 +55,8 @@ ShellRoot {
     if (!delegate) return null
     if (delegate.objectName === "serviceCard") return delegate
     var children = delegate.children || []
-    for (var index = 0; index < children.length; index++) {
-      var match = cardIn(children[index])
+    for (let index = 0; index < children.length; index++) {
+      const match = cardIn(children[index])
       if (match) return match
     }
     return null
@@ -66,8 +66,8 @@ ShellRoot {
     if (!delegate) return null
     if (delegate.objectName === name) return delegate
     var children = delegate.children || []
-    for (var index = 0; index < children.length; index++) {
-      var match = namedIn(children[index], name)
+    for (let index = 0; index < children.length; index++) {
+      const match = namedIn(children[index], name)
       if (match) return match
     }
     return null

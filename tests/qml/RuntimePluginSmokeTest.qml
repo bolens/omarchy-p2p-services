@@ -96,8 +96,8 @@ ShellRoot {
       if (!widget.durableSettingsLoaded || !Array.isArray(widget.services) || widget.barText() === "") throw new Error("plugin initial load failed")
       if (widget.serviceFiltersExpanded) throw new Error("service filters were not hidden by default")
       if (widget.serviceFiltersRowVisible) throw new Error("hidden service filters retained layout visibility")
-      var collapsedFilterWidth = widget.desiredPanelWidth
-      var collapsedFilterGutter = widget.scrollbarGutter
+      const collapsedFilterWidth = widget.desiredPanelWidth
+      const collapsedFilterGutter = widget.scrollbarGutter
       widget.serviceFiltersExpanded = true
       if (!widget.serviceFiltersExpanded) throw new Error("service filter disclosure did not expand")
       if (Math.abs(widget.desiredPanelWidth - collapsedFilterWidth) > Math.max(collapsedFilterGutter, widget.scrollbarGutter) + 0.01) throw new Error("expanded service filters changed the panel by more than its scrollbar gutter: " + collapsedFilterWidth + " -> " + widget.desiredPanelWidth + ", gutters " + collapsedFilterGutter + "/" + widget.scrollbarGutter)
@@ -117,7 +117,7 @@ ShellRoot {
       if (!widget.intrinsicMainWidth || widget.desiredPanelWidth !== widget.mainPanelWidth || widget.mainPanelWidth >= widget.configuredPanelWidth)
         throw new Error("main service view did not use its deterministic compact width")
       widget.showingWidgetSettings = true
-      var settingsWidth = widget.desiredPanelWidth
+      const settingsWidth = widget.desiredPanelWidth
       widget.settingsPage = "packages"
       if (settingsWidth !== widget.configuredPanelWidth || widget.desiredPanelWidth !== settingsWidth)
         throw new Error("settings pages did not retain a consistent configured width")
@@ -130,7 +130,7 @@ ShellRoot {
       if (widget.setFiltersExpanded(true) !== "ok" || !widget.focusedFiltersExpanded()) throw new Error("focused filter disclosure routing failed")
       if (widget.closeFocused() !== "ok" || !widget.focusedPanelClosed()) throw new Error("focused close routing failed")
       focusedWidgetFixture.opened = true
-      var snapshot = JSON.parse(widget.focusedSettingsSnapshot())
+      const snapshot = JSON.parse(widget.focusedSettingsSnapshot())
       if (snapshot.privacyFilter !== true || snapshot.serviceLayout !== "grid") throw new Error("focused settings snapshot failed")
       barMock.routeToFocusedFixture = false
       barMock.routeReloadFixture = true
@@ -173,7 +173,7 @@ ShellRoot {
         throw new Error("failed settings save did not restore widget and inline state")
       widget.settingsSaveStatus = "saving"
       widget.serviceCatalog = [{id:"syncthing",installedPackages:["syncthing"]}]
-      var entry = {id:"syncthing",name:"Syncthing",active:false}
+      const entry = {id:"syncthing",name:"Syncthing",active:false}
       if (widget.openMainView() !== "ok" || !widget.opened) throw new Error("main panel did not open for confirmation lifecycle test")
       widget.requestUninstall(entry)
       if (!widget.uninstallConfirmOpen || widget.uninstallTarget.id !== "syncthing") throw new Error("widget uninstall confirmation wiring failed")
@@ -190,7 +190,7 @@ ShellRoot {
       if (widget.selectedServiceId !== "stopped" || widget.expandedServiceId !== "stopped") throw new Error("collapsed service activation failed")
       widget.collapsedServiceGroups = ({RUNNING:true,STOPPED:true,HIDDEN:true})
       if (!widget.serviceGroupsVisible || !widget.allServiceGroupsCollapsed) throw new Error("visible collapsed groups were not summarized")
-      var expandUpdates = root.updates
+      const expandUpdates = root.updates
       widget.setAllServiceGroupsCollapsed(false)
       if (widget.allServiceGroupsCollapsed || widget.collapsedServiceGroups.RUNNING || widget.collapsedServiceGroups.STOPPED || widget.collapsedServiceGroups.HIDDEN !== true) throw new Error("expand-all did not restore only visible groups")
       if (root.updates !== expandUpdates + 1) throw new Error("expand-all did not persist exactly once")
@@ -198,7 +198,7 @@ ShellRoot {
       if (!widget.allServiceGroupsCollapsed || widget.collapsedServiceGroups.RUNNING !== true || widget.collapsedServiceGroups.STOPPED !== true || widget.collapsedServiceGroups.HIDDEN !== true) throw new Error("collapse-all did not preserve hidden group state")
       if (root.updates !== expandUpdates + 2) throw new Error("collapse-all did not persist exactly once")
       widget.adoptTransferredSettings({serviceGroupMode:"status",persistCollapsedGroups:false,notifyUnhealthy:false,notifyUnexpectedStops:true,notificationCooldownSeconds:30,eventRefresh:false})
-      var disabledPersistenceUpdates = root.updates
+      const disabledPersistenceUpdates = root.updates
       widget.setAllServiceGroupsCollapsed(false)
       if (widget.allServiceGroupsCollapsed || widget.collapsedServiceGroups.HIDDEN !== true) throw new Error("non-persistent expand-all did not update transient visible state")
       if (root.updates !== disabledPersistenceUpdates) throw new Error("disabled collapsed-group persistence wrote settings")
@@ -261,6 +261,9 @@ ShellRoot {
       if (!widget.catalogLoading) throw new Error("fast catalog failure did not retain minimum loading presentation")
       root.stage = 6
       } else if (root.stage === 6) {
+      // Completion is an observed state, not a promise made by the 350ms tick.
+      // The unchanged outer harness deadline still rejects an unsettled state.
+      if (widget.catalogLoading) return
       if (widget.visibleErrorText !== "Service catalog refresh failed") throw new Error("catalog failure was not surfaced")
       if (widget.serviceCatalog.length !== 1 || widget.serviceCatalog[0].id !== "preserved") throw new Error("catalog failure replaced existing data")
       if (widget.catalogLoading) throw new Error("failed catalog loading presentation did not settle")

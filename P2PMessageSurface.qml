@@ -2,13 +2,14 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 Rectangle {
   id: surface
   required property string message
   property string icon: "󰋼"
-  property color tone: Color.muted
+  property color tone: Commons.Color.muted
   property string actionText: ""
   signal actionRequested()
   Layout.fillWidth: true
@@ -23,12 +24,12 @@ Rectangle {
     anchors.margins: Style.spacing.md
     spacing: Style.spacing.sm
     Text { text: surface.icon; textFormat: Text.PlainText; color: surface.tone; font.family: Style.font.family; font.pixelSize: Style.font.icon }
-    Text { id: messageText; Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.preferredWidth: 0; text: surface.message; textFormat: Text.PlainText; color: Color.popups.text; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.body }
+    Text { id: messageText; Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.preferredWidth: 0; text: surface.message; textFormat: Text.PlainText; color: Commons.Color.popups.text; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.body }
     Button {
       objectName: "messageSurfaceAction"
       visible: surface.actionText !== ""
       text: surface.actionText
-      foreground: Color.popups.text
+      foreground: Commons.Color.popups.text
       accent: surface.tone
       bordered: true
       selected: true

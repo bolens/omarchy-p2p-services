@@ -11,6 +11,7 @@ source "$plugin_dir/tests/tooling_env.sh"
 python_bin="$(find_command "${PYTHON_BIN:-}" python3)"
 
 "$python_bin" -m unittest discover -s tests -p '*_test.py'
+"$python_bin" -m unittest discover -s tests -p 'test_*.py'
 for test_file in tests/*.test.js; do
   node "$test_file"
 done
@@ -26,7 +27,7 @@ fi
 qmlformat_bin=${QMLFORMAT:-/usr/lib/qt6/bin/qmlformat}
 [[ -x "$qmlformat_bin" ]] || { printf 'Qt 6 qmlformat not found: %s\n' "$qmlformat_bin" >&2; exit 1; }
 scripts/lint-qml
-"$qmlformat_bin" -n Button.qml WidgetButton.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
+"$qmlformat_bin" -n Button.qml WidgetButton.qml BarHostAccess.qml BarWidget.qml Service.qml P2P*.qml SettingsSurface.qml IntegerSetting.qml tests/qml/Runtime*.qml >/dev/null
 validation_dir=$(mktemp -d)
 trap 'rm -rf -- "$validation_dir"' EXIT
 git archive HEAD | tar -x -C "$validation_dir"

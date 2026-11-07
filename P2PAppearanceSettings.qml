@@ -1,9 +1,10 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
-import "Model.js" as Model
 
 ColumnLayout {
   id: page
@@ -20,10 +21,10 @@ ColumnLayout {
           SettingsSurface {
           visible: page.controller.settingsPage === "appearance"
           P2PSettingsGrid {
-            Dropdown { objectName: "serviceLayoutDropdown"; Layout.fillWidth: true; label: "Layout"; value: String(page.controller.setting("serviceLayout", "list")); options: [{value:"list",label:"Single-column list"},{value:"grid",label:"Two-column grid"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({serviceLayout:next}) } }
-            Dropdown { objectName: "cardDensityDropdown"; Layout.fillWidth: true; label: "Card density"; value: String(page.controller.setting("cardDensity","comfortable")); options: [{value:"comfortable",label:"Comfortable"},{value:"compact",label:"Compact"},{value:"minimal",label:"Minimal"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({cardDensity:next}) } }
+            Dropdown { objectName: "serviceLayoutDropdown"; Layout.fillWidth: true; label: "Layout"; value: String(page.controller.setting("serviceLayout", "list")); options: [{value:"list",label:"Single-column list"},{value:"grid",label:"Two-column grid"}]; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({serviceLayout:next}) } }
+            Dropdown { objectName: "cardDensityDropdown"; Layout.fillWidth: true; label: "Card density"; value: String(page.controller.setting("cardDensity","comfortable")); options: [{value:"comfortable",label:"Comfortable"},{value:"compact",label:"Compact"},{value:"minimal",label:"Minimal"}]; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({cardDensity:next}) } }
           }
-          Text { Layout.fillWidth: true; text: page.controller.setting("cardDensity", "comfortable") === "comfortable" ? "Status, glanceable metrics, and actions." : (page.controller.setting("cardDensity", "comfortable") === "compact" ? "Condensed metrics with icon actions." : "Identity and status only."); textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { Layout.fillWidth: true; text: page.controller.setting("cardDensity", "comfortable") === "comfortable" ? "Status, glanceable metrics, and actions." : (page.controller.setting("cardDensity", "comfortable") === "compact" ? "Condensed metrics with icon actions." : "Identity and status only."); textFormat: Text.PlainText; color: Commons.Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           P2PSettingsGrid {
             P2PSettingToggle { controller: page.controller; settingKey: "showStatusRail"; label: "Status rail"; fallback: true }
             P2PSettingToggle { controller: page.controller; settingKey: "showFavoriteMarker"; label: "Favorite marker"; fallback: true }
@@ -32,15 +33,15 @@ ColumnLayout {
             P2PSettingToggle { controller: page.controller; settingKey: "showQuickActions"; label: "Quick actions"; fallback: true }
             P2PSettingToggle { controller: page.controller; settingKey: "compactHeader"; label: "Compact header"; fallback: false; description: "Use a text summary instead of status chips." }
           }
-          Dropdown { objectName: "groupHeaderStyleDropdown"; Layout.fillWidth: true; label: "Group header style"; value: String(page.controller.setting("groupHeaderStyle","surfaced")); options: [{value:"surfaced",label:"Surfaced"},{value:"dense",label:"Dense"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({groupHeaderStyle:next}) } }
+          Dropdown { objectName: "groupHeaderStyleDropdown"; Layout.fillWidth: true; label: "Group header style"; value: String(page.controller.setting("groupHeaderStyle","surfaced")); options: [{value:"surfaced",label:"Surfaced"},{value:"dense",label:"Dense"}]; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({groupHeaderStyle:next}) } }
           }
           P2PSectionHeading { visible: page.controller.settingsPage === "appearance"; title: "Bar and panel"; description: "Tune the compact bar indicator and popup dimensions." }
           SettingsSurface {
           visible: page.controller.settingsPage === "appearance"
-          Text { text: "Bar icon"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { text: "Bar icon"; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
             Layout.fillWidth: true
-            TextField { id: widgetIconEditor; objectName: "widgetIconEditor"; Layout.fillWidth: true; text: String(page.controller.setting("widgetIcon", "󰒍")); placeholderText: "󰒍"; foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.saveWidgetIcon(text) }
+            TextField { id: widgetIconEditor; objectName: "widgetIconEditor"; Layout.fillWidth: true; text: String(page.controller.setting("widgetIcon", "󰒍")); placeholderText: "󰒍"; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; font.family: Style.font.family; onAccepted: page.saveWidgetIcon(text) }
             Button { objectName: "widgetIconSaveButton"; iconText: "󰆓"; tooltipText: "Save bar icon"; horizontalPadding: Style.spacing.controlGap; onClicked: page.saveWidgetIcon(widgetIconEditor.text) }
           }
 
@@ -50,7 +51,7 @@ ColumnLayout {
           }
           P2PSettingsGrid {
             objectName: "barBehaviorGrid"
-            Dropdown { objectName: "barPresentationDropdown"; Layout.fillWidth: true; label: "Bar presentation"; value: String(page.controller.setting("barPresentation","active")); options: [{value:"icon",label:"Icon only"},{value:"active",label:"Active count"},{value:"active-total",label:"Active / total"},{value:"health",label:"Health indicator"},{value:"category-active",label:"Category active counts"},{value:"category-active-total",label:"Category active / total"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({barPresentation:next}) } }
+            Dropdown { objectName: "barPresentationDropdown"; Layout.fillWidth: true; label: "Bar presentation"; value: String(page.controller.setting("barPresentation","active")); options: [{value:"icon",label:"Icon only"},{value:"active",label:"Active count"},{value:"active-total",label:"Active / total"},{value:"health",label:"Health indicator"},{value:"category-active",label:"Category active counts"},{value:"category-active-total",label:"Category active / total"}]; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({barPresentation:next}) } }
             P2PSettingToggle { controller: page.controller; settingKey: "hideZeroCount"; label: "Hide zero count"; fallback: false; description: "Show only the icon when no services are active." }
           }
           ColumnLayout {
@@ -58,15 +59,15 @@ ColumnLayout {
             Layout.fillWidth: true
             visible: String(page.controller.setting("barPresentation", "active")).indexOf("category-") === 0
             spacing: Style.spacing.xs
-            Text { text: "Category icons"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+            Text { text: "Category icons"; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
             Repeater {
               model: categoryIconSettings.visible ? page.controller.categorySummaries() : null
               delegate: RowLayout {
                 id: categoryIconRow
                 required property var modelData
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: categoryIconRow.modelData.category; textFormat: Text.PlainText; color: Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.body }
-                TextField { id: categoryIconEditor; objectName: "categoryIconEditor"; Layout.preferredWidth: Style.space(72); text: categoryIconRow.modelData.icon; foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.saveCategoryIcon(categoryIconRow.modelData.category, text) }
+                Text { Layout.fillWidth: true; text: categoryIconRow.modelData.category; textFormat: Text.PlainText; color: Commons.Color.popups.text; font.family: Style.font.family; font.pixelSize: Style.font.body }
+                TextField { id: categoryIconEditor; objectName: "categoryIconEditor"; Layout.preferredWidth: Style.space(72); text: categoryIconRow.modelData.icon; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.saveCategoryIcon(categoryIconRow.modelData.category, text) }
                 Button { iconText: "󰆓"; tooltipText: "Save " + categoryIconRow.modelData.category + " icon"; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.saveCategoryIcon(categoryIconRow.modelData.category, categoryIconEditor.text) }
               }
             }
@@ -79,7 +80,7 @@ ColumnLayout {
           }
           P2PSettingsGrid {
             objectName: "barStyleGrid"
-            Dropdown { objectName: "barTextRotationDropdown"; Layout.fillWidth: true; label: "Text rotation"; value: String(page.controller.setting("barTextRotation", "normal")); options: [{value:"normal",label:"Normal"},{value:"clockwise",label:"Clockwise"},{value:"counterclockwise",label:"Counterclockwise"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({barTextRotation:next}) } }
+            Dropdown { objectName: "barTextRotationDropdown"; Layout.fillWidth: true; label: "Text rotation"; value: String(page.controller.setting("barTextRotation", "normal")); options: [{value:"normal",label:"Normal"},{value:"clockwise",label:"Clockwise"},{value:"counterclockwise",label:"Counterclockwise"}]; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({barTextRotation:next}) } }
             P2PThemeRoleSetting { controller: page.controller; settingKey: "barForegroundColorRole"; label: "Idle color"; fallback: "foreground" }
             P2PThemeRoleSetting { controller: page.controller; settingKey: "barActiveColorRole"; label: "Active color"; fallback: "accent" }
             P2PSettingToggle { controller: page.controller; settingKey: "barDimWhenIdle"; label: "Dim while idle"; fallback: false; description: "Reduce opacity when no services are active and the panel is closed." }
@@ -94,9 +95,9 @@ ColumnLayout {
           P2PSettingsGrid {
             id: loadingIndicatorGrid
             objectName: "loadingIndicatorGrid"
-            Dropdown { objectName: "loadingIndicatorStyleDropdown"; Layout.fillWidth: true; label: "Indicator style"; value: String(page.controller.setting("loadingIndicatorStyle", "spinner")); options: [{value:"spinner",label:"Braille spinner"},{value:"dots",label:"Terminal dots"},{value:"bar",label:"Progress sweep"},{value:"glyph",label:"Custom glyph"}]; foreground: Color.popups.text; accent: Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({loadingIndicatorStyle:next}) } }
+            Dropdown { objectName: "loadingIndicatorStyleDropdown"; Layout.fillWidth: true; label: "Indicator style"; value: String(page.controller.setting("loadingIndicatorStyle", "spinner")); options: [{value:"spinner",label:"Braille spinner"},{value:"dots",label:"Terminal dots"},{value:"bar",label:"Progress sweep"},{value:"glyph",label:"Custom glyph"}]; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; onChanged: function(next) { page.controller.persistKeepingOpen({loadingIndicatorStyle:next}) } }
             IntegerSetting { controller: page.controller; settingKey: "loadingIndicatorSpeed"; label: "Animation interval, ms"; minimum: 60; maximum: 1000; fallback: 140 }
-            TextField { objectName: "loadingIndicatorGlyphEditor"; Layout.fillWidth: true; Layout.columnSpan: loadingIndicatorGrid.twoColumns ? 2 : 1; visible: String(page.controller.setting("loadingIndicatorStyle", "spinner")) === "glyph"; text: String(page.controller.setting("loadingIndicatorGlyph", ">")); placeholderText: ">"; foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.persistKeepingOpen({loadingIndicatorGlyph:String(text || ">").slice(0, 4)}) }
+            TextField { objectName: "loadingIndicatorGlyphEditor"; Layout.fillWidth: true; Layout.columnSpan: loadingIndicatorGrid.twoColumns ? 2 : 1; visible: String(page.controller.setting("loadingIndicatorStyle", "spinner")) === "glyph"; text: String(page.controller.setting("loadingIndicatorGlyph", ">")); placeholderText: ">"; foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.persistKeepingOpen({loadingIndicatorGlyph:String(text || ">").slice(0, 4)}) }
           }
           }
 

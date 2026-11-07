@@ -50,6 +50,14 @@ points and sibling imports relative to the installed plugin directory.
 ## Ownership and invariants
 
 - `Service.qml` owns shared status collection and exposes one keep-loaded model.
+- Its `P2PIpcHub.qml` owns one IPC handler shared by all monitor widgets. Widgets
+  register exact service/module identities with monotonic leases and unregister
+  on destruction. A surviving widget never creates a replacement handler.
+  Routing accepts only a live registered focused widget; unresolved, conflicting
+  or foreign focus fails closed with multiple widgets. A sole widget is unambiguous.
+  Hosts may expose the optional own-module `findPanelWidget(id)` capability on
+  their scoped bar facade. Without it, multiple widgets return unavailable.
+  Queries never invoke `summon` or choose the first-created monitor.
 - `Service.qml` owns the single durable-settings watcher; monitor-specific widgets
   reconcile only when its observed revision advances beyond their local revision.
   The shared service also owns watcher health, bounded retry backoff, and telemetry.

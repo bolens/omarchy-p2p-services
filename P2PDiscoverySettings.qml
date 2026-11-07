@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
 
@@ -14,10 +15,10 @@ ColumnLayout {
   function sectionY(section) { return section === "custom-services" ? customHeading.y : section === "routing" ? routingHeading.y : -1 }
           P2PSectionHeading { id: routingHeading; title: "Console routing"; description: "Fallback routing for published container consoles." }
           SettingsSurface {
-          Text { text: "Fallback console host · blank uses 127.0.0.1"; textFormat: Text.PlainText; color: Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { text: "Fallback console host · blank uses 127.0.0.1"; textFormat: Text.PlainText; color: Commons.Color.muted; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
             Layout.fillWidth: true
-            TextField { id: consoleHostEditor; objectName: "consoleHostEditor"; Layout.fillWidth: true; placeholderText: "server.home.arpa or 192.168.1.10"; text: String(page.controller.setting("consoleHost", "")); foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.persistKeepingOpen({consoleHost: text.trim()}) }
+            TextField { id: consoleHostEditor; objectName: "consoleHostEditor"; Layout.fillWidth: true; placeholderText: "server.home.arpa or 192.168.1.10"; text: String(page.controller.setting("consoleHost", "")); foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; font.family: Style.font.family; onAccepted: page.controller.persistKeepingOpen({consoleHost: text.trim()}) }
             Button { objectName: "consoleHostSaveButton"; iconText: "󰆓"; tooltipText: "Save fallback console host"; horizontalPadding: Style.spacing.controlGap; onClicked: page.controller.persistKeepingOpen({consoleHost: consoleHostEditor.text.trim()}) }
           }
           }
@@ -26,17 +27,17 @@ ColumnLayout {
           SettingsSurface {
           RowLayout {
             Layout.fillWidth: true
-            TextField { id: serviceAllowlistEditor; objectName: "serviceAllowlistEditor"; Layout.fillWidth: true; placeholderText: "yggdrasil, i2pd, syncthing"; text: Model.enabled(page.controller.setting("enabledServices", []), []).join(", "); foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family }
+            TextField { id: serviceAllowlistEditor; objectName: "serviceAllowlistEditor"; Layout.fillWidth: true; placeholderText: "yggdrasil, i2pd, syncthing"; text: Model.enabled(page.controller.setting("enabledServices", []), []).join(", "); foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; font.family: Style.font.family }
             Button { objectName: "serviceAllowlistSaveButton"; iconText: "󰆓"; tooltipText: "Save service filter"; horizontalPadding: Style.spacing.controlGap; onClicked: { var ids = serviceAllowlistEditor.text.split(",").map(function(value) { return value.trim() }).filter(function(value) { return value !== "" }); page.controller.persistKeepingOpen({enabledServices: ids}) } }
           }
           }
 
           P2PSectionHeading { id: customHeading; title: "Custom services"; description: "Add validated, observation-only process or systemd services." }
           SettingsSurface {
-          Text { Layout.fillWidth: true; text: "JSON array; IDs begin custom-. Executable, process, and unit fields support detection but never control actions."; textFormat: Text.PlainText; color: Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+          Text { Layout.fillWidth: true; text: "JSON array; IDs begin custom-. Executable, process, and unit fields support detection but never control actions."; textFormat: Text.PlainText; color: Commons.Color.muted; wrapMode: Text.WordWrap; font.family: Style.font.family; font.pixelSize: Style.font.caption }
           RowLayout {
             Layout.fillWidth: true
-            TextField { id: customServicesEditor; objectName: "customServicesEditor"; Layout.fillWidth: true; placeholderText: "[]"; text: JSON.stringify(page.controller.setting("customServices", [])); foreground: Color.popups.text; accent: Color.bar.active; font.family: Style.font.family }
+            TextField { id: customServicesEditor; objectName: "customServicesEditor"; Layout.fillWidth: true; placeholderText: "[]"; text: JSON.stringify(page.controller.setting("customServices", [])); foreground: Commons.Color.popups.text; accent: Commons.Color.bar.active; font.family: Style.font.family }
             Button { objectName: "customServicesSaveButton"; text: "Validate & save"; onClicked: page.controller.saveCustomServices(customServicesEditor.text) }
           }
           }
@@ -51,7 +52,7 @@ ColumnLayout {
             style: String(page.controller.setting("loadingIndicatorStyle", "spinner"))
             glyph: String(page.controller.setting("loadingIndicatorGlyph", ">"))
             speed: Number(page.controller.setting("loadingIndicatorSpeed", 140)) || 140
-            tone: page.controller.themeColor("accent", Color.accent)
+            tone: page.controller.themeColor("accent", Commons.Color.accent)
           }
           RowLayout {
             Layout.fillWidth: true

@@ -1,7 +1,9 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
 
@@ -21,7 +23,7 @@ import "Model.js" as Model
               Layout.fillWidth: true
               text: editor.current ? editor.controller.labelFor(editor.current) + " settings" : "Service settings"
               textFormat: Text.PlainText
-              color: Color.popups.text
+              color: Commons.Color.popups.text
               font.family: Style.font.family
               font.pixelSize: Style.font.title
               font.weight: Font.DemiBold
@@ -50,8 +52,8 @@ import "Model.js" as Model
             label: "Favorite service"
             description: "Keep this service above non-favorites in every sorting mode."
             checked: editor.controller.isFavorite(editor.controller.editingServiceId)
-            foreground: Color.popups.text
-            accent: Color.bar.active
+            foreground: Commons.Color.popups.text
+            accent: Commons.Color.bar.active
             fontFamily: Style.font.family
             onClicked: editor.controller.toggleFavorite(editor.controller.editingServiceId)
           }
@@ -63,8 +65,8 @@ import "Model.js" as Model
               Layout.fillWidth: true
               placeholderText: "Display label"
               text: editor.current ? editor.controller.labelFor(editor.current) : ""
-              foreground: Color.popups.text
-              accent: Color.bar.active
+              foreground: Commons.Color.popups.text
+              accent: Commons.Color.bar.active
               font.family: Style.font.family
               onAccepted: editor.controller.persistServiceMap("serviceLabels", editor.controller.editingServiceId, text, true)
             }
@@ -78,8 +80,8 @@ import "Model.js" as Model
               Layout.fillWidth: true
               placeholderText: "Icon"
               text: editor.current ? String(editor.controller.iconFor(editor.current) || "") : ""
-              foreground: Color.popups.text
-              accent: Color.bar.active
+              foreground: Commons.Color.popups.text
+              accent: Commons.Color.bar.active
               font.family: Style.font.family
               onAccepted: editor.controller.persistServiceMap("serviceIcons", editor.controller.editingServiceId, text, true)
             }
@@ -92,8 +94,8 @@ import "Model.js" as Model
             label: "Show while stopped"
             description: "Keep this service visible when it is installed but not running."
             checked: editor.controller.serviceShowsStopped(editor.controller.editingServiceId)
-            foreground: Color.popups.text
-            accent: Color.bar.active
+            foreground: Commons.Color.popups.text
+            accent: Commons.Color.bar.active
             fontFamily: Style.font.family
             onClicked: editor.controller.persistServiceMap("serviceShowStopped", editor.controller.editingServiceId, !checked, false)
           }
@@ -103,8 +105,8 @@ import "Model.js" as Model
             label: "Action notifications"
             value: editor.controller.serviceNotificationPolicy(editor.controller.editingServiceId)
             options: [{value:"inherit",label:"Use global setting"},{value:"always",label:"Always"},{value:"failures",label:"Failures only"},{value:"silent",label:"Silent"}]
-            foreground: Color.popups.text
-            accent: Color.bar.active
+            foreground: Commons.Color.popups.text
+            accent: Commons.Color.bar.active
             onChanged: function(next) { editor.controller.persistServiceMap("serviceNotificationPolicies", editor.controller.editingServiceId, next, next === "inherit") }
           }
 
@@ -114,8 +116,8 @@ import "Model.js" as Model
             Layout.fillWidth: true
             placeholderText: "Console URL (http:// or https://)"
             text: editor.current ? editor.controller.consoleUrl(editor.current) : ""
-            foreground: Color.popups.text
-            accent: Color.bar.active
+            foreground: Commons.Color.popups.text
+            accent: Commons.Color.bar.active
             font.family: Style.font.family
             onAccepted: editor.controller.saveConsoleUrl(editor.controller.editingServiceId, text)
           }
@@ -139,7 +141,7 @@ import "Model.js" as Model
             Layout.fillWidth: true
             text: editor.current ? ("Backend: " + editor.current.id + "\nControl: " + (editor.current.unit || "exact process name") + "\n" + Model.summary(editor.current, editor.controller.privacyFilter)) : ""
             textFormat: Text.PlainText
-            color: Color.muted
+            color: Commons.Color.muted
             wrapMode: Text.WordWrap
             font.family: Style.font.family
             font.pixelSize: Style.font.caption
@@ -149,7 +151,7 @@ import "Model.js" as Model
             readonly property var catalog: editor.controller.catalogEntry(editor.controller.editingServiceId)
             text: catalog && catalog.backups && catalog.backups.length ? (catalog.backups.length + " configuration backup" + (catalog.backups.length === 1 ? "" : "s") + " · latest " + catalog.backups[0].timestamp) : "No configuration backups"
             textFormat: Text.PlainText
-            color: Color.muted
+            color: Commons.Color.muted
             font.family: Style.font.family
             font.pixelSize: Style.font.caption
           }
@@ -166,10 +168,11 @@ import "Model.js" as Model
                 return item && item.backups ? item.backups : []
               }
               delegate: RowLayout {
+                id: backupRow
                 required property var modelData
                 Layout.fillWidth: true
-                Text { Layout.fillWidth: true; text: modelData.timestamp; textFormat: Text.PlainText; color: Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
-                Button { objectName: "serviceRestoreButton"; text: "Restore"; enabled: !!editor.current && !editor.current.active; tooltipText: enabled ? "Restore this configuration backup" : "Stop the service before restoring configuration"; onClicked: if (enabled) editor.controller.requestRestore(editor.current, modelData.name) }
+                Text { Layout.fillWidth: true; text: backupRow.modelData.timestamp; textFormat: Text.PlainText; color: Commons.Color.muted; elide: Text.ElideRight; font.family: Style.font.family; font.pixelSize: Style.font.caption }
+                Button { objectName: "serviceRestoreButton"; text: "Restore"; enabled: !!editor.current && !editor.current.active; tooltipText: enabled ? "Restore this configuration backup" : "Stop the service before restoring configuration"; onClicked: if (enabled) editor.controller.requestRestore(editor.current, backupRow.modelData.name) }
               }
             }
           }

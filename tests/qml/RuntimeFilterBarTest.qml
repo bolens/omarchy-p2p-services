@@ -1,9 +1,14 @@
 import Quickshell
+import Quickshell.Wayland
 import QtQuick
+import QtQuick.Window
 import QtQuick.Layouts
+import qs.Commons
 
 ShellRoot {
   id: root
+  property int frameStage: 0
+  property int constrainedWidth: 0
 
   QtObject {
     id: mockController
@@ -26,30 +31,63 @@ ShellRoot {
     function setAllServiceGroupsCollapsed(collapsed) { allServiceGroupsCollapsed = collapsed; events = events.concat([{allGroupsCollapsed:collapsed}]) }
   }
 
-  ColumnLayout {
-    id: filterHost
-    width: 620
-    P2PFilterBar { id: filterBar; Layout.fillWidth: true; controller: mockController }
-  }
-  ColumnLayout {
-    id: narrowFilterHost
-    x: 700
-    width: 400
-    P2PFilterBar { id: narrowFilterBar; Layout.fillWidth: true; controller: mockController }
+  PanelWindow {
+    id: filterWindow
+    implicitWidth: 1200
+    implicitHeight: 200
+    exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    visible: true
+    Connections {
+      target: filterWindow.contentItem.Window.window
+      function onFrameSwapped() {
+        if (root.frameStage === 0) {
+          root.frameStage = 1
+          root.configureConstraint()
+        } else if (root.frameStage === 1 && narrowFilterBar.width === root.constrainedWidth) {
+          root.frameStage = 2
+          Qt.callLater(root.verifyLayoutAndActions)
+        }
+      }
+    }
+    ColumnLayout {
+      id: filterHost
+      width: 620
+      P2PFilterBar { id: filterBar; Layout.fillWidth: true; controller: mockController }
+    }
+    ColumnLayout {
+      id: narrowFilterHost
+      x: 700
+      width: 400
+      P2PFilterBar { id: narrowFilterBar; Layout.fillWidth: true; controller: mockController }
+    }
   }
 
   function descendant(item, name) {
     if (!item) return null
     if (item.objectName === name) return item
     var children = item.children || []
-    for (var index = 0; index < children.length; index++) {
-      var match = descendant(children[index], name)
+    for (let index = 0; index < children.length; index++) {
+      const match = descendant(children[index], name)
       if (match) return match
     }
     return null
   }
 
-  Component.onCompleted: Qt.callLater(function() {
+  function configureConstraint() {
+    var narrowPrimary = descendant(narrowFilterBar, "primaryFilterFlow")
+    var narrowActions = descendant(narrowFilterBar, "filterActionRow")
+    // Each group fits alone; their actual measured combination must wrap.
+    var widestGroup = Math.max(narrowPrimary.width, narrowActions.width)
+    var combinedGroups = narrowPrimary.width + narrowActions.width + Style.spacing.sm
+    var constrainedWidth = Math.ceil((widestGroup + combinedGroups) / 2)
+    if (!(constrainedWidth >= widestGroup && constrainedWidth < combinedGroups))
+      throw new Error("filter fixture could not construct a constrained group width")
+    root.constrainedWidth = constrainedWidth
+    narrowFilterHost.width = constrainedWidth
+  }
+
+  function verifyLayoutAndActions() {
     var backend = descendant(filterBar, "activeBackendFilterPill")
     var count = descendant(filterBar, "visibleServiceCountText")
     var primary = descendant(filterBar, "primaryFilterPill")
@@ -101,9 +139,11 @@ ShellRoot {
       if (filterBar.primaryFilterCount !== 3) throw new Error("cleared issue count did not remove its compact filter")
     mockController.backendFilter = "docker"
     Qt.callLater(function() {
+      filterWindow.visible = false
+      if (filterWindow.visible) throw new Error("owned filter fixture window did not close")
       console.log("P2P_QML_FILTER_BAR_OK")
       Qt.quit()
     })
     })
-  })
+  }
 }

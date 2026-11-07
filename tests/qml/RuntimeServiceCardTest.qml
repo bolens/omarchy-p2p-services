@@ -51,8 +51,8 @@ ShellRoot {
     if (!item) return null
     if (item.objectName === name) return item
     var children = item.children || []
-    for (var index = 0; index < children.length; index++) {
-      var match = descendant(children[index], name)
+    for (let index = 0; index < children.length; index++) {
+      const match = descendant(children[index], name)
       if (match) return match
     }
     return null
@@ -111,7 +111,7 @@ ShellRoot {
           if (!item) return null
           if (item.objectName === "compactIndicatorPill" && item.indicator && item.indicator.action === "config") return item
           var children = item.children || []
-          for (var index = 0; index < children.length; index++) { var match = findDisabledConfigPill(children[index]); if (match) return match }
+          for (let index = 0; index < children.length; index++) { const match = findDisabledConfigPill(children[index]); if (match) return match }
           return null
         }
         disabledConfigPill = findDisabledConfigPill(card)
@@ -134,7 +134,7 @@ ShellRoot {
             if (!item) return null
             if (item.objectName === "compactIndicatorPill" && item.indicator && item.indicator.action === "console") return item
             var children = item.children || []
-            for (var index = 0; index < children.length; index++) { var match = findWebPill(children[index]); if (match) return match }
+            for (let index = 0; index < children.length; index++) { const match = findWebPill(children[index]); if (match) return match }
             return null
           }
           webPill = findWebPill(card)

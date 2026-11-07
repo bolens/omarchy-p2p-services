@@ -18,6 +18,7 @@ attestation.
 5. Squash-merge the pull request and delete its branch. Do not push directly
    to `main`; rebase merges, merge commits, and protection bypasses are disabled.
 6. Confirm the worktree is clean and `origin/main` matches the merged candidate.
+   Require the exact merged-commit checks described below before tagging.
 
 ## Tag and publish
 
@@ -61,6 +62,57 @@ clean-install smoke, Pages display, and marketplace status as release evidence.
 
 Fleet policy: <https://github.com/bolens/.github/blob/main/RELEASING.md>.
 
+## Required merge checks
+
+Protected `main` requires an up-to-date pull request, resolved conversations and
+these five check contexts on the reviewed candidate:
+
+- `Repository` (GitHub Actions app 15368).
+- `lint / Source lint` (GitHub Actions app 15368).
+- `Development environment` (GitHub Actions app 15368).
+- `ci/woodpecker/pr/plugin`.
+- `ci/woodpecker/pr/site`.
+
+Require every context before an ordinary squash merge; missing, pending or failed
+checks do not authorize a bypass. Woodpecker plugin and site results cover their
+native suites separately. They do not replace retained GitHub repository, source
+lint, development-environment, platform or signed-release validation, and none of
+these CI results establishes physical desktop behavior.
+
+## Observe the exact merged candidate
+
+After the squash merge, record its `mergeCommit.oid`, fetch `main` and require
+that commit to match the release candidate. Fast-forward only a clean local main
+checkout. Query runs by the exact commit and push event, select the applicable
+run ID, then let `gh run watch` observe its terminal state:
+
+```sh
+repo=bolens/omarchy-p2p-services
+release_sha=$(gh pr view "$pr" --repo "$repo" --json mergeCommit --jq .mergeCommit.oid)
+git fetch origin main
+test "$release_sha" = "$(git rev-parse origin/main)"
+gh run list --repo "$repo" --commit "$release_sha" --event push \
+  --json databaseId,workflowName,headSha,status,conclusion
+run_id=$(gh run list --repo "$repo" --workflow CI --commit "$release_sha" \
+  --event push --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+test -n "$run_id"
+gh run watch "$run_id" --repo "$repo" --exit-status
+gh api "repos/$repo/commits/$release_sha/check-runs?per_page=100" \
+  --jq '.check_runs[] | {name,head_sha,status,conclusion,app_id:.app.id}'
+gh api "repos/$repo/commits/$release_sha/status" \
+  --jq '.statuses[] | {context,state,target_url}'
+```
+
+An absent run or status is pending evidence; inspect the matching push event
+before proceeding. Do not replace missing results with a fixed sleep or retry
+count. Watch the exact Source lint and development-environment run IDs from the
+same commit as well. Require successful `Repository`, `lint / Source lint` and
+`Development environment` check runs from app 15368, plus successful
+`ci/woodpecker/push/plugin` and `ci/woodpecker/push/site` statuses. A PR success
+belongs to its PR head and does not establish acceptance of the squash SHA.
+Retain the commit, run URLs and native pipeline URLs. Fix a failed merged
+candidate through a new pull request before tagging.
+
 ## Source lint
 
 The Source lint workflow checks maintained python, javascript, css files selected by
@@ -75,11 +127,21 @@ Require the new check to pass on the current PR head before merging.
 ## Woodpecker plugin validation
 
 [Woodpecker](https://woodpecker.bolens.dev/repos) runs the plugin archive,
-ShellCheck, behavior and QML lint checks on pull requests and pushes to `main`.
-It uses the same immutable Omarchy toolchain image and v4.0.1 imports as
-GitHub CI. The entry point is `bash scripts/woodpecker-plugin.sh` inside that
-image. It requires network access only to fetch the pinned public imports
-and any lockfile-based test dependencies; it receives no publishing secrets.
+ShellCheck, behavior, strict QML controls and complete canonical headless runtime
+suite on pull requests and pushes to `main`. Its pinned toolchain and v4.0.1
+imports also serve retained GitHub callers. Preparation runs
+`bash scripts/woodpecker-plugin.sh --prepare` to fetch only immutable public
+imports. The required `--offline` phase runs as container user 10042 with
+networking disabled; test dependencies are already in the image. Neither phase
+receives publishing secrets.
+
+Woodpecker 3.x reads `network_mode: none` as a direct step field; placing it
+under `backend_options.docker` is ignored by the agent. Docker backend options
+retain the ordinary `10042:10042` user. The server must accept the legacy
+step-level field in its workflow schema. Verify the actual plugin container has
+`HostConfig.NetworkMode=none` and no attached workflow network before claiming
+offline acceptance; YAML lint and source assertions alone do not prove this.
+Preparation and cloning retain their network access and public immutable inputs.
 
 The required plugin check is `ci/woodpecker/pr/plugin`. Ordinary GitHub PR
 and main runs skip the duplicate plugin jobs. Reusable callers retain hosted
@@ -115,3 +177,20 @@ site run. Forks still require native approval and receive no publishing secrets.
 Publishing and platform checks retain their current workflows. Review the manual
 browser-image digest pin alongside the other native image pins; Dependabot does
 not update Woodpecker YAML.
+
+## QML compatibility profiles
+
+After the Qt 6.12 compatibility update, stale plugin code may survive a hot reload.
+Finish active captures, then run `omarchy restart shell` if old code or warnings
+remain. See [Omarchy #6981](https://github.com/omacom/omarchy/issues/6981) for the
+upstream cache issue and restart workaround.
+
+Refresh the source and tooling profiles with the toolchain. Verify every imported
+file against its immutable upstream source and keep the palette backport and
+metadata projection explicit. Require real valid/invalid lint controls and the
+complete existing runtime inventory before accepting a new profile. Preserve the
+older/current palette and token-engine comparison as compatibility evidence.
+Update native, retained release-validation and compatibility image digests only
+after the actual published image has passed admission. Keep these maintainer
+helpers out of the release archive through the existing `scripts/` and `tests/`
+export exclusions; release validation still checks the actual distributable.

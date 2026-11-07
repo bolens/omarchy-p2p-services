@@ -6,7 +6,7 @@ ShellRoot {
 
   Component.onCompleted: {
     Qt.callLater(function() {
-      for (var index = 0; index < 150; index++)
+      for (let index = 0; index < 150; index++)
         if (!journal.record("event-" + index, 1)) throw new Error("bounded journal queue rejected normal work")
       if (journal.queue.length !== 100
           || journal.queue[0][2] !== "event-50"

@@ -13,8 +13,8 @@ ShellRoot {
     if (!item) return null
     if (item.objectName === name) return item
     var objects = item.data || item.children || []
-    for (var index = 0; index < objects.length; index++) {
-      var match = descendant(objects[index], name)
+    for (let index = 0; index < objects.length; index++) {
+      const match = descendant(objects[index], name)
       if (match) return match
     }
     return null

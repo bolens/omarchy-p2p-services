@@ -4,6 +4,10 @@ All notable changes to P2P Services are documented here. This project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+
+- Add native repository policy checks alongside the existing protected GitHub checks.
+
 
 
 ### Fixed

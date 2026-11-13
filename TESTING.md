@@ -106,9 +106,12 @@ ShellCheck, behavior, strict QML controls and complete canonical headless runtim
 suite on pull requests and pushes to `main`. Its pinned toolchain and v4.0.1
 imports also serve retained GitHub callers. Preparation runs
 `bash scripts/woodpecker-plugin.sh --prepare` to fetch only immutable public
-imports. The required `--offline` phase runs as container user 10042 with
-networking disabled; test dependencies are already in the image. Neither phase
-receives publishing secrets.
+imports. Preparation fetches the pinned Omarchy revision with a blob-filtered
+cone checkout of the complete `shell` and `bin` trees. It verifies the required
+objects and working files before offline validation. Lazy fetching is disabled
+during that validation. The required `--offline` phase runs as container user
+10042 with networking disabled. The image supplies the Qt toolchain and plugin
+test tools. Neither phase receives publishing secrets.
 
 The required plugin check is `ci/woodpecker/pr/plugin`. Ordinary GitHub PR
 and main runs skip the duplicate plugin jobs. Reusable callers retain hosted
@@ -237,7 +240,7 @@ focus disabled. Actual window frames gate layout assertions after changes; they
 do not activate an editable focus or change the four-second case deadlines.
 These are geometry tests. Physical desktop keyboard interaction remains separate.
 
-## Additive native repository checks
+## Native repository checks
 
 The credential-free `repository` workflow adds the existing shared Source lint,
 workflow security, changelog, HTML/XML and documentation-link policies on each
@@ -247,9 +250,10 @@ Privacy-specific issue-form, release metadata and docs checks remain mandatory
 where applicable. Run `bash scripts/woodpecker-repository.sh` in the documented
 Linux tooling container to reproduce the public-tool bootstrap and checks.
 
-Existing GitHub requirements remain active during this additive delivery. Do not
-retire `Repository` or `lint / Source lint` until exact-head native PR and genuine
-main proof is accepted and protected checks are migrated separately. Preserve
+The duplicate GitHub Source lint workflow is disabled after accepted native PR
+and genuine-main proof. Protected `main` requires `ci/woodpecker/pr/repository`
+in its place. The hosted `Repository` and `Development environment` checks remain
+required alongside the native plugin and site checks. Preserve
 `ci.yml`'s reusable release-validation interface and all release, platform and
 Pages deployment boundaries. No future pipeline or merge is accepted by this text.
 
@@ -259,7 +263,7 @@ Pages deployment boundaries. No future pipeline or merge is accepted by this tex
 |---|---|---|---|
 | `plugin.yml` | Portable plugin, strict Qt/QML and owned runtime/IPC | `scripts/woodpecker-plugin.sh --prepare` then `--offline` in its qualified container | `ci/woodpecker/pr/plugin` |
 | `site.yml` | Site build/test and real accessibility browser audit | `npm run build:site`, `npm run test:site`, `node scripts/audit-site.mjs` in its qualified browser container | `ci/woodpecker/pr/site` |
-| `repository.yml` | Source/workflow policy and document integrity | `scripts/woodpecker-repository.sh --policy` and `--documents`; default `--all` runs both | `ci/woodpecker/pr/repository` (pending delivery proof) |
+| `repository.yml` | Source/workflow policy and document integrity | `scripts/woodpecker-repository.sh --policy` and `--documents`; default `--all` runs both | `ci/woodpecker/pr/repository` |
 
 Workflow filenames own status identity; descriptive kebab-case step names group
 checks within each workflow. The new repository group publishes no artifacts or

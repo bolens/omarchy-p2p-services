@@ -95,7 +95,7 @@
     },
     "p2p/RuntimeSettingsLoadingFailureTest.qml": {
       "source_files": {
-        "tests/qml/RuntimeSettingsLoadingFailureTest.qml": "a74fce2b890399f4e522d8af69c17bcdb791ce8e01ab9e372e3c2510c41f649d",
+        "tests/qml/RuntimeSettingsLoadingFailureTest.qml": "14ea8a60ec43912fe3abad5103b0eb0a2c4a612433718477771a1f3078630866",
         "BarWidget.qml": "90123832ebd91f22985716df4701af65531e0081d7708291dec1e99868b06c33"
       },
       "caller_evidence": [

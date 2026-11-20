@@ -51,5 +51,9 @@ npm ci --ignore-scripts --no-audit --no-fund
 
 npm run build:site
 npm run test:site
+if grep -R --fixed-strings '__PLUGIN_VERSION__' _site; then
+    echo 'Built site contains an unresolved plugin version' >&2
+    exit 1
+fi
 python3 scripts/check-repository-documents.py --repository "$repository"
 fi

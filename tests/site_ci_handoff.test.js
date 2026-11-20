@@ -3,6 +3,9 @@ const fs = require("node:fs")
 const ci = fs.readFileSync(".github/workflows/ci.yml", "utf8")
 const release = fs.readFileSync(".github/workflows/release.yml", "utf8")
 const native = fs.readFileSync(".woodpecker/site.yml", "utf8")
+const nativeRepository = fs.readFileSync(".woodpecker/repository.yml", "utf8")
+const documents = fs.readFileSync("scripts/woodpecker-repository.sh", "utf8")
+const validators = fs.readFileSync("scripts/check-repository-documents.py", "utf8")
 const repository = ci.match(/^  (?:pages|repository-checks):\n[\s\S]*?(?=^  \S)/m)
 assert.ok(repository, "retain the real repository validation job")
 const steps = repository[0].split(/(?=^      - )/m).slice(1)
@@ -14,9 +17,17 @@ assert.match(browser[0], /score\s*===\s*1/)
 for (const step of steps.filter(step => step !== browser[0])) {
   assert.doesNotMatch(step, /^(?:      - |        )if:/m, "real repository checks must remain active independently of browser selection")
 }
-for (const command of [/tidy -errors/, /xmllint --noout/, /lycheeverse\/lychee-action@[a-f0-9]{40}/, /npm run build:site/, /npm run test:site/]) {
-  assert.match(repository[0], command, "retain real HTML, XML, links and site checks")
-}
+const documentGate = /bash scripts\/woodpecker-repository\.sh --documents/
+assert.match(repository[0], documentGate)
+assert.match(nativeRepository, documentGate)
+assert.match(documents, /sha256sum --check --strict/)
+assert.match(documents, /npm run build:site/)
+assert.match(documents, /npm run test:site/)
+assert.match(documents, /python3 scripts\/check-repository-documents\.py/)
+assert.match(validators, /"tidy", "-errors"/)
+assert.match(validators, /"xmllint", "--noout"/)
+assert.match(validators, /"\.github\/lychee\.toml"/)
+assert.match(validators, /"--exclude-path".*node_modules/)
 assert.match(ci, /workflow_call:\n    inputs:\n      release_validation:[\s\S]*?type: boolean\n        default: true/)
 assert.match(release, /uses: \.\/\.github\/workflows\/ci\.yml\n    with:\n      release_validation: true/)
 const filter = ci.split("            repository:\n")[1]

@@ -20,16 +20,22 @@ def check_tidy(run=subprocess.run):
         raise RuntimeError("HTML validation failed")
 
 
-def link_command(repository, lychee):
+COMMIT_ARCHIVES = r"^https://codeload\.github\.com/[^/]+/[^/]+/tar\.gz/[0-9a-f]{40}$"
+
+
+def link_command(repository, lychee, *, commit_archives=False):
     if repository not in REPOSITORIES:
         raise ValueError("unsupported repository")
     compare = (rf"^https://github\.com/bolens/{repository}/compare/"
                if repository == "omarchy-privacy-devices" else
                rf"^https://github\.com/bolens/{repository}/(compare|releases/tag)/")
-    return [lychee, "--no-progress", "--exclude-path", "(^|/)node_modules/",
+    filters = (["--include", COMMIT_ARCHIVES, "--exclude", ".*", "--method", "head"]
+               if commit_archives else ["--exclude", COMMIT_ARCHIVES])
+    return [lychee, "--config", ".github/lychee.toml", "--no-progress",
+            "--exclude-path", "(^|/)node_modules/",
             "--accept", "200,204,206,429", "--exclude", compare, "--exclude",
             rf"^https://bolens[.]github[.]io/{repository}/changelog/$",
-            "./**/*.md", "./_site/**/*.html"]
+            *filters, "./**/*.md", "./_site/**/*.html"]
 
 
 def check_documents(repository, lychee="lychee", run=subprocess.run):
@@ -38,6 +44,7 @@ def check_documents(repository, lychee="lychee", run=subprocess.run):
     check_tidy(run)
     run(["xmllint", "--noout", "docs/favicon.svg", "docs/sitemap.xml"], check=True)
     run(link_command(repository, lychee), check=True)
+    run(link_command(repository, lychee, commit_archives=True), check=True)
 
 
 def main():

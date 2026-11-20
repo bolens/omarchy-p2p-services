@@ -35,8 +35,6 @@ assert.match(ci, /plugin-result:[\s\S]*name: Plugin[\s\S]*if: always\(\) && inpu
 assert.match(ci, /repository-result:[\s\S]*name: Repository[\s\S]*if: always\(\)/)
 assert.match(ci, /actions\/setup-node@[a-f0-9]{40}(?:\s|$)/)
 assert.match(ci, /shellcheck/)
-assert.match(ci, /lycheeverse\/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8/)
-assert.match(ci, /--exclude-path '[^']*node_modules/)
 assert.match(ci, /accessibility\.score\s*===\s*1|score\s*===\s*1/)
 assert.match(ci, /13f18b2cb7286fb54f87daf571a031aa6af3d8f0/)
 assert.match(ci, /concurrency:[\s\S]*cancel-in-progress:\s*true/)

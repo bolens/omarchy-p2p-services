@@ -43,8 +43,29 @@ class Contracts(unittest.TestCase):
                 DOCS.check_documents("omarchy-app-drawer", run=run)
             self.assertEqual(calls[-1], failure)
 
+    def test_commit_archives_use_head_in_a_separate_pass(self):
+        calls = []
+
+        def run(command, **kwargs):
+            if command[0] == "lychee":
+                calls.append(command)
+                if "--method" in command:
+                    raise subprocess.CalledProcessError(1, command)
+            return self.result(0)
+
+        with patch.object(Path, "is_file", return_value=True), self.assertRaises(subprocess.CalledProcessError):
+            DOCS.check_documents("omarchy-app-drawer", run=run)
+
+        documents, archives = calls
+        archive_pattern = archives[archives.index("--include") + 1]
+        self.assertEqual(documents[documents.index(archive_pattern) - 1], "--exclude")
+        self.assertNotIn("--method", documents)
+        self.assertEqual(archives[archives.index("--method") + 1], "head")
+        self.assertIn(".*", archives)
+
     def test_links_keep_repository_specific_trust_boundaries(self):
         command = DOCS.link_command("omarchy-app-drawer", "lychee")
+        self.assertEqual(command[1:3], ["--config", ".github/lychee.toml"])
         self.assertIn("200,204,206,429", command)
         self.assertIn("./**/*.md", command)
         self.assertIn("./_site/**/*.html", command)

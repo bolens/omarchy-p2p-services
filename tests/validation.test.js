@@ -42,7 +42,7 @@ assert.doesNotMatch(workflow, /node tests\/model\.test\.js/);
 assert.match(workflow, /group: \$\{\{ github\.workflow \}\}-ci-\$\{\{ github\.ref \}\}/);
 assert.match(workflow, /actions\/setup-node@[0-9a-f]{40}[^\n]*# v[0-9]+\.[0-9]+\.[0-9]+/);
 assert.match(workflow, /node-version: 24\.19\.0/);
-assert.match(workflow, /npm ci --ignore-scripts --no-audit/);
+assert.match(fs.readFileSync("scripts/woodpecker-repository.sh", "utf8"), /npm ci --ignore-scripts --no-audit/);
 assert.match(pages, /node tests\/site\.test\.js/);
 assert.match(pages, /__PLUGIN_VERSION__/);
 assert.match(release, /group: release-\$\{\{ github\.ref \}\}/);

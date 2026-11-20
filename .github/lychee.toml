@@ -1,0 +1,6 @@
+# GitHub's HTML views of commits and files can return 503.
+# Check commit archives with HEAD and file links through the raw service.
+remap = [
+  '^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/commit/([0-9a-f]{40})$ https://codeload.github.com/${1}/${2}/tar.gz/${3}',
+  '^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/blob/(main|master|[0-9a-f]{40})/(.+)$ https://raw.githubusercontent.com/${1}/${2}/${3}/${4}',
+]

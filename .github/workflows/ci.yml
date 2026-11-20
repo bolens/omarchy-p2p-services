@@ -185,7 +185,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      checks: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -199,31 +198,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes libxml2-utils tidy
-      - name: Validate HTML and XML
-        run: |
-          tidy -errors -quiet docs/index.html docs/404.html 2>&1 | tee /tmp/tidy-output || true
-          if grep -E 'Error:' /tmp/tidy-output; then exit 1; fi
-          xmllint --noout docs/favicon.svg docs/sitemap.xml
-      - name: Check documentation links
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
-        with:
-          args: >-
-            --no-progress
-            --exclude-path '(^|/)node_modules/'
-            --accept 200,204,206,429
-            --exclude '^https://github\.com/bolens/omarchy-p2p-services/(compare|releases/tag)/'
-            --exclude '^https://bolens[.]github[.]io/omarchy-p2p-services/changelog/$'
-            './**/*.md'
-            './_site/**/*.html'
-          fail: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and test site
-        run: |
-          npm ci --ignore-scripts --no-audit
-          npm run build:site
-          npm run test:site
-          ! grep -R --fixed-strings '__PLUGIN_VERSION__' _site
+      - name: Build site and validate repository documents
+        run: bash scripts/woodpecker-repository.sh --documents
       - name: Audit site accessibility
         if: inputs.release_validation || github.event_name == 'workflow_dispatch'
         run: |

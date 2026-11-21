@@ -58,8 +58,9 @@ class StatusCacheTests(unittest.TestCase):
       for generation in range(8):
         cached_status("key-%d" % generation, lambda generation=generation: {"generation": generation}, root, ttl=10, max_entries=3)
       self.assertLessEqual(len(list(root.glob("*.json"))), 3)
+      existing = set(root.glob("*.json"))
       cached_status("corrupt", lambda: {"generation": 1}, root, ttl=10, max_entries=4)
-      target = max(root.glob("*.json"), key=lambda path: path.stat().st_mtime_ns)
+      target, = set(root.glob("*.json")) - existing
       target.write_text("not json")
       self.assertEqual(cached_status("corrupt", lambda: {"recovered": True}, root, ttl=10)["recovered"], True)
 

@@ -36,7 +36,9 @@ ShellRoot {
   }
   Component.onCompleted: {
     widget.showingWidgetSettings = true
-    if (!widget.settingsIndicatorVisible) throw new Error("failed settings load did not start presentation")
+    // A missing local file can move the Loader directly to Error.
+    if (!widget.settingsIndicatorVisible && widget.settingsErrorText !== "Unable to load P2P settings interface")
+      throw new Error("failed settings load did not start presentation or report the error")
   }
 
   function advanceWhenReady() {

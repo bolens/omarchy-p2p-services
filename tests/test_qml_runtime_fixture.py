@@ -156,12 +156,12 @@ class Contracts(unittest.TestCase):
                 checkout = Path(tmp); (checkout/'tests').mkdir()
                 deadline = 'limit=${3:-${QML_RUNTIME_LIMIT:-4}}' if repo == 'p2p' else 'timeout ' + str(limit) + ' "$quickshell_bin"'
                 text = deadline + '\nrun_harness RuntimeExistingTest.qml EXISTING_OK\nrun_harness RuntimePaletteTest.qml PALETTE_OK\n'
-                if repo == 'p2p':text += 'run_harness RuntimePluginSmokeTest.qml SMOKE_OK 7\n'
+                if repo == 'p2p':text += 'run_harness RuntimePluginSmokeTest.qml SMOKE_OK 12\n'
                 (checkout/'tests/run_qml_runtime.sh').write_text(text)
                 rows = RUNTIME.canonical_contract(checkout, repo)
                 self.assertEqual(rows[1]['file'], 'RuntimePaletteTest.qml')
                 self.assertEqual(rows[0]['deadline'], limit)
-                if repo == 'p2p':self.assertEqual(rows[-1]['deadline'],7)
+                if repo == 'p2p':self.assertEqual(rows[-1]['deadline'],12)
                 (checkout/'tests/run_qml_runtime.sh').write_text(text+'run_harness UNKNOWN UNPARSED\n')
                 with self.assertRaises(AssertionError):RUNTIME.canonical_contract(checkout, repo)
                 (checkout/'tests/run_qml_runtime.sh').write_text(text+'run_harness RuntimePaletteTest.qml PALETTE_OK\n')

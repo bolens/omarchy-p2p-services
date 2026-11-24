@@ -96,7 +96,7 @@
     "p2p/RuntimeSettingsLoadingFailureTest.qml": {
       "source_files": {
         "tests/qml/RuntimeSettingsLoadingFailureTest.qml": "14ea8a60ec43912fe3abad5103b0eb0a2c4a612433718477771a1f3078630866",
-        "BarWidget.qml": "90123832ebd91f22985716df4701af65531e0081d7708291dec1e99868b06c33"
+        "BarWidget.qml": "edeb25220fd0fce2b32fecac50f9e26cf3482e2d6a52af699950268a85a8b544"
       },
       "caller_evidence": [
         "settingsSurfaceSource: Qt.resolvedUrl(\"tests/fixtures/does-not-exist.qml\")",

@@ -18,15 +18,15 @@ Rectangle {
   property bool hovered: false
 
   Layout.fillWidth: true
-  readonly property string density: String(controller.setting("cardDensity", "comfortable"))
-  readonly property bool grid: controller.setting("serviceLayout", "list") === "grid"
+  readonly property string density: String(card.controller.setting("cardDensity", "comfortable"))
+  readonly property bool grid: card.controller.setting("serviceLayout", "list") === "grid"
   readonly property bool compact: density !== "comfortable"
   readonly property bool minimal: density === "minimal"
   readonly property bool minimalList: minimal && !grid
   readonly property bool iconActions: compact
   readonly property real cardPadding: minimal ? Style.spacing.xs : (compact ? Style.spacing.sm : Style.spacing.md)
   readonly property var compactIndicators: compact ? Model.compactIndicators(entry) : []
-  readonly property var comfortableIndicators: !compact ? Model.comfortableIndicators(entry, controller.privacyFilter) : []
+  readonly property var comfortableIndicators: !compact ? Model.comfortableIndicators(card.entry, card.controller.privacyFilter) : []
   readonly property real identityWidthHint: Math.min(serviceNameText.implicitWidth, Style.space(180))
   readonly property real headerWidthHint: serviceIcon.implicitWidth
     + identityWidthHint
@@ -36,16 +36,16 @@ Rectangle {
     serviceQuickActions.visible ? serviceQuickActions.implicitWidth : 0
   ) + cardPadding * 2
   function activateIndicator(indicator) {
-    if (indicator.action === "console") controller.openConsole(entry)
-    else if (indicator.action === "config") controller.act(entry, "config")
-    else if (indicator.action === "backend") controller.filterByBackend(String(entry.backend || "process"))
-    else controller.toggleServiceDetails(entry.id)
+    if (indicator.action === "console") card.controller.openConsole(entry)
+    else if (indicator.action === "config") card.controller.act(card.entry, "config")
+    else if (indicator.action === "backend") card.controller.filterByBackend(String(card.entry.backend || "process"))
+    else card.controller.toggleServiceDetails(card.entry.id)
   }
   implicitHeight: serviceColumn.implicitHeight + cardPadding * 2
   radius: Style.cornerRadius
-  color: Util.alpha(controller.serviceColor(entry), controller.selectedServiceId === entry.id ? 0.13 : (hovered ? 0.09 : (entry.active ? 0.065 : 0.025)))
-  border.width: controller.selectedServiceId === entry.id ? 2 : 1
-  border.color: Util.alpha(controller.serviceColor(entry), controller.selectedServiceId === entry.id ? 0.7 : (entry.active ? 0.32 : 0.12))
+  color: Util.alpha(card.controller.serviceColor(entry), card.controller.selectedServiceId === card.entry.id ? 0.13 : (hovered ? 0.09 : (card.entry.active ? 0.065 : 0.025)))
+  border.width: card.controller.selectedServiceId === card.entry.id ? 2 : 1
+  border.color: Util.alpha(card.controller.serviceColor(entry), card.controller.selectedServiceId === card.entry.id ? 0.7 : (card.entry.active ? 0.32 : 0.12))
 
   Rectangle {
     visible: card.controller.setting("showStatusRail", true) === true
@@ -173,6 +173,18 @@ Rectangle {
       }
     }
 
+    Text {
+      objectName: "discoveryOnlyNotice"
+      visible: card.entry.discoveryOnly === true && !card.minimal
+      Layout.fillWidth: true
+      text: card.entry.authorizationRequired === true ? "Administrator authorization required for Docker controls" : "Observation only · Docker controls require separate authorization"
+      textFormat: Text.PlainText
+      color: Commons.Color.muted
+      wrapMode: Text.WordWrap
+      font.family: Style.font.family
+      font.pixelSize: Style.font.caption
+    }
+
     Flow {
       id: comfortableMetadata
       objectName: "comfortableMetadata"
@@ -212,7 +224,7 @@ Rectangle {
       Button { objectName: "serviceDetailsButton"; text: card.iconActions ? "" : (card.controller.expandedServiceId === card.entry.id ? "Hide details" : "Details"); iconText: card.iconActions ? (card.controller.expandedServiceId === card.entry.id ? "󰁈" : "󰁅") : ""; tooltipText: card.iconActions ? (card.controller.expandedServiceId === card.entry.id ? "Hide details" : "Show details") : ""; horizontalPadding: card.iconActions ? Style.spacing.controlGap : Style.spacing.controlPaddingX; active: card.controller.expandedServiceId === card.entry.id; selected: active; onClicked: card.controller.toggleServiceDetails(card.entry.id) }
       Item { Layout.fillWidth: true }
       Button { iconText: "󰖟"; tooltipText: "Open web console"; visible: card.controller.hasConsole(card.entry); horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.openConsole(card.entry) }
-      Button { iconText: "󰒓"; tooltipText: "Open configuration"; visible: card.entry.configExists === true && card.entry.controllable !== false; horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.act(card.entry, "config") }
+      Button { iconText: "󰒓"; tooltipText: "Open configuration"; visible: card.entry.configExists === true && card.entry.controllable !== false && card.entry.discoveryOnly !== true; horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.act(card.entry, "config") }
       Button { objectName: "serviceCustomizeButton"; iconText: "󰏫"; tooltipText: "Customize service"; horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.editService(card.entry.id) }
     }
     Rectangle {
@@ -232,7 +244,7 @@ Rectangle {
         Button { text: "Restart"; visible: card.entry.active && card.entry.controllable !== false; enabled: card.controller.pendingService === ""; onClicked: card.controller.act(card.entry, "restart") }
         Button { text: "Details"; onClicked: card.controller.toggleServiceDetails(card.entry.id) }
         Item { Layout.fillWidth: true }
-        Button { iconText: "󰆍"; tooltipText: "Open service logs"; visible: card.entry.unit || card.entry.containerCount > 0; horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.openLogs(card.entry) }
+        Button { iconText: "󰆍"; tooltipText: "Open service logs"; visible: card.entry.discoveryOnly !== true && (card.entry.unit || card.entry.containerCount > 0); horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.openLogs(card.entry) }
         Button { iconText: "󰆏"; tooltipText: "Copy privacy-aware diagnostics"; horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.copyDiagnostics(card.entry) }
         Button { iconText: "󰖟"; tooltipText: "Open web console"; visible: card.controller.hasConsole(card.entry); horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.openConsole(card.entry) }
         Button { iconText: "󰏫"; tooltipText: "Customize service"; horizontalPadding: Style.spacing.controlGap; onClicked: card.controller.editService(card.entry.id) }
@@ -274,7 +286,7 @@ Rectangle {
         }
         Text {
         Layout.fillWidth: true
-        text: card.entry.unit ? card.entry.unitScope + " service · " + card.entry.unit : "Managed by exact process name"
+        text: card.entry.discoveryOnly === true ? (card.entry.authorizationRequired === true ? "Docker container · Administrator authorization required" : "Docker container · Observation only") : (card.entry.unit ? card.entry.unitScope + " service · " + card.entry.unit : "Managed by exact process name")
         textFormat: Text.PlainText
         color: Commons.Color.muted
         elide: Text.ElideMiddle

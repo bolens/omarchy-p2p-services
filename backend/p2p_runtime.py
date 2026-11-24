@@ -25,13 +25,14 @@ def parse_json_records(text):
 
 
 class RuntimeProbe:
-  def __init__(self, snapshot, run_command, services, ps, systemctl, aliases):
+  def __init__(self, snapshot, run_command, services, ps, systemctl, aliases, restricted_discovery=None):
     self.snapshot = snapshot
     self.run = run_command
     self.services = services
     self.ps = ps
     self.systemctl = systemctl
     self.aliases = aliases
+    self.restricted_discovery = restricted_discovery
 
   
   def process_rows(self):
@@ -153,6 +154,10 @@ class RuntimeProbe:
     until=datetime.datetime.now(datetime.timezone.utc).isoformat()
     for item,latest in recent_items:
       if int(item.get("RestartCount",0) or 0) <= 0: continue
+      if item.get("_discovery_only"):
+        kinds = [classification[0] for event in item.get("_discovery_events",[]) if (classification := classify_container_event(event))]
+        event_kinds.append(select_restart_kind(kinds))
+        continue
       command=item.get("_runtime_cmd")
       name=str(item.get("Name","")).lstrip("/")
       if not command or not name: continue
@@ -244,17 +249,27 @@ class RuntimeProbe:
     self.snapshot.containers=[]
     for runtime in ("docker","podman"):
       executable=shutil.which(runtime)
-      if not executable: continue
+      if not executable:
+        if runtime == "docker" and self.restricted_discovery:
+          recovered = self.restricted_discovery()
+          if recovered is not None: self.snapshot.containers += [item for item in recovered if self.snapshot.all_containers or item.get("State",{}).get("Running")]
+        continue
       executable=os.path.realpath(executable)
       listed=self.run([executable,"ps","-aq" if self.snapshot.all_containers else "-q"],4)
       if not listed or listed.returncode != 0:
-        self.snapshot.warning("container_list_unavailable",runtime=runtime)
+        recovered = self.restricted_discovery() if runtime == "docker" and self.restricted_discovery else None
+        if recovered is not None:
+          self.snapshot.containers += [item for item in recovered if self.snapshot.all_containers or item.get("State",{}).get("Running")]
+        else: self.snapshot.warning("container_list_unavailable",runtime=runtime)
         continue
       ids=listed.stdout.split() if listed and listed.returncode == 0 else []
       if not ids: continue
       inspected=self.run([executable,"inspect"]+ids,10)
       if not inspected or inspected.returncode != 0:
-        self.snapshot.warning("container_inspect_unavailable",runtime=runtime)
+        recovered = self.restricted_discovery() if runtime == "docker" and self.restricted_discovery else None
+        if recovered is not None:
+          self.snapshot.containers += [item for item in recovered if self.snapshot.all_containers or item.get("State",{}).get("Running")]
+        else: self.snapshot.warning("container_inspect_unavailable",runtime=runtime)
         continue
       try:
         found=json.loads(inspected.stdout)
@@ -275,6 +290,9 @@ class RuntimeProbe:
       if not item.get("State",{}).get("Running"): continue
       runtime=item.get("_runtime","docker"); command=item.get("_runtime_cmd")
       name=str(item.get("Name","")).lstrip("/")
+      if item.get("_discovery_only"):
+        if "_discovery_stats" in item: self.snapshot.container_stats[(runtime,name)] = item["_discovery_stats"]
+        continue
       if command and name: groups.setdefault((runtime,command),[]).append(name)
     for (runtime,command),names in groups.items():
       args=[command,"stats","--no-stream"] + (["--format","{{json .}}"] if runtime=="docker" else ["--format","json"]) + names

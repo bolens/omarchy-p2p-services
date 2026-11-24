@@ -317,6 +317,23 @@ class ControlCliTests(ControlTestCase):
     self.assertEqual(errors.getvalue(), "")
     self.assertEqual(launch.call_count, 1)
 
+  def test_watch_falls_back_to_polling_when_installed_backends_exit(self):
+    process = mock.Mock()
+    process.stdout.readline.return_value = ""
+    process.poll.return_value = 1
+    selector = mock.Mock()
+    selector.select.return_value = [(types.SimpleNamespace(fileobj=process.stdout), None)]
+    with mock.patch.object(CONTROL.shutil, "which", side_effect=lambda name: "/usr/bin/docker" if name == "docker" else None), \
+         mock.patch.object(CONTROL.subprocess, "Popen", return_value=process), \
+         mock.patch.object(CONTROL.selectors, "DefaultSelector", return_value=selector), \
+         mock.patch.object(CONTROL.signal, "signal"), \
+         redirect_stdout(output := io.StringIO()):
+      self.assertFalse(CONTROL.watch_events())
+    messages = [json.loads(line) for line in output.getvalue().splitlines()]
+    self.assertEqual(messages[-1]["code"], "polling-only")
+    selector.close.assert_called_once()
+    process.stdout.close.assert_called_once()
+
   def test_watch_excludes_podman_debounces_emits_heartbeat_and_cleans_up(self):
     class EventStream:
       def __init__(self, line): self.line, self.closed = line, False

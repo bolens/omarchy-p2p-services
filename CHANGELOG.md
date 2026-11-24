@@ -15,6 +15,16 @@ All notable changes to P2P Services are documented here. This project follows
 - Keep one IPC handler across monitors and reject ambiguous focused-panel routing.
 - Keep plugin colors tied to Omarchy’s palette on Qt 6.12.
 
+### Added
+
+- Optional restricted Docker discovery without Docker group membership or direct socket access.
+- Start, stop, and restart existing P2P containers with fresh administrator authorization and exact target validation.
+
+### Fixed
+
+- Preserve service status, refresh requests, and actions when Qt passes native QML lists.
+- Fall back to polling when installed event backends cannot be accessed.
+
 ## [0.3.9] - 2026-09-03
 
 ### Added

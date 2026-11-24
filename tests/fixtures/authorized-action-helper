@@ -1,0 +1,7 @@
+#!/usr/bin/sh
+printf '%s\n' '{"phase":"authorization"}'
+sleep 0.1
+printf '%s\n' '{"phase":"applying"}'
+sleep 0.1
+printf '%s\n' '{"phase":"verifying"}'
+sleep 0.1

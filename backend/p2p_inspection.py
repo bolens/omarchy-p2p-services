@@ -44,6 +44,9 @@ class ServiceInspector:
     web_value,default_web,has_web=public_web_fields(discovered_web,private)
     stats=self.snapshot.container_stats or {}; totals=[stats.get((item.get("_runtime","docker"),str(item.get("Name","")).lstrip("/"))) for item in running_items]
     totals=[value for value in totals if value is not None]; rx_bytes=sum(value[0] for value in totals); tx_bytes=sum(value[1] for value in totals)
+    restricted=any(item.get("_discovery_only") for item in docker_items)
+    authorization=restricted and all(item.get("_discovery_only") and item.get("_authorization_control") for item in docker_items)
+    controllable=service.get("controllable",True) is True and (not restricted or authorization) and not (restricted and (user_active or system_active))
     return dict(id=service["id"],name=service["name"],icon=service["icon"],category=service["category"],installed=True,
       active=active,hasError=has_error,health=("error" if has_error else ("healthy" if active else "stopped")),pids=[] if private else pids,processCount=len(pids),uptime=uptime,
       connections=connected,listeners=listening,endpoints=endpoints,rxBytes=rx_bytes,txBytes=tx_bytes,trafficAvailable=bool(totals),
@@ -54,7 +57,7 @@ class ServiceInspector:
       runtimes=sorted(set(item.get("_runtime","docker") for item in docker_items)),
       backend="+".join(sorted(set(item.get("_runtime","docker") for item in docker_items))) if docker_items else ("systemd" if user_unit or system_unit else "process"),proxy=proxy,
       restartCount=restart_count,restartKind=restart_kind,stopKind=stop_kind,stopCause=stop_cause,lastTransition=last_transition,failureReason=("Service reported an error" if private and failure_reason else failure_reason),
-      custom=service.get("custom",False),controllable=service.get("controllable",True) is True,
+      custom=service.get("custom",False),discoveryOnly=restricted,authorizationRequired=authorization and controllable,controllable=controllable,
       privacyFiltered=private)
   
   def diagnostics_text(self, service, private=True):

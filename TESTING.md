@@ -35,7 +35,7 @@ Harness sources live under `tests/qml/`; the runner links them beside the
 production components in an isolated temporary directory before launch. The
 harnesses exercise real QML component behavior, process integration,
 settings persistence, refresh and watcher lifecycles, user interaction,
-privacy boundaries, and plugin-load smoke paths. `tests/run_qml_runtime.sh` is
+privacy boundaries, native QML list delivery, and plugin-load smoke paths. `tests/run_qml_runtime.sh` is
 the canonical harness inventory; adding or removing a runtime test there avoids
 maintaining a second enumerated list in documentation. Headless validation
 reports an explicit skip instead of implying runtime behavior was exercised.
@@ -66,6 +66,34 @@ restart Omarchy Shell, inspect its logs, and exercise only actions that can be
 safely reversed. Keep private mode enabled when collecting report material.
 Run `npm run verify:live` for read-only IPC discovery, payload, version, and
 invalid-input checks against an installed plugin.
+
+## Restricted Docker discovery
+
+`tests/restricted_discovery_test.py` isolates all Docker, sudo, socket, and
+installer boundaries. It checks secret omission, canonical aliases, fixed GET
+requests, payload/time bounds, observation-only controls, and unchanged direct
+runtime discovery. No privileged command or live container is controlled by tests.
+
+After an explicitly authorized helper installation, verify root ownership and
+modes, a successful no-argument invocation, rejection of extra arguments, and a
+privacy-filtered live status scan. A helper exit status of 1 means unavailable
+Docker data; 2 means invalid invocation. This verification is read-only.
+
+## Authorized Docker controls
+
+`tests/authorized_controls_test.py` simulates every mutation and covers policy,
+per-service allowlists, full target preflight, stale identities, partial failure,
+cancellation, root serialization and the caller pidfd guard. QML harnesses exercise
+authorization progress, controls and restricted logs/configuration. Tests never
+invoke a real control helper or change a live container.
+
+After installation, use `pkaction` to inspect the exact policy and `pkcheck`
+without interaction before and after a validation-only `--check` request to prove
+authorization is not retained. A non-interactive challenge returns status 2 and
+the `auth_admin` decision detail; status 0 would mean authorization is already
+granted. Identify the checked subject by PID, process start time, and UID. `--check restart SERVICE FULL_CONTAINER_ID` requires
+native authentication but sends only inspect requests. Real start/stop/restart
+smoke tests require explicit authorization to disrupt a named live service.
 
 ## Refreshing screenshots
 

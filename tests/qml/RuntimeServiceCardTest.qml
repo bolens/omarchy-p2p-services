@@ -170,8 +170,18 @@ ShellRoot {
             card.width = 180
             Qt.callLater(function() {
               if (!serviceName.truncated || serviceName.fullLabel !== mockController.displayLabel) throw new Error("truncated service name lost its full tooltip title")
-              console.log("P2P_QML_SERVICE_CARD_OK")
-              Qt.quit()
+              mockController.density = "comfortable"
+              card.entry = Object.assign({}, card.entry, {discoveryOnly:true,controllable:false})
+              Qt.callLater(function() {
+                var notice = descendant(card, "discoveryOnlyNotice")
+                if (primary.visible || !notice || !notice.visible || notice.text.indexOf("Observation only") < 0) throw new Error("restricted discovery did not explain observation-only access")
+                card.entry = Object.assign({}, card.entry, {authorizationRequired:true,controllable:true})
+                Qt.callLater(function() {
+                  if (!primary.visible || notice.text.indexOf("Administrator authorization required") < 0) throw new Error("authorized Docker controls were not exposed with their authorization requirement")
+                  console.log("P2P_QML_SERVICE_CARD_OK")
+                  Qt.quit()
+                })
+              })
             })
           })
           })

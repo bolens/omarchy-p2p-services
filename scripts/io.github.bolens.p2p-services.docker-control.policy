@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN" "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>P2P Services</vendor>
+  <action id="io.github.bolens.p2p-services.docker-control">
+    <description>Control an existing P2P Docker container</description>
+    <message>Administrator authorization is required for this P2P container request: $(command_line)</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/libexec/omarchy-p2p-control</annotate>
+  </action>
+</policyconfig>

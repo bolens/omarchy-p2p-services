@@ -22,7 +22,7 @@ QtObject {
   }
 
   function openLogs(entry) {
-    if (!hasHelper() || !entry || !entry.id) return false
+    if (!hasHelper() || !entry || !entry.id || entry.discoveryOnly === true) return false
     Quickshell.execDetached(["omarchy-launch-terminal", helper, "logs", entry.id])
     return true
   }
@@ -58,7 +58,7 @@ QtObject {
   }
 
   function control(entry, action) {
-    if (hasHelper() && entry && entry.id && ["start","stop","restart","config"].indexOf(action) >= 0 && entry.controllable !== false)
+    if (hasHelper() && entry && entry.id && ["start","stop","restart","config"].indexOf(action) >= 0 && entry.controllable !== false && !(entry.discoveryOnly === true && action === "config"))
       actionRequested(entry, action, [helper, "action", entry.id, action])
   }
 }

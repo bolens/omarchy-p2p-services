@@ -1,0 +1,97 @@
+#!/usr/bin/python3 -I
+"""Install the reviewed helper and a single-account, no-argument sudo rule."""
+import argparse
+import ast
+import os
+import pathlib
+import pwd
+import re
+import stat
+import subprocess
+import tempfile
+import xml.etree.ElementTree as ET
+
+TARGET = pathlib.Path("/usr/local/libexec/omarchy-p2p-discover")
+RULE = pathlib.Path("/etc/sudoers.d/omarchy-p2p-discovery")
+CONTROL_TARGET = pathlib.Path("/usr/local/libexec/omarchy-p2p-control")
+CONTROL_POLICY = pathlib.Path("/usr/share/polkit-1/actions/io.github.bolens.p2p-services.docker-control.policy")
+MARKER = "# Managed by omarchy-p2p-services restricted discovery\n"
+
+
+def check_directory(path):
+  for parent in (path, *path.parents):
+    info = parent.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+      raise ValueError("installation parent is not a trusted root-owned directory: " + str(parent))
+
+
+def atomic_install(path, content, mode):
+  check_directory(path.parent)
+  if path.exists() or path.is_symlink():
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+      raise ValueError("refusing untrusted installation target")
+  fd, staging = tempfile.mkstemp(prefix=".p2p-install-", dir=path.parent)
+  try:
+    with os.fdopen(fd,"wb") as stream:
+      os.fchmod(stream.fileno(),mode)
+      stream.write(content)
+      stream.flush()
+      os.fsync(stream.fileno())
+    os.replace(staging,path)
+  finally:
+    if os.path.exists(staging): os.unlink(staging)
+
+
+def sudo_rule(user):
+  if not re.fullmatch(r"[a-z_][a-z0-9_-]*",user): raise ValueError("invalid account")
+  if pwd.getpwnam(user).pw_uid == 0: raise ValueError("select an unprivileged account")
+  return (MARKER + user + ' ALL=(root) NOPASSWD: NOSETENV: ' + str(TARGET) + ' ""\n').encode()
+
+
+def main():
+  parser = argparse.ArgumentParser(description=__doc__)
+  parser.add_argument("--user",required=True)
+  parser.add_argument("--with-controls",action="store_true",help="Install fresh-administrator-authorized start/stop/restart controls")
+  args = parser.parse_args()
+  if os.geteuid() != 0: raise SystemExit("Run this installer through native administrator authorization")
+  rule = sudo_rule(args.user)
+  source = pathlib.Path(__file__).resolve().parents[1]/"backend/p2p_docker_helper.py"
+  # Read bytes, never import or execute a user-writable module as root.
+  with source.open("rb") as stream: helper = stream.read(128*1024+1)
+  if len(helper) > 128*1024 or not helper.startswith(b"#!/usr/bin/python3 -I\n"): raise ValueError("invalid helper payload")
+  ast.parse(helper)
+  control_payload, policy_payload = None, None
+  if args.with_controls:
+    control_source = source.with_name("p2p_docker_control_helper.py")
+    with control_source.open("rb") as stream: control_payload = stream.read(128*1024+1)
+    if len(control_payload) > 128*1024 or not control_payload.startswith(b"#!/usr/bin/python3 -I\n"): raise ValueError("invalid controller payload")
+    ast.parse(control_payload)
+    with (pathlib.Path(__file__).resolve().parent/CONTROL_POLICY.name).open("rb") as stream: policy_payload = stream.read(16385)
+    if len(policy_payload) > 16384: raise ValueError("invalid control policy")
+    policy = ET.fromstring(policy_payload)
+    action = policy.find("action")
+    if policy.tag != "policyconfig" or len(policy.findall("action")) != 1 or action is None or action.get("id") != "io.github.bolens.p2p-services.docker-control": raise ValueError("invalid control action")
+    if [action.findtext("defaults/"+scope) for scope in ("allow_any","allow_inactive","allow_active")] != ["no","no","auth_admin"]: raise ValueError("control authentication must not be retained")
+    if len(action.findall("annotate")) != 1 or {n.get("key"):n.text for n in action.findall("annotate")} != {"org.freedesktop.policykit.exec.path":str(CONTROL_TARGET)}: raise ValueError("invalid control executable")
+    check_directory(CONTROL_TARGET.parent)
+    check_directory(CONTROL_POLICY.parent)
+  check_directory(TARGET.parent)
+  check_directory(RULE.parent)
+  if RULE.exists() and not RULE.read_text().startswith(MARKER): raise ValueError("refusing to replace an unmanaged sudo rule")
+  fd, candidate = tempfile.mkstemp(prefix="p2p-sudoers-")
+  try:
+    with os.fdopen(fd,"wb") as stream: stream.write(rule)
+    subprocess.run(["/usr/bin/visudo","-cf",candidate],check=True)
+  finally: os.unlink(candidate)
+  # Install the sealed code first, then grant access. Never install a symlink.
+  atomic_install(TARGET,helper,0o755)
+  atomic_install(RULE,rule,0o440)
+  if args.with_controls:
+    # Capability remains unavailable until both sealed files have been installed.
+    atomic_install(CONTROL_TARGET,control_payload,0o755)
+    atomic_install(CONTROL_POLICY,policy_payload,0o644)
+  print("Installed restricted Docker discovery" + (" and authorized controls" if args.with_controls else "") + " for " + args.user)
+
+
+if __name__ == "__main__": main()

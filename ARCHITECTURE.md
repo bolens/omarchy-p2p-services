@@ -119,6 +119,23 @@ points and sibling imports relative to the installed plugin directory.
   replacement.
 - A service action is successful only after observed state confirms it.
 
+`p2p_restricted_discovery.py` is an optional fallback capability injected into
+`RuntimeProbe`. When direct Docker inventory fails, it invokes only the sealed
+no-argument helper installed by `scripts/install-restricted-discovery`.
+`p2p_docker_helper.py` is copied as a standalone root-owned file, never imported
+from the checkout by privileged code. Its fixed schema feeds the existing
+privacy projection; `discoveryOnly` and `controllable` distinguish observation
+from authorization. Cached snapshot ownership stays in `SnapshotContext`.
+
+`p2p_docker_control_helper.py` is an independent sealed controller installed only
+with `--with-controls`. The client recognizes a trusted helper plus the exact
+non-retained Polkit policy before projecting `authorizationRequired` and enabling
+lifecycle controls. `discoveryOnly` continues to deny logs/configuration; it no
+longer implies that separately authorized lifecycle control is impossible.
+`P2PActionRunner` owns the longer authorization deadline and progress phase,
+while the privileged controller owns serialization and target revalidation.
+The unprivileged CLI remains the caller-lifetime boundary watched by a root pidfd.
+
 Docker and Podman remain optional. Discovery degrades without either runtime or
 without any supported P2P software installed.
 

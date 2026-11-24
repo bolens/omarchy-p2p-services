@@ -102,7 +102,7 @@ class ControlHelperTests(unittest.TestCase):
   def test_caller_guard_checks_uid_and_stops_requests_when_parent_exits(self):
     with mock.patch.dict(helper.os.environ,{"PKEXEC_UID":"1000"}), mock.patch.object(helper.os,"getppid",return_value=42), \
          mock.patch.object(helper.os,"stat",return_value=types.SimpleNamespace(st_uid=1000)), \
-         mock.patch.object(helper.os,"pidfd_open",return_value=77), \
+         mock.patch.object(helper.os,"pidfd_open",return_value=77,create=True), \
          mock.patch.object(helper.select,"select",return_value=([77],[],[])), mock.patch.object(helper,"request") as request:
       descriptor,api = helper.caller_guard()
       self.assertEqual(descriptor,77)

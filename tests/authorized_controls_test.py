@@ -1,20 +1,18 @@
 import copy
 import io
 import json
-import os
 import pathlib
 import signal
 import subprocess
 import types
 import unittest
 import xml.etree.ElementTree as ET
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import redirect_stdout
 from unittest import mock
 
 from backend import p2p_docker_control_helper as helper
 from backend import p2p_restricted_discovery as client
 from backend.p2p_catalog import DOCKER_ALIASES
-from backend.p2p_inspection import ServiceInspector
 from control_test_support import CONTROL, ControlTestCase, ROOT
 from restricted_discovery_test import fixture, IDENTITY
 

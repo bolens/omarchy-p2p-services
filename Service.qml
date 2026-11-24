@@ -5,8 +5,8 @@ import "PathUtils.js" as PathUtils
 
 Item {
   id: root
-  property var shell: null
   readonly property P2PIpcHub ipcHub: P2PIpcHub { serviceIdentity: root }
+  property var shell: null
   property var manifest: null
   property var settings: ({})
   property var services: []
@@ -37,7 +37,7 @@ Item {
   property string helper: PathUtils.localFilePath(Qt.resolvedUrl("p2p-control"))
 
   function configure(next) {
-    settings = next && typeof next === "object" && !Array.isArray(next) ? next : {}
+    settings = next && typeof next === "object" && !Model.isList(next) ? next : {}
     durableSettingsRevision = Math.max(durableSettingsRevision, Number(settings._p2pRevision) || 0)
     if (settings.eventRefresh === false) {
       watcherProc.running = false

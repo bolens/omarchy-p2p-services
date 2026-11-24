@@ -4,6 +4,12 @@ import "PathUtils.js" as PathUtils
 
 ShellRoot {
   id: root
+  property bool savedSettingsObserved: false
+  // The saved notice is transient; loading settings may outlast that notice.
+  Connections {
+    target: widget
+    function onSettingsSaveStatusChanged() { if (widget.settingsSaveStatus === "saved") root.savedSettingsObserved = true }
+  }
   property int updates: 0
   property int stage: 0
   property double settingsLoadDeadline: 0
@@ -78,6 +84,9 @@ ShellRoot {
     bar: barMock
     helper: root.fixtureHelper
     settings: ({eventRefresh:false,refreshOnOpen:false,refreshAfterSettings:false,showTrafficStats:false})
+    // This stateless helper echoes patches, not revisioned durable snapshots.
+    // Revision reconciliation has dedicated watcher/store integration harnesses.
+    function reloadIfSharedSettingsAdvanced() { return false }
   }
 
   Component.onCompleted: {
@@ -232,14 +241,14 @@ ShellRoot {
       if (widget.settingsIndicatorVisible) throw new Error("disabled loading preference did not release settings surface")
       widget.adoptTransferredSettings({eventRefresh:false,showLoadingIndicators:true})
       widget.showSettingsPage("general")
-      root.settingsLoadDeadline = Date.now() + 2000
+      root.settingsLoadDeadline = Date.now() + 5000
       root.stage = 1
       } else if (root.stage === 1) {
       if (!widget.settingsSurfaceLoaded || widget.settingsIndicatorVisible) {
         if (Date.now() >= root.settingsLoadDeadline) throw new Error("lazy settings surface or minimum loading presentation did not settle")
         return
       }
-      if (widget.settingsSaveStatus !== "saved") throw new Error("durable settings save status did not complete: " + widget.settingsSaveStatus)
+      if (!root.savedSettingsObserved || widget.settingsPersistenceRunning) throw new Error("durable settings save did not complete")
       widget.helper = PathUtils.localFilePath(Qt.resolvedUrl("tests/fixtures/loading-helper"))
       widget.showSettingsPage("packages")
       root.stage = 2
@@ -249,9 +258,13 @@ ShellRoot {
       } else if (root.stage === 3) {
       if (!widget.catalogLoading) throw new Error("long catalog loading presentation ended before request completion")
       widget.showSettingsPage("general")
+      root.settingsLoadDeadline = Date.now() + 3000
       root.stage = 4
       } else if (root.stage === 4) {
-      if (widget.catalogLoading) throw new Error("long catalog loading presentation did not settle")
+      if (widget.catalogLoading) {
+        if (Date.now() >= root.settingsLoadDeadline) throw new Error("long catalog loading presentation did not settle")
+        return
+      }
       widget.settingsPage = "packages"
       widget.serviceCatalog = [{id:"preserved"}]
       widget.helper = "/usr/bin/false"

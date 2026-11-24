@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import "Model.js" as Model
 
 QtObject {
   id: controller
@@ -14,7 +15,7 @@ QtObject {
   signal failed(int exitCode, bool fullScan)
 
   function request(baseCommand, fullScan, bypassCache) {
-    if (!Array.isArray(baseCommand) || baseCommand.length === 0 || String(baseCommand[0] || "").trim() === "") return false
+    if (!Model.isList(baseCommand) || baseCommand.length === 0 || String(baseCommand[0] || "").trim() === "") return false
     var next = {baseCommand:baseCommand.slice(),fullScan:fullScan === true,bypassCache:bypassCache === true}
     if (busy) {
       if (queuedRequest) {

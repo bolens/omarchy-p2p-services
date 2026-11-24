@@ -5,6 +5,7 @@ CONTROL_ACTIONS = frozenset({"start", "stop", "restart"})
 
 def container_action_commands(items, action):
   if action not in CONTROL_ACTIONS: return []
+  if any(item.get("_discovery_only") for item in items): raise ValueError("discovery-only containers cannot be controlled")
   commands = []
   for runtime in sorted(set(item.get("_runtime", "docker") for item in items)):
     owned = [item for item in items if item.get("_runtime", "docker") == runtime and not item.get("Name", "").lstrip("/").endswith("-init")]

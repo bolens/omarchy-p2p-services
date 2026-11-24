@@ -3,6 +3,7 @@ import importlib.util
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 LOADER = importlib.machinery.SourceFileLoader("p2p_control_test", str(ROOT / "p2p-control"))
@@ -21,6 +22,12 @@ class ControlTestCase(unittest.TestCase):
     CONTROL.STATUS_CACHE_ROOT = pathlib.Path(cache_directory.name)
     self.addCleanup(setattr, CONTROL, "STATUS_CACHE_ROOT", original_cache_root)
     self.addCleanup(cache_directory.cleanup)
+    restricted = CONTROL.PROBE.restricted_discovery
+    CONTROL.PROBE.restricted_discovery = None
+    self.addCleanup(setattr, CONTROL.PROBE, "restricted_discovery", restricted)
+    authorization = mock.patch("backend.p2p_restricted_discovery.controls_available",return_value=False)
+    authorization.start()
+    self.addCleanup(authorization.stop)
     CONTROL.reset_discovery()
 
   def service(self, service_id):

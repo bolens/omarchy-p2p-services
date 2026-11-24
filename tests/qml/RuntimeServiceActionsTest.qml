@@ -22,6 +22,9 @@ ShellRoot {
 
   Component.onCompleted: Qt.callLater(function() {
     actions.control({id:"syncthing"}, "restart")
+    actions.control({id:"syncthing",controllable:false}, "restart")
+    actions.control({id:"syncthing",controllable:true,discoveryOnly:true,authorizationRequired:true}, "config")
+    if (actions.openLogs({id:"syncthing",discoveryOnly:true}) !== false) throw new Error("restricted discovery offered log access")
     actions.control(null, "stop")
     actions.control({}, "stop")
     actions.control({id:"syncthing"}, "")

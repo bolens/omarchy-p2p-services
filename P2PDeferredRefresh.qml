@@ -7,7 +7,7 @@ QtObject {
   signal applyRequested(var services, bool fullScan)
 
   function coalesce(services, fullScan) {
-    var rows = Array.isArray(services) ? services : []
+    var rows = Model.isList(services) ? services : []
     if (pending && pending.fullScan === true && fullScan !== true)
       return {services:Model.mergeServiceStatus(pending.services, rows, false),fullScan:true}
     return {services:rows,fullScan:fullScan === true}

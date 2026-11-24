@@ -14,6 +14,7 @@ from backend.p2p_event_store import EventStore
 from backend.p2p_packages import install_command, uninstall_command
 from backend.p2p_registry import normalize_custom_services, validate_registry
 from backend.p2p_runtime import RuntimeProbe
+from backend.p2p_restricted_discovery import discover as restricted_discover, authorized_control
 from backend.p2p_settings import reconcile_settings, sanitize_settings
 from backend.p2p_settings_store import SettingsStore
 from backend.p2p_settings_watch import watch_settings
@@ -86,7 +87,7 @@ def run(args, timeout=2):
     SNAPSHOT.warning("command_failed",command=os.path.basename(str(args[0])),detail=type(error).__name__)
     return None
 
-PROBE = RuntimeProbe(SNAPSHOT, lambda *args: run(*args), lambda: SNAPSHOT.services if SNAPSHOT.services is not None else all_services(), PS, SYSTEMCTL, DOCKER_ALIASES)
+PROBE = RuntimeProbe(SNAPSHOT, lambda *args: run(*args), lambda: SNAPSHOT.services if SNAPSHOT.services is not None else all_services(), PS, SYSTEMCTL, DOCKER_ALIASES, restricted_discovery=lambda: restricted_discover(run, SNAPSHOT))
 
 def command_path(service):
   candidates=[]
@@ -185,6 +186,7 @@ INSPECTOR = ServiceInspector(PROBE, SNAPSHOT, lambda *args: sockets(*args), lamb
 def show_logs(service):
   docker_items=sorted(PROBE.docker_matches(service),key=lambda item:(item.get("_runtime","docker"),str(item.get("Name","")).lstrip("/")))
   if docker_items:
+    if any(item.get("_discovery_only") for item in docker_items): raise RuntimeError("Docker discovery does not grant log access")
     item=docker_items[0]; runtime=item.get("_runtime_cmd") or shutil.which(item.get("_runtime","docker")); name=str(item.get("Name","")).lstrip("/")
     if runtime and name: return subprocess.call([runtime,"logs","--tail","200","-f",name])
   user_unit,_=PROBE.unit_state(service["units"],True); system_unit,_=PROBE.unit_state(service["units"],False)
@@ -248,6 +250,10 @@ def watch_events():
       if not events and now-last_heartbeat >= 15.0:
         print(json.dumps(watch_event_payload(),separators=(",",":")),flush=True); last_heartbeat=now
       processes=[process for process in processes if process.poll() is None]
+    # Installed backends can still be unusable (for example, denied socket or
+    # bus access). Stop retrying an event stream when every source has exited.
+    print(json.dumps(watch_event_payload("heartbeat",True,"polling-only"),separators=(",",":")),flush=True)
+    return False
   except KeyboardInterrupt: pass
   finally:
     for process in processes:
@@ -409,6 +415,13 @@ def control(service, action, terminal_auth=False):
   docker_items=PROBE.docker_matches(service)
   user_unit,user_active=PROBE.unit_state(service["units"],True) if action in CONTROL_ACTIONS else ("",False)
   system_unit,system_active=PROBE.unit_state(service["units"],False) if action in CONTROL_ACTIONS else ("",False)
+  if any(item.get("_discovery_only") for item in docker_items):
+    if action == "config": raise RuntimeError("Restricted Docker access does not grant configuration controls")
+    if action in CONTROL_ACTIONS:
+      if user_active or system_active: raise RuntimeError("service has multiple control backends active")
+      authorized_control(service,action,docker_items)
+      print('{"phase":"verifying"}',flush=True)
+      return
   if docker_items and action in CONTROL_ACTIONS:
     if user_active or system_active: raise RuntimeError("service has multiple control backends active")
     completed=[]

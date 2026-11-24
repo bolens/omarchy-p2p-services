@@ -385,3 +385,10 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.eventJournalRows([
   {kind:"old",at:1},{kind:"new",at:2},{kind:"bad"}
 ], 1))), [{kind:"new",at:2}]);
 console.log("ok");
+
+assert.equal(context.isList([]), true);
+for (const invalidList of [null, {}, "array", {0:"service",length:1}])
+  assert.equal(context.isList(invalidList), false);
+
+const restrictedConfig = context.compactIndicators({configExists:true,controllable:true,discoveryOnly:true}).find(item => item.action === "config");
+assert.equal(restrictedConfig.enabled, false);

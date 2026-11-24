@@ -1,5 +1,12 @@
 .pragma library
 
+// Qt can expose native list properties and signal arguments as V4Sequence.
+// They provide array methods but do not satisfy JavaScript Array.isArray().
+function isList(value) {
+  return Array.isArray(value) || (value !== null && typeof value === "object"
+    && Object.prototype.toString.call(value) === "[object V4Sequence]")
+}
+
 function timestampOrNow(value) {
   if (value === undefined || value === null || value === "") return Date.now()
   var timestamp = Number(value)
@@ -71,7 +78,7 @@ function compactIndicators(entry) {
   if (listeners) values.push({icon:"󰖟", value:String(listeners), tooltip:listeners + " listening socket" + (listeners === 1 ? "" : "s") + " · Show details", action:"details"})
   if (processes) values.push({icon:"󰆍", value:String(processes), tooltip:processes + " running process" + (processes === 1 ? "" : "es") + " · Show details", action:"details"})
   if (entry.hasWeb === true) values.push({icon:"󰖟", value:"", tooltip:"Open web console", action:"console"})
-  if (entry.configExists === true) values.push(entry.controllable === false
+  if (entry.configExists === true) values.push(entry.controllable === false || entry.discoveryOnly === true
     ? {icon:"󰒓", value:"", tooltip:"Configuration detected · Observation only", action:"config", enabled:false}
     : {icon:"󰒓", value:"", tooltip:"Open configuration", action:"config"})
   return values
@@ -248,8 +255,8 @@ function actionNotification(serviceName, requestedAction, exitCode, detail) {
 }
 
 function mergeServiceStatus(previousEntries, nextEntries, fullScan) {
-  var previous = Array.isArray(previousEntries) ? previousEntries : []
-  var next = Array.isArray(nextEntries) ? nextEntries : []
+  var previous = isList(previousEntries) ? previousEntries : []
+  var next = isList(nextEntries) ? nextEntries : []
   if (fullScan === true) return next.slice()
   var byId = {}, emitted = {}, merged = []
   for (var index = 0; index < next.length; index++) byId[next[index].id] = next[index]
@@ -337,7 +344,7 @@ function retainLifecycleEvidence(current, event, now) {
 
 function applyLifecycleEvidence(services, evidence, now) {
   var timestamp = timestampOrNow(now), known = evidence || {}
-  return (Array.isArray(services) ? services : []).map(function(entry) {
+  return (isList(services) ? services : []).map(function(entry) {
     var event = known[entry.id]
     if (!event || Number(event.expiresAt) <= timestamp) return entry
     var copy = Object.assign({}, entry)
@@ -688,8 +695,8 @@ function smoothTrafficRate(previous, current, alpha, threshold) {
 
 function serviceTransitions(previous, next, restartThreshold) {
   var oldById = {}, changes = [], threshold = Math.max(1, Number(restartThreshold) || 1)
-  previous = Array.isArray(previous) ? previous : []
-  next = Array.isArray(next) ? next : []
+  previous = isList(previous) ? previous : []
+  next = isList(next) ? next : []
   for (var oldIndex = 0; oldIndex < previous.length; oldIndex++) oldById[previous[oldIndex].id] = previous[oldIndex]
   for (var index = 0; index < next.length; index++) {
     var entry = next[index], old = oldById[entry.id], lifecycleHandled = false
@@ -758,7 +765,7 @@ function transitionNotifications(changes) {
 
 function eventJournalRows(events, limit) {
   var maximum = Math.max(1, Math.min(100, Number(limit) || 25))
-  return (Array.isArray(events) ? events : []).filter(function(event) {
+  return (isList(events) ? events : []).filter(function(event) {
     return event && typeof event.kind === "string" && typeof event.at === "number"
   }).slice(-maximum).reverse()
 }

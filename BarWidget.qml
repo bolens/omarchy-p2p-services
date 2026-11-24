@@ -478,7 +478,7 @@ Panel {
     var target = focusedPanelInstance()
     return !!target && target.opened === true && target.showingWidgetSettings !== true
       && target.editingServiceId === "" && target.statusIndicatorVisible !== true
-      && Array.isArray(target.services) && target.services.length > 0
+      && Model.isList(target.services) && target.services.length > 0
       && String(target.setting("serviceLayout", "list")) === String(layout)
       && String(target.setting("cardDensity", "comfortable")) === String(density)
   }
@@ -676,6 +676,8 @@ Panel {
   }
   function serviceActionLabel(id) {
     if (pendingService !== id) return ""
+    if (actionRunner.phase === "authorization") return "AWAITING AUTHORIZATION"
+    if (actionRunner.phase === "verifying") return "VERIFYING"
     if (pendingAction === "start") return "STARTING"
     if (pendingAction === "stop") return "STOPPING"
     if (pendingAction === "restart") return "RESTARTING"
@@ -876,7 +878,7 @@ Panel {
     notify(message.title, message.body)
   }
   function act(entry, action) {
-    if (!entry || actionRunner.running || (entry.controllable === false && ["start","stop","restart","config"].indexOf(action) >= 0)) return
+    if (!entry || actionRunner.running || (entry.discoveryOnly === true && action === "config") || (entry.controllable === false && ["start","stop","restart","config"].indexOf(action) >= 0)) return
     serviceActions.control(entry, action)
   }
   function tooltip() {
@@ -1301,7 +1303,7 @@ Panel {
       root.reloadIfSharedSettingsAdvanced()
     }
     function onRefreshSerialChanged() {
-      if (!root.p2pService || !Array.isArray(root.p2pService.services)) return
+      if (!root.p2pService || !Model.isList(root.p2pService.services)) return
       deferredRefresh.receive(root.p2pService.services, root.p2pService.lastFullScan, popupScroll.moving)
       root.helperDiagnostics = root.p2pService.diagnostics || []
       root.lastRefreshDurationMs = root.p2pService.lastDurationMs

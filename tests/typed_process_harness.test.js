@@ -21,12 +21,15 @@ function methods(source, names, context) {
   return context
 }
 
+const model = vm.createContext({})
+vm.runInContext(read("Model.js").replace(/^\.pragma library\s*$/m, ""), model)
+
 const refreshSource = read("P2PRefreshController.qml")
 assert.match(refreshSource, /component RefreshProcess: Process \{ property bool fullScan: false \}/)
 assert.match(refreshSource, /property RefreshProcess process: RefreshProcess \{/)
 const scheduled = []
 let starts = 0
-const refresh = { busy: false, timedOut: false, queuedRequest: null,
+const refresh = { Model: model, busy: false, timedOut: false, queuedRequest: null,
   process: { fullScan: false, running: false, command: [] },
   watchdog: { start() { starts++ } }, Qt: { callLater(fn) { scheduled.push(fn) } } }
 refresh.controller = refresh
@@ -63,8 +66,6 @@ assert.equal(transfer.activeMode, "check")
 assert.equal(transfer.process.mode, "check")
 assert.deepEqual(Array.from(transfer.process.command), ["fixture-helper", "settings-can-undo"])
 
-const model = vm.createContext({})
-vm.runInContext(read("Model.js").replace(/^\.pragma library\s*$/m, ""), model)
 const navigationSource = read("tests/qml/RuntimeNavigationTest.qml")
 assert.match(navigationSource, /component NavigationHarness: Item \{/)
 assert.match(navigationSource, /property NavigationHarness harness: NavigationHarness \{\}/)

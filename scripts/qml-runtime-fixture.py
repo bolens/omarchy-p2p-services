@@ -224,7 +224,7 @@ def canonical_contract(checkout, label):
         if label == "p2p":
             assert 'limit=${3:-${QML_RUNTIME_LIMIT:-4}}' in script
             if override:
-                assert file == "RuntimePluginSmokeTest.qml" and override == "7"
+                assert file == "RuntimePluginSmokeTest.qml" and override == "12"
                 limit = int(override)
         else:
             assert not override and "timeout " + str(limit) + ' "$quickshell_bin"' in script

@@ -12,6 +12,8 @@ All notable changes to P2P Services are documented here. This project follows
 
 ### Fixed
 
+- Keep Pages deployments tied to the current workflow attempt and wait for uploaded artifact metadata.
+
 - Keep one IPC handler across monitors and reject ambiguous focused-panel routing.
 - Keep plugin colors tied to Omarchy’s palette on Qt 6.12.
 
